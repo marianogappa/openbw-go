@@ -54,7 +54,8 @@ Raw values:
 
 - `frame <n> <hash>` every `-every` frames (when `n % every == 0`).
 - `end <frame> <hash>` after the last frame.
-- `-dump-units F`: a TSV block between `units_at_frame F` and `end_units`, in the same unit order as the hash. Columns: `index`, `type`, `owner`, `x` and `y` (`u->position`), `hp`, `shields`, `energy` (each `raw_value >> 8`), `order` (as in the hash), `completed` (`status_flag_completed`).
+- `-dump-units F`: first a line `rng state=<lcg_rand_state> total=<total_random_counts> source_<i>=<count> ...` (non-zero `random_counts` only). Then a TSV block between `units_at_frame F` and `end_units`, in the same unit order as the hash. Columns: `index`, `type`, `owner`, `x` and `y` (`u->position`), `hp`, `shields`, `energy` (each `raw_value >> 8`), `order` (as in the hash), `completed` (`status_flag_completed`), then `exact_x`, `exact_y`, `hp_raw` (raw values), `status` (`status_flags`), `order_state`, `movement_state`, `heading` (raw), `order_timer` (`main_order_timer`), `speed` (`current_speed` raw) and `images` (the number of images of the unit's sprite, or -1).
+- `-no-actions`: do not execute replay actions. The map, the players and the starting units still load from the replay. This is the "empty game" milestone.
 - `player <slot> ...` and `units <slot> <type_id>=<count> ...` for each slot with an active controller. Unit counts come from `st.player_units[slot]`. Supply prints as `used/available` in game units.
 - `action_fails <count>`: the number of actions where `read_action` returned `false`. Each one also prints `action_fail <frame> <slot> <action_id>` on stderr.
 - `error <frame> <message>` on stdout, exit code 2, when OpenBW throws.

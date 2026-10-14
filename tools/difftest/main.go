@@ -20,6 +20,7 @@ type config struct {
 	maxFrames int
 	limit     int
 	maxLines  int
+	noActions bool
 }
 
 func main() {
@@ -49,12 +50,14 @@ func parseConfig() (config, []string, error) {
 	flag.IntVar(&cfg.maxFrames, "max-frames", -1, "stop both engines at this frame")
 	flag.IntVar(&cfg.limit, "n", 0, "compare at most this many replays (0: all)")
 	flag.IntVar(&cfg.maxLines, "max-lines", 100, "print at most this many differences per frame (0: all)")
+	flag.BoolVar(&cfg.noActions, "no-actions", false, "run both engines without replay actions")
+	listPath := flag.String("list", "", "file with one replay path per line ('#' starts a comment line)")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "usage: difftest [flags] replay.rep|dir ...")
+		fmt.Fprintln(os.Stderr, "usage: difftest [flags] [-list replays.txt] [replay.rep|dir ...]")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	if flag.NArg() == 0 {
+	if flag.NArg() == 0 && *listPath == "" {
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -70,8 +73,31 @@ func parseConfig() (config, []string, error) {
 	}
 	cfg.harness = engine{name: "harness", path: *harnessPath, data: *data}
 	cfg.obwhash = engine{name: "obwhash", path: *obwhashPath, data: *data}
-	replays, err := collectReplays(flag.Args(), cfg.limit)
+	args := flag.Args()
+	if *listPath != "" {
+		listed, err := readReplayList(*listPath)
+		if err != nil {
+			return cfg, nil, err
+		}
+		args = append(listed, args...)
+	}
+	replays, err := collectReplays(args, cfg.limit)
 	return cfg, replays, err
+}
+
+func readReplayList(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var replays []string
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			replays = append(replays, line)
+		}
+	}
+	return replays, nil
 }
 
 func buildObwhash(outDir string) (string, error) {
@@ -138,8 +164,8 @@ func compareReplay(cfg config, replay string) bool {
 		fmt.Printf("  skipped: %v\n", err)
 		return false
 	}
-	a := cfg.harness.run(legacy, frameArgs(cfg.maxFrames)...)
-	b := cfg.obwhash.run(legacy, frameArgs(cfg.maxFrames)...)
+	a := cfg.harness.run(legacy, cfg.engineArgs(frameArgs(cfg.maxFrames))...)
+	b := cfg.obwhash.run(legacy, cfg.engineArgs(frameArgs(cfg.maxFrames))...)
 	frame, differs := firstDifferentFrame(a, b)
 	if !differs {
 		return reportMatch(cfg, a, b)
@@ -150,6 +176,10 @@ func compareReplay(cfg config, replay string) bool {
 
 func reportMatch(cfg config, a, b *runOutput) bool {
 	if a.lastFrame < 0 {
+		if a.errorLine != "" && a.errorLine == b.errorLine {
+			fmt.Printf("  match: both engines fail with %q\n", a.errorLine)
+			return true
+		}
 		fmt.Printf("  %s produced no frames: %s\n", cfg.harness.name, a.describeFailure())
 		return false
 	}
@@ -177,6 +207,13 @@ func reportDifference(cfg config, legacy string, frame int, a, b *runOutput) {
 	printSnapshotAt(cfg, legacy, frame)
 }
 
+func (cfg config) engineArgs(args []string) []string {
+	if cfg.noActions {
+		return append([]string{"-no-actions"}, args...)
+	}
+	return args
+}
+
 func hashOrFailure(out *runOutput, frame int) string {
 	if hash, ok := out.frameHashes[frame]; ok {
 		return hash
@@ -186,7 +223,7 @@ func hashOrFailure(out *runOutput, frame int) string {
 
 func printSnapshotAt(cfg config, legacy string, frame int) {
 	args := []string{"-every", "1000000000", "-max-frames", fmt.Sprint(frame), "-dump-units", fmt.Sprint(frame)}
-	a := cfg.harness.run(legacy, args...)
-	b := cfg.obwhash.run(legacy, args...)
+	a := cfg.harness.run(legacy, cfg.engineArgs(args)...)
+	b := cfg.obwhash.run(legacy, cfg.engineArgs(args)...)
 	printSnapshotDiff(os.Stdout, frame, cfg.harness.name, cfg.obwhash.name, a, b, cfg.maxLines)
 }

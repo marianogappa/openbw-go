@@ -339,12 +339,12 @@ func (f *StateFunctions) initializeUnitConstructionRates(u *Unit) {
 	ut := u.UnitType
 	if ut.BuildTime == 0 {
 		u.RemainingBuildTime = 1
-		u.HpConstructionRate = Fp8One()
+		u.HpConstructionRate = Fp8FromRaw(1)
 	} else {
 		u.RemainingBuildTime = ut.BuildTime
-		u.HpConstructionRate = ut.Hitpoints.Sub(ut.Hitpoints.DivInt(10)).Add(Fp8FromRaw(ut.BuildTime)).Sub(Fp8One()).DivInt(ut.BuildTime)
+		u.HpConstructionRate = ut.Hitpoints.Sub(ut.Hitpoints.DivInt(10)).Add(Fp8FromRaw(ut.BuildTime)).Sub(Fp8FromRaw(1)).DivInt(ut.BuildTime)
 		if u.HpConstructionRate == Fp8Zero() {
-			u.HpConstructionRate = Fp8One()
+			u.HpConstructionRate = Fp8FromRaw(1)
 		}
 	}
 	if ut.HasShield && f.uGroundedBuilding(u) {
@@ -723,7 +723,7 @@ func (f *StateFunctions) initializeUnit(u *Unit, unitType *UnitTypeT, pos Xy, ow
 	u.UnitIDGeneration++
 	u.WireframeRandomizer = f.lcgRand(15) & 0xff
 	if f.utTurret(u.UnitType) {
-		u.Hp = Fp8One()
+		u.Hp = Fp8FromRaw(1)
 	} else {
 		u.Hp = u.UnitType.Hitpoints.DivInt(10)
 	}

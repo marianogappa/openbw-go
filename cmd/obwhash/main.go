@@ -20,10 +20,11 @@ type options struct {
 	every          int32
 	dumpUnitsFrame int32
 	maxFrames      int32
+	noActions      bool
 }
 
 func exitWithUsage() {
-	fmt.Fprintf(os.Stderr, "usage: obwhash [-data dir] [-every N] [-dump-units F] [-max-frames M] replay.rep\n")
+	fmt.Fprintf(os.Stderr, "usage: obwhash [-data dir] [-every N] [-dump-units F] [-max-frames M] [-no-actions] replay.rep\n")
 	os.Exit(1)
 }
 
@@ -61,6 +62,8 @@ func parseOptions(args []string) options {
 		case arg == "-max-frames" && hasValue:
 			i++
 			opts.maxFrames = parseIntArgument("-max-frames", args[i])
+		case arg == "-no-actions":
+			opts.noActions = true
 		case arg != "" && arg[0] != '-' && opts.replayPath == "":
 			opts.replayPath = arg
 		default:
@@ -96,15 +99,40 @@ func (r *runner) printUnitRow(u *bwgame.Unit) {
 	if u.StatusFlags&bwgame.UnitStatusFlagCompleted != 0 {
 		completed = 1
 	}
-	fmt.Fprintf(r.out, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+	fmt.Fprintf(r.out, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
 		int32(u.Index), int32(u.UnitType.ID), u.Owner, u.Position.X, u.Position.Y,
 		u.Hp.RawValue>>8, u.ShieldPoints.RawValue>>8, u.Energy.RawValue>>8,
-		bwgame.UnitOrderID(u), completed)
+		bwgame.UnitOrderID(u), completed,
+		u.ExactPosition.X.RawValue, u.ExactPosition.Y.RawValue, u.Hp.RawValue,
+		u.StatusFlags, u.OrderState, u.MovementState, u.Heading.RawValue,
+		u.MainOrderTimer, u.CurrentSpeed.RawValue, imageCount(u))
+}
+
+func imageCount(u *bwgame.Unit) int {
+	if u.Sprite == nil {
+		return -1
+	}
+	count := 0
+	for range u.Sprite.Images.All() {
+		count++
+	}
+	return count
+}
+
+func (r *runner) printRandomState() {
+	fmt.Fprintf(r.out, "rng state=%d total=%d", r.st.LcgRandState, r.st.TotalRandomCounts)
+	for source, count := range r.st.RandomCounts {
+		if count != 0 {
+			fmt.Fprintf(r.out, " source_%d=%d", source, count)
+		}
+	}
+	fmt.Fprintf(r.out, "\n")
 }
 
 func (r *runner) dumpUnits() {
+	r.printRandomState()
 	fmt.Fprintf(r.out, "units_at_frame %d\n", r.st.CurrentFrame)
-	fmt.Fprintf(r.out, "index\ttype\towner\tx\ty\thp\tshields\tenergy\torder\tcompleted\n")
+	fmt.Fprintf(r.out, "index\ttype\towner\tx\ty\thp\tshields\tenergy\torder\tcompleted\texact_x\texact_y\thp_raw\tstatus\torder_state\tmovement_state\theading\torder_timer\tspeed\timages\n")
 	for _, units := range bwgame.HashedUnitLists(r.st) {
 		for u := range units.All() {
 			r.printUnitRow(u)
@@ -198,6 +226,7 @@ func (r *runner) run() error {
 	r.st = bwgame.NewState(global, bwgame.NewGameState())
 	r.funcs = bwgame.NewReplayFunctions(r.st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	r.funcs.OnActionFail = r.reportActionFail
+	r.funcs.SkipActions = r.opts.noActions
 	if err := r.funcs.LoadReplayFile(r.opts.replayPath); err != nil {
 		return err
 	}

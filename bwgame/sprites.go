@@ -203,7 +203,7 @@ func (f *StateFunctions) newThingy() *Thingy {
 }
 
 func (f *StateFunctions) initializeThingy(t *Thingy, spriteType *SpriteTypeT, pos Xy, owner int32) bool {
-	t.Hp = Fp8One()
+	t.Hp = Fp8FromRaw(1)
 	t.Sprite = f.createSprite(spriteType, pos, owner)
 	return t.Sprite != nil
 }
@@ -380,7 +380,7 @@ func (f *StateFunctions) initializeFlingy(flingy *Flingy, flingyType *FlingyType
 	f.setNextTargetWaypoint(flingy, pos)
 	flingy.Heading = heading
 	flingy.NextVelocityDirection = heading
-	flingy.Hp = Fp8One()
+	flingy.Hp = Fp8FromRaw(1)
 
 	flingy.Sprite = f.createSprite(flingyType.Sprite.Get(), pos, owner)
 	if flingy.Sprite == nil {

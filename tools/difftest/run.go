@@ -113,7 +113,7 @@ func (out *runOutput) parseLine(line string) {
 		out.endLine = line
 	case "error":
 		out.errorLine = line
-	case "player", "units":
+	case "player", "units", "rng":
 		if len(fields) >= 2 {
 			out.parsePlayerLine(fields)
 		}
@@ -124,6 +124,15 @@ func (out *runOutput) parseLine(line string) {
 
 func (out *runOutput) parsePlayerLine(fields []string) {
 	prefix := fields[0] + " " + fields[1]
+	if fields[0] == "rng" {
+		prefix = "rng"
+		for _, kv := range fields[1:] {
+			if key, value, ok := strings.Cut(kv, "="); ok {
+				out.players[prefix+" "+key] = value
+			}
+		}
+		return
+	}
 	if fields[0] == "units" {
 		out.players[prefix] = strings.Join(fields[2:], " ")
 		return
@@ -144,7 +153,7 @@ func (out *runOutput) describeFailure() string {
 	if out.exitErr != nil {
 		parts = append(parts, "exit: "+out.exitErr.Error())
 	}
-	if out.stderrTail != "" && out.errorLine == "" {
+	if out.stderrTail != "" && out.errorLine == "" && out.exitErr != nil {
 		parts = append(parts, "stderr: "+out.stderrTail)
 	}
 	return strings.Join(parts, "; ")

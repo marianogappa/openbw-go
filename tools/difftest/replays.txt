@@ -1,0 +1,21 @@
+# Fixed difftest set: 20 replays that INTEGRATION.md classified clean. 17 under about 16 minutes, 3 long games.
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-mentalgap/MM-FC802C7E-A9BE-11F0-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-3050_KzerG/MM-E8DD6C38-B169-11F0-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-Horang2[._.]/MM-0BAED626-EA67-11F0-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-Horang2[._.]/MM-7FCE8310-F30B-11F0-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-000E17C0-01F3-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays/30-lIlIIIIIIllllll/MM-D4DCAE08-11BB-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-491926A2-11BC-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-CB157510-11C2-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-E0A8B85E-1287-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-SST_JumJaJungJi/MM-AAA58B20-12F9-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-Esccccccc/MM-AD3C6A4C-2619-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-BBBuuuUU[kS]/MM-0E7AF1D0-34BF-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-Skins_/MM-96471080-34D8-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-Skins_/MM-71C039A8-35B4-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-Horang2[._.]/MM-39C48C10-35DD-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-231314231313131/MM-40AD2926-3892-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-Esccccccc/MM-4862526E-25E0-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-F7581750-01C2-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-4023b/MM-F4C14D6E-3A97-11F1-A3DD-FA167B5461B6.rep
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-BBBuuuUU[kS]/MM-657AB750-3AC7-11F1-A3DD-FA167B5461B6.rep

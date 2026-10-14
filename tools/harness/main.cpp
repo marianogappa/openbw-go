@@ -23,10 +23,11 @@ struct options {
 	int every = 1;
 	int dump_units_frame = -1;
 	int max_frames = -1;
+	bool no_actions = false;
 };
 
 [[noreturn]] void exit_with_usage() {
-	std::fprintf(stderr, "usage: harness [-data dir] [-every N] [-dump-units F] [-max-frames M] replay.rep\n");
+	std::fprintf(stderr, "usage: harness [-data dir] [-every N] [-dump-units F] [-max-frames M] [-no-actions] replay.rep\n");
 	std::exit(1);
 }
 
@@ -56,6 +57,7 @@ options parse_options(int argc, char** argv) {
 		else if (arg == "-every" && has_value) opts.every = parse_int_argument("-every", argv[++i]);
 		else if (arg == "-dump-units" && has_value) opts.dump_units_frame = parse_int_argument("-dump-units", argv[++i]);
 		else if (arg == "-max-frames" && has_value) opts.max_frames = parse_int_argument("-max-frames", argv[++i]);
+		else if (arg == "-no-actions") opts.no_actions = true;
 		else if (!arg.empty() && arg[0] != '-' && opts.replay_path.empty()) opts.replay_path = arg;
 		else exit_with_usage();
 	}
@@ -150,6 +152,7 @@ struct harness_functions : bwgame::replay_functions {
 	using bwgame::replay_functions::replay_functions;
 
 	int action_fail_count = 0;
+	bool no_actions = false;
 
 	int owner_of_player_id(int player_id) const {
 		auto i = std::find(action_st.player_id.begin(), action_st.player_id.end(), player_id);
@@ -191,7 +194,7 @@ struct harness_functions : bwgame::replay_functions {
 	void next_frame() {
 		if (st.current_frame == replay_st.end_frame) bwgame::error("replay: attempt to play past end");
 		auto& buffer = replay_st.actions_data_buffer;
-		execute_actions_reporting_fails(buffer.data(), buffer.data() + buffer.size());
+		if (!no_actions) execute_actions_reporting_fails(buffer.data(), buffer.data() + buffer.size());
 		bwgame::state_functions::next_frame();
 	}
 };
@@ -202,17 +205,35 @@ void print_frame_hash(const bwgame::state& st) {
 	std::printf("frame %d %016llx\n", st.current_frame, (unsigned long long)state_hash(st));
 }
 
+int image_count(const bwgame::unit_t* u) {
+	if (!u->sprite) return -1;
+	int count = 0;
+	for (auto& image : u->sprite->images) {
+		(void)image;
+		++count;
+	}
+	return count;
+}
+
 void print_unit_row(const bwgame::unit_t* u) {
 	bool completed = (u->status_flags & bwgame::unit_t::status_flag_completed) != 0;
-	std::printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+	std::printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
 		(int)u->index, (int)u->unit_type->id, u->owner, u->position.x, u->position.y,
 		(int)(u->hp.raw_value >> 8), (int)(u->shield_points.raw_value >> 8), (int)(u->energy.raw_value >> 8),
-		order_id(u), completed ? 1 : 0);
+		order_id(u), completed ? 1 : 0,
+		(int)u->exact_position.x.raw_value, (int)u->exact_position.y.raw_value, (int)u->hp.raw_value,
+		(int)u->status_flags, u->order_state, u->movement_state, (int)u->heading.raw_value,
+		u->main_order_timer, (int)u->current_speed.raw_value, image_count(u));
 }
 
 void dump_units(const bwgame::state& st) {
+	std::printf("rng state=%u total=%d", (unsigned)st.lcg_rand_state, st.total_random_counts);
+	for (size_t i = 0; i != st.random_counts.size(); ++i) {
+		if (st.random_counts[i]) std::printf(" source_%d=%d", (int)i, st.random_counts[i]);
+	}
+	std::printf("\n");
 	std::printf("units_at_frame %d\n", st.current_frame);
-	std::printf("index\ttype\towner\tx\ty\thp\tshields\tenergy\torder\tcompleted\n");
+	std::printf("index\ttype\towner\tx\ty\thp\tshields\tenergy\torder\tcompleted\texact_x\texact_y\thp_raw\tstatus\torder_state\tmovement_state\theading\torder_timer\tspeed\timages\n");
 	for (auto& u : st.visible_units) print_unit_row(&u);
 	for (auto& u : st.hidden_units) print_unit_row(&u);
 	for (auto& u : st.map_revealer_units) print_unit_row(&u);
@@ -278,6 +299,7 @@ int run(const options& opts) {
 	bwgame::action_state action_st;
 	bwgame::replay_state replay_st;
 	harness_functions funcs(player.st(), action_st, replay_st);
+	funcs.no_actions = opts.no_actions;
 	funcs.load_replay_file(opts.replay_path.c_str());
 	bwgame::state& st = player.st();
 	after_frame(st, opts);

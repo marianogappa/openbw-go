@@ -307,6 +307,7 @@ type ReplayFunctions struct {
 	replaySt *ReplayState
 
 	OnActionFail func(frame int32, owner int32, actionID int32)
+	SkipActions  bool
 }
 
 func NewReplayFunctions(st *State, actionSt *ActionState, replaySt *ReplayState) *ReplayFunctions {
@@ -556,9 +557,11 @@ func (f *ReplayFunctions) nextFrame() {
 	if f.st.CurrentFrame == f.replaySt.EndFrame {
 		throwError("replay: attempt to play past end")
 	}
-	if f.OnActionFail != nil {
+	switch {
+	case f.SkipActions:
+	case f.OnActionFail != nil:
 		f.executeActionsReportingFails(f.replaySt.ActionsDataBuffer)
-	} else {
+	default:
 		f.executeActions(f.replaySt.ActionsDataBuffer)
 	}
 	f.StateFunctions.nextFrame()

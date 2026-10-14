@@ -497,7 +497,7 @@ func (f *StateFunctions) orderCastNuclearStrike(u *Unit) {
 		return
 	}
 	f.stopUnit(u)
-	if !f.isFacingNextTargetWaypoint(u, Fp8Integer(1)) {
+	if !f.isFacingNextTargetWaypoint(u, Fp8FromRaw(1)) {
 		return
 	}
 	silo := f.findReadyNuclearSilo(u.Owner)

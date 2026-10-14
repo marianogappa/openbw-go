@@ -127,10 +127,6 @@ func Fp8Zero() Fp8 {
 	return Fp8Integer(0)
 }
 
-func Fp8One() Fp8 {
-	return Fp8Integer(1)
-}
-
 func (f Fp8) IntegerPart() int32 {
 	return f.RawValue >> 8
 }
