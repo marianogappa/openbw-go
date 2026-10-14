@@ -3,12 +3,7 @@ package bwgame
 import (
 	"iter"
 	"slices"
-	"sort"
 )
-
-func unitFinderLowerBound(vec []UnitFinderEntry, value int32) int {
-	return sort.Search(len(vec), func(i int) bool { return vec[i].Value >= value })
-}
 
 func unitFinderIndexOf(vec []UnitFinderEntry, value int32, u *Unit) int {
 	i := unitFinderLowerBound(vec, value)

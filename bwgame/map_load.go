@@ -21,13 +21,6 @@ func clampMapPosCoord(v *int32) {
 	}
 }
 
-func resizeSlice[T any](s []T, n int) []T {
-	if n <= len(s) {
-		return s[:n]
-	}
-	return append(s, make([]T, n-len(s))...)
-}
-
 func (f *GameLoadFunctions) reset() {
 	st := f.st
 	g := f.gameSt
@@ -497,13 +490,6 @@ func (s *sightValuesGenerator) at(relativeIndex int32) *sightBaseMask {
 		throwError("attempt to access invalid base mask center-relative index %d (size %d)", index, len(s.baseMask))
 	}
 	return &s.baseMask[index]
-}
-
-func absInt32(v int32) int32 {
-	if v < 0 {
-		return -v
-	}
-	return v
 }
 
 func (s *sightValuesGenerator) doN(dir int, thisX, thisY int32, n int32) (int32, int32) {

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"iter"
+	"sort"
 	"unsafe"
 )
 
@@ -706,3 +707,33 @@ var psiFieldMask = [5][8]bool{
 }
 
 var allPlayerSlots = [12]int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+
+func contourLowerBound(contours []Contour, value int32) int {
+	return sort.Search(len(contours), func(i int) bool { return contours[i].V[0] >= value })
+}
+
+func contourUpperBound(contours []Contour, value int32) int {
+	return sort.Search(len(contours), func(i int) bool { return value < contours[i].V[0] })
+}
+
+func unitFinderLowerBound(entries []UnitFinderEntry, value int32) int {
+	return sort.Search(len(entries), func(i int) bool { return entries[i].Value >= value })
+}
+
+func unitFinderUpperBound(entries []UnitFinderEntry, value int32) int {
+	return sort.Search(len(entries), func(i int) bool { return value < entries[i].Value })
+}
+
+func absInt32(v int32) int32 {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+func resizeSlice[T any](s []T, n int) []T {
+	if n <= len(s) {
+		return s[:n]
+	}
+	return append(s, make([]T, n-len(s))...)
+}

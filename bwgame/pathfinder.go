@@ -43,25 +43,6 @@ func pfPartitionPoint(n int, isBefore func(i int) bool) int {
 	return first
 }
 
-func contourLowerBound(contours []Contour, value int32) int {
-	return pfPartitionPoint(len(contours), func(i int) bool { return contours[i].V[0] < value })
-}
-
-func contourUpperBound(contours []Contour, value int32) int {
-	return pfPartitionPoint(len(contours), func(i int) bool { return !(value < contours[i].V[0]) })
-}
-
-func unitFinderLowerBound(entries []UnitFinderEntry, value int32) int {
-	return pfPartitionPoint(len(entries), func(i int) bool { return entries[i].Value < value })
-}
-
-func resizeSlice[T any](s []T, count uint) []T {
-	if uint(len(s)) >= count {
-		return s[:count]
-	}
-	return append(s, make([]T, count-uint(len(s)))...)
-}
-
 func prependSlice[T any](s []T, v T) []T {
 	return append([]T{v}, s...)
 }
@@ -604,7 +585,7 @@ func (f *StateFunctions) pathProgress(u *Unit, to Xy, considerCollisionWithUnit 
 				pf.ShortPath = resizeSlice(pf.ShortPath, 23)
 				pf.LongPath = resizeSlice(pf.LongPath, 1)
 			} else {
-				pf.LongPath = resizeSlice(pf.LongPath, (24-uint(len(pf.ShortPath)))*2)
+				pf.LongPath = resizeSlice(pf.LongPath, (24-len(pf.ShortPath))*2)
 			}
 		}
 		path = f.newPath()

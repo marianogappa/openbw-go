@@ -222,11 +222,11 @@ func TestReplayFileReaderReadsDowngradedReplay(t *testing.T) {
 
 func loadReplayHeaderOnly(t *testing.T, data []byte) (*State, *ReplayFunctions) {
 	t.Helper()
-	st := NewState(nil, NewGameState())
+	st := NewState(testGlobalState(t), NewGameState())
 	funcs := NewReplayFunctions(st, &ActionState{}, &ReplayState{})
 	err := funcs.LoadReplayData(data)
 	var notPorted *NotPortedError
-	if err != nil && !(errors.As(err, &notPorted) && notPorted.Name == "load_map_data") {
+	if err != nil && !errors.As(err, &notPorted) {
 		t.Fatalf("load replay: %v", err)
 	}
 	return st, funcs
