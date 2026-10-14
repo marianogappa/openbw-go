@@ -113,7 +113,7 @@ func joinValues(values ...any) string {
 type referenceReplayer struct {
 	t *testing.T
 
-	lcgState StateBaseCopyable
+	lcgFuncs *StateFunctions
 
 	images        ObjectContainer[Image, *Image]
 	takenImages   map[uint]*Image
@@ -128,11 +128,12 @@ type referenceReplayer struct {
 func newReferenceReplayer(t *testing.T) *referenceReplayer {
 	r := &referenceReplayer{
 		t:             t,
+		lcgFuncs:      NewStateFunctions(&State{}),
 		images:        NewObjectContainer[Image](5000, 50),
 		takenImages:   map[uint]*Image{},
 		unknownOpSeen: map[string]bool{},
 	}
-	r.lcgState.LcgRandState = 42
+	r.lcgFuncs.st.LcgRandState = 42
 	for i := range r.listImages {
 		r.listImages[i].Index = uint(i)
 	}
@@ -311,17 +312,17 @@ func (r *referenceReplayer) lcgResult(c referenceCase) (string, bool) {
 	t := r.t
 	switch c.op {
 	case "lcg":
-		v := r.lcgState.lcgRand(c.i32(t, 0))
-		return joinValues(v, r.lcgState.LcgRandState), true
+		v := r.lcgFuncs.lcgRand(c.i32(t, 0))
+		return joinValues(v, r.lcgFuncs.st.LcgRandState), true
 	case "lcg_range":
-		v := r.lcgState.lcgRandRange(c.i32(t, 0), c.i32(t, 1), c.i32(t, 2))
-		return joinValues(v, r.lcgState.LcgRandState), true
+		v := r.lcgFuncs.lcgRandRange(c.i32(t, 0), c.i32(t, 1), c.i32(t, 2))
+		return joinValues(v, r.lcgFuncs.st.LcgRandState), true
 	case "lcg_counts":
 		var values []any
-		for _, count := range r.lcgState.RandomCounts[:64] {
+		for _, count := range r.lcgFuncs.st.RandomCounts[:64] {
 			values = append(values, count)
 		}
-		values = append(values, r.lcgState.TotalRandomCounts)
+		values = append(values, r.lcgFuncs.st.TotalRandomCounts)
 		return joinValues(values...), true
 	}
 	return "", false

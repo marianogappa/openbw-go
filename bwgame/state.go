@@ -77,16 +77,7 @@ type StateBaseCopyable struct {
 	TechResearched   [12][TechTypesNone]bool
 	TechResearching  [12][TechTypesNone]bool
 
-	UnitCounts          [12][UnitTypesNone]int32
-	CompletedUnitCounts [12][UnitTypesNone]int32
-
-	FactoryCounts     [12]int32
-	BuildingCounts    [12]int32
-	NonBuildingCounts [12]int32
-
-	CompletedFactoryCounts     [12]int32
-	CompletedBuildingCounts    [12]int32
-	CompletedNonBuildingCounts [12]int32
+	UnitCounters
 
 	TotalBuildingsEverCompleted    [12]int32
 	TotalNonBuildingsEverCompleted [12]int32
@@ -201,15 +192,4 @@ func NewState(global *GlobalState, game *GameState) *State {
 	st.ImagesContainer = NewObjectContainer[Image](5000, 50)
 	st.OrdersContainer = NewObjectContainer[Order](2000, 20)
 	return st
-}
-
-func (st *StateBaseCopyable) lcgRand(source int32) int32 {
-	st.RandomCounts[source]++
-	st.TotalRandomCounts++
-	st.LcgRandState = st.LcgRandState*22695477 + 1
-	return int32((st.LcgRandState >> 16) & 0x7fff)
-}
-
-func (st *StateBaseCopyable) lcgRandRange(source int32, from int32, to int32) int32 {
-	return from + ((st.lcgRand(source) * (to - from + 1)) >> 15)
 }
