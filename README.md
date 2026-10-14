@@ -11,14 +11,17 @@ Status: planning. See [PLAN.md](PLAN.md).
 The engine needs Blizzard data files. They are not in this repository. Put them in `testdata/bwdata/` (git-ignored) or set `OPENBW_DATA`:
 
 ```
-arr/units.dat  arr/weapons.dat  arr/upgrades.dat  arr/techdata.dat
-arr/flingy.dat arr/sprites.dat  arr/images.dat    arr/orders.dat
+arr/{units,weapons,upgrades,techdata,flingy,sprites,images,orders}.dat
 arr/images.tbl
 scripts/iscript.bin
-triggers/Melee.trg
+triggers/melee.trg
 unit/**/*.grp, unit/**/*.lo?   (every file that arr/images.tbl names)
-Tileset/{badlands,platform,install,AshWorld,Jungle,Desert,Ice,Twilight}.{cv5,vf4}
+tileset/{badlands,platform,install,ashworld,jungle,desert,ice,twilight}.{cv5,vf4}
 ```
+
+All paths are lowercase. The loader converts each requested path with `strings.ToLower(strings.ReplaceAll(p, "\\", "/"))`.
+
+These are the classic (SD) files from an SC:R install. To extract them again, use [tools/bwdata-export](tools/bwdata-export): it needs [CascLib](https://github.com/ladislav-zezula/CascLib) and SC:R installed.
 
 ## Reference source
 
