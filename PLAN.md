@@ -30,7 +30,7 @@ SC:R .rep ──screp──▶ header + map CHK + commands ──translate──
 
 The translation table:
 
-- `0x60`–`0x65` (Right Click, Targeted Order, Unload, Select, Select Add, Select Remove 1.21): the same as the legacy commands, but with 4-byte unit tags. Keep the low 16 bits.
+- `0x60`–`0x65` (Right Click, Targeted Order, Unload, Select, Select Add, Select Remove 1.21): the same as the legacy commands, but with 4-byte unit tags. Map the 1.21 index (13 bits) back to the OpenBW index: 1701-3400 becomes 1-1700, and keep the generation modulo 32. See `downgrade/README.md`.
 - Drop commands that the 1.16 engine does not know. Log each drop.
 - Map player slots and races from the SC:R header.
 
