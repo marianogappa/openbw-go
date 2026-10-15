@@ -162,17 +162,23 @@ func (s *unitFinderSearch) markVisited(i int) {
 }
 
 func (s *unitFinderSearch) next(i int) int {
-	for {
-		i++
-		if i == s.iEnd {
-			return i
+	candidates := s.vec[:s.iEnd]
+	area := s.area
+	visitedSlot := s.searchIndex
+	generation := s.generation
+	for i++; i < len(candidates); i++ {
+		u := candidates[i].U
+		bb := &u.UnitFinderBoundingBox
+		if bb.From.X >= area.To.X || bb.From.Y >= area.To.Y || bb.To.Y < area.From.Y {
+			continue
 		}
-		if s.inBounds(i) && !s.visited(i) {
-			break
+		if u.UnitFinderVisited[visitedSlot] == generation {
+			continue
 		}
+		u.UnitFinderVisited[visitedSlot] = generation
+		return i
 	}
-	s.markVisited(i)
-	return i
+	return s.iEnd
 }
 
 func (s *unitFinderSearch) begin() int {
