@@ -23,6 +23,14 @@ func unitFinderIndexOfWithHint(vec []UnitFinderEntry, value int32, u *Unit, hint
 	return unitFinderIndexOf(vec, value, u)
 }
 
+func unitFinderIndexOfDistinctValue(vec []UnitFinderEntry, value int32, otherValue int32, u *Unit, hint *int) int {
+	if value == otherValue {
+		return unitFinderIndexOf(vec, value, u)
+	}
+	*hint = unitFinderIndexOfWithHint(vec, value, u, *hint)
+	return *hint
+}
+
 func (f *StateFunctions) errorIfUnitFinderSearchActive() {
 	if f.unitFinderSearchIndex != 0 {
 		throwError("attempt to modify unit finder while search is active")
@@ -370,10 +378,11 @@ func (f *StateFunctions) findNearestUnitToUnit(u *Unit, searchArea Rect, predica
 		return f.findNearestUnit(u.Sprite.Position, searchArea, predicate)
 	}
 	bb := u.UnitFinderBoundingBox
-	leftI := uint(unitFinderIndexOf(f.st.UnitFinderX, bb.To.X, u))
-	upI := uint(unitFinderIndexOf(f.st.UnitFinderY, bb.To.Y, u))
-	rightI := uint(unitFinderIndexOf(f.st.UnitFinderX, bb.From.X, u)) + 1
-	downI := uint(unitFinderIndexOf(f.st.UnitFinderY, bb.From.Y, u)) + 1
+	hints := &u.unitFinderIndexHints
+	leftI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderX, bb.To.X, bb.From.X, u, &hints[1]))
+	upI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderY, bb.To.Y, bb.From.Y, u, &hints[3]))
+	rightI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderX, bb.From.X, bb.To.X, u, &hints[0])) + 1
+	downI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderY, bb.From.Y, bb.To.Y, u, &hints[2])) + 1
 	return f.findNearestUnitFromIndices(u.Sprite.Position, searchArea, leftI, upI, rightI, downI, predicate)
 }
 
