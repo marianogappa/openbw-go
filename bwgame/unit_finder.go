@@ -136,6 +136,7 @@ type unitFinderSearch struct {
 	iEnd        int
 	area        Rect
 	searchIndex uint
+	generation  uint32
 }
 
 func (s *unitFinderSearch) inBounds(i int) bool {
@@ -153,11 +154,11 @@ func (s *unitFinderSearch) inBounds(i int) bool {
 }
 
 func (s *unitFinderSearch) visited(i int) bool {
-	return s.vec[i].U.UnitFinderVisited[s.searchIndex]
+	return s.vec[i].U.UnitFinderVisited[s.searchIndex] == s.generation
 }
 
 func (s *unitFinderSearch) markVisited(i int) {
-	s.vec[i].U.UnitFinderVisited[s.searchIndex] = true
+	s.vec[i].U.UnitFinderVisited[s.searchIndex] = s.generation
 }
 
 func (s *unitFinderSearch) next(i int) int {
@@ -186,17 +187,17 @@ func (s *unitFinderSearch) begin() int {
 	return i
 }
 
-func (s *unitFinderSearch) clearVisited() {
-	for i := s.iBegin; i != s.iEnd; i++ {
-		s.vec[i].U.UnitFinderVisited[s.searchIndex] = false
-	}
-}
-
 func (f *StateFunctions) newUnitFinderSearch(area Rect, expand bool) unitFinderSearch {
 	if f.unitFinderSearchIndex == 4 {
 		throwError("unit_finder_search maximum recursive depth reached")
 	}
-	s := unitFinderSearch{vec: f.st.UnitFinderX, area: area, searchIndex: f.unitFinderSearchIndex}
+	f.st.unitFinderSearchGenerations[f.unitFinderSearchIndex]++
+	s := unitFinderSearch{
+		vec:         f.st.UnitFinderX,
+		area:        area,
+		searchIndex: f.unitFinderSearchIndex,
+		generation:  f.st.unitFinderSearchGenerations[f.unitFinderSearchIndex],
+	}
 	f.unitFinderSearchIndex++
 
 	beginX := area.From.X
@@ -220,7 +221,6 @@ func (f *StateFunctions) unitFinderSearchUnits(area Rect, expand bool) iter.Seq[
 		s := f.newUnitFinderSearch(area, expand)
 		defer func() {
 			f.unitFinderSearchIndex--
-			s.clearVisited()
 		}()
 		for i := s.begin(); i != s.iEnd; i = s.next(i) {
 			if !yield(s.vec[i].U) {

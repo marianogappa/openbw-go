@@ -131,8 +131,12 @@ func TestUnitFinderSearchClearsState_c10(t *testing.T) {
 	if f.unitFinderSearchIndex != 0 {
 		t.Errorf("search index = %d, want 0", f.unitFinderSearchIndex)
 	}
-	if u.UnitFinderVisited != [4]bool{} {
-		t.Errorf("visited marks = %v, want all false", u.UnitFinderVisited)
+	found := 0
+	for range f.findUnits(Rect{From: Xy{X: 0, Y: 0}, To: Xy{X: 30, Y: 30}}) {
+		found++
+	}
+	if found != 1 {
+		t.Errorf("second search found %d units, want 1", found)
 	}
 }
 

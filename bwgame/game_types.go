@@ -1009,7 +1009,7 @@ type Unit struct {
 	RepulseIndex                   uint
 
 	UnitFinderBoundingBox Rect
-	UnitFinderVisited     [4]bool
+	UnitFinderVisited     [4]uint32
 	unitFinderIndexHints  [4]int
 	UnitFinderIndexFrom   uint
 	UnitFinderIndexTo     uint
