@@ -356,6 +356,10 @@ func (f *StateFunctions) getUnit(index uint) *Unit {
 	return u
 }
 
+func (f *StateFunctions) UnitByID(id UnitID) *Unit {
+	return f.getUnitByID(id)
+}
+
 func (f *StateFunctions) getUnitByID(id UnitID) *Unit {
 	idx := id.Index()
 	if idx == 0 {

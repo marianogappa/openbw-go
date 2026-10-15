@@ -307,6 +307,7 @@ type ReplayFunctions struct {
 	replaySt *ReplayState
 
 	OnActionFail func(frame int32, owner int32, actionID int32)
+	BeforeAction func(owner int32, actionID int32, payload []byte)
 	SkipActions  bool
 }
 
@@ -559,7 +560,7 @@ func (f *ReplayFunctions) nextFrame() {
 	}
 	switch {
 	case f.SkipActions:
-	case f.OnActionFail != nil:
+	case f.OnActionFail != nil || f.BeforeAction != nil:
 		f.executeActionsReportingFails(f.replaySt.ActionsDataBuffer)
 	default:
 		f.executeActions(f.replaySt.ActionsDataBuffer)
@@ -587,7 +588,10 @@ func (f *ReplayFunctions) executeActionGroup(r *DataReader) {
 		if r.Left() > 1 {
 			actionID = int32(r.data[r.ptr+1])
 		}
-		if !f.readAction(r) {
+		if f.BeforeAction != nil && owner >= 0 && actionID >= 0 {
+			f.BeforeAction(owner, actionID, r.data[r.ptr+2:])
+		}
+		if !f.readAction(r) && f.OnActionFail != nil {
 			f.OnActionFail(f.st.CurrentFrame, owner, actionID)
 		}
 	}
