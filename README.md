@@ -4,7 +4,7 @@ A pure Go port of the [OpenBW](https://github.com/OpenBW/openbw) StarCraft: Broo
 
 A library that runs the game engine on a replay and streams what the engine knows as Go values: unit lifecycles with killers, owner changes, production, research, player results, what the engine did with each command, and the live state of units and players. It writes no files and does no analysis; it is a foundation for tools that do.
 
-Status: the engine matches C++ OpenBW bit for bit. See [API.md](API.md) for the API and [DESIGN.md](DESIGN.md) for the layers.
+Status: the engine matches C++ OpenBW bit for bit. See [API.md](API.md) for the API, [DESIGN.md](DESIGN.md) for the layers and [API_VALIDATION.md](API_VALIDATION.md) for the validation on 210 replays.
 
 ## Usage
 
