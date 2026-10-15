@@ -27,6 +27,33 @@ func clearRegionLongPathNodes(allNodes []*longPathNode) {
 	}
 }
 
+const longPathMaxNodes = 350
+const longPathMaxOpen = 125
+
+type longPathScratch struct {
+	nodes     [longPathMaxNodes]longPathNode
+	usedNodes int
+	allNodes  []*longPathNode
+	open      []*longPathNode
+}
+
+func (f *StateFunctions) longPathBuffers() *longPathScratch {
+	if f.longPath == nil {
+		f.longPath = &longPathScratch{
+			allNodes: make([]*longPathNode, 0, longPathMaxNodes),
+			open:     make([]*longPathNode, 0, longPathMaxOpen+1),
+		}
+	}
+	return f.longPath
+}
+
+func (scratch *longPathScratch) newNode() *longPathNode {
+	n := &scratch.nodes[scratch.usedNodes]
+	scratch.usedNodes++
+	*n = longPathNode{}
+	return n
+}
+
 func pfPartitionPoint(n int, isBefore func(i int) bool) int {
 	first := 0
 	length := n
@@ -48,8 +75,9 @@ func (f *StateFunctions) pathfinderFindLongPath(pf *Pathfinder) bool {
 		return false
 	}
 
-	var open []*longPathNode
-	var allNodes []*longPathNode
+	scratch := f.longPathBuffers()
+	open := scratch.open
+	allNodes := scratch.allNodes
 	var goalNode *longPathNode
 
 	regionPos := func(r *Region) XyFp8 {
@@ -68,8 +96,9 @@ func (f *StateFunctions) pathfinderFindLongPath(pf *Pathfinder) bool {
 		allNodes = allNodes[:0]
 		open = open[:0]
 		goalNode = nil
+		scratch.usedNodes = 0
 
-		startNode := &longPathNode{}
+		startNode := scratch.newNode()
 		allNodes = append(allNodes, startNode)
 		startNode.pos = regionPos(fromRegion)
 		startNode.region = fromRegion
@@ -107,7 +136,7 @@ func (f *StateFunctions) pathfinderFindLongPath(pf *Pathfinder) bool {
 				totalCost := cur.totalCost.Add(cost)
 				n := regionLongPathNode(r)
 				if n == nil {
-					n = &longPathNode{}
+					n = scratch.newNode()
 					allNodes = append(allNodes, n)
 					n.prev = cur
 					n.pos = pos

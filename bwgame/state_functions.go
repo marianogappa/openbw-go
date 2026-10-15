@@ -13,6 +13,7 @@ type StateFunctions struct {
 	iscriptUnit           *Unit
 	unitFinderSearchIndex uint
 	shortPath             *shortPathScratch
+	longPath              *longPathScratch
 
 	deselectUnit func(u *Unit)
 }

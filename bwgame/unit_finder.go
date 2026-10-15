@@ -176,11 +176,11 @@ func (s *unitFinderSearch) clearVisited() {
 	}
 }
 
-func (f *StateFunctions) newUnitFinderSearch(area Rect, expand bool) *unitFinderSearch {
+func (f *StateFunctions) newUnitFinderSearch(area Rect, expand bool) unitFinderSearch {
 	if f.unitFinderSearchIndex == 4 {
 		throwError("unit_finder_search maximum recursive depth reached")
 	}
-	s := &unitFinderSearch{vec: f.st.UnitFinderX, area: area, searchIndex: f.unitFinderSearchIndex}
+	s := unitFinderSearch{vec: f.st.UnitFinderX, area: area, searchIndex: f.unitFinderSearchIndex}
 	f.unitFinderSearchIndex++
 
 	beginX := area.From.X
