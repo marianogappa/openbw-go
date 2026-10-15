@@ -4,7 +4,54 @@ A pure Go port of the [OpenBW](https://github.com/OpenBW/openbw) StarCraft: Broo
 
 The goal is a library like [screp](https://github.com/icza/screp) that runs the game engine on a replay's commands, so you get engine-derived data: units, supply, deaths, resources and build timings per frame.
 
-Status: planning. See [PLAN.md](PLAN.md).
+Status: the engine matches C++ OpenBW bit for bit, and the public API is implemented. See [API.md](API.md) for the full spec and [DESIGN.md](DESIGN.md) for the layers.
+
+## Usage
+
+### Go
+
+Stream events and stop when you have what you need. The engine only runs as far as you read:
+
+```go
+import openbw "github.com/marianogappa/openbw-go"
+
+g, err := openbw.Open(replay, openbw.StreamOptions{
+	Kinds:    openbw.KindUnitDestroyed,
+	MaxFrame: 10 * 60 * 24,
+})
+if err != nil {
+	return err
+}
+for e := range g.Events() {
+	d := e.(*openbw.UnitDestroyed)
+	if d.Killer != 0 {
+		fmt.Println(d.Frame, d.Type, "killed by", d.KillerType)
+	}
+}
+return g.Err()
+```
+
+Or record the whole game in one call, like screp:
+
+```go
+res, err := openbw.Run(replay, openbw.Options{})
+```
+
+`res` has screp's header and computed data, the engine events, command results (accepted or rejected, and the units each command produced), player stats every second and trust signals. Unit snapshots and screp's commands and map data are opt-in. `Game.Engine()` gives the engine itself for anything else. See the examples in [example_test.go](example_test.go).
+
+The game data comes from `$OPENBW_DATA`, or from `openbw.LoadData(dir)` passed as `Options.Data`. One `Data` is safe to share between games running in parallel.
+
+### CLI
+
+```
+go install github.com/marianogappa/openbw-go/cmd/openbw@latest
+openbw -data testdata/bwdata game.rep > game.json
+openbw -overview game.rep
+openbw -kinds UnitCreated,UnitDestroyed -results none -stats=false game.rep
+openbw -units -unitsevery 240 -unitfields pos,hp,order game.rep
+```
+
+The flags follow screp (`-header`, `-map`, `-cmds`, `-computed`, `-indent`, `-outfile`, `-stdin`). Run `openbw -h` for the rest. [testdata/examples/MM-39C48C10.json](testdata/examples/MM-39C48C10.json) is the output of `openbw -statsevery 240 -results none` on a 5-minute game.
 
 ## Game data
 

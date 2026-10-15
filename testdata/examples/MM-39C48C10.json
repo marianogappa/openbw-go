@@ -1,0 +1,7596 @@
+{
+  "SchemaVersion": 1,
+  "Header": {
+    "Engine": {
+      "Name": "Brood War",
+      "ID": 1,
+      "ShortName": "BW"
+    },
+    "Version": "1.21+",
+    "Frames": 7250,
+    "StartTime": "2026-04-11T23:33:04+04:00",
+    "Title": "deurKMWWnNCY",
+    "MapWidth": 128,
+    "MapHeight": 128,
+    "AvailSlotsCount": 2,
+    "Speed": {
+      "Name": "Fastest",
+      "ID": 6
+    },
+    "Type": {
+      "Name": "Top vs Bottom",
+      "ID": 15,
+      "ShortName": "TvB"
+    },
+    "SubType": 1,
+    "Host": "Horang2[._.]",
+    "Map": "\u0007KnockOut \u00051.4",
+    "Players": [
+      {
+        "SlotID": 1,
+        "ID": 0,
+        "Type": {
+          "Name": "Human",
+          "ID": 2
+        },
+        "Race": {
+          "Name": "Protoss",
+          "ID": 2,
+          "ShortName": "toss",
+          "Letter": 80
+        },
+        "Team": 1,
+        "Name": "Horang2[._.]",
+        "Color": {
+          "Name": "Teal",
+          "ID": 2,
+          "RGB": 2929812
+        },
+        "Observer": false
+      },
+      {
+        "SlotID": 3,
+        "ID": 1,
+        "Type": {
+          "Name": "Human",
+          "ID": 2
+        },
+        "Race": {
+          "Name": "Terran",
+          "ID": 1,
+          "ShortName": "ran",
+          "Letter": 84
+        },
+        "Team": 2,
+        "Name": "IIIIlIlllllllI",
+        "Color": {
+          "Name": "White",
+          "ID": 6,
+          "RGB": 13426896
+        },
+        "Observer": false
+      }
+    ]
+  },
+  "Computed": {
+    "LeaveGameCmds": [
+      {
+        "Frame": 7199,
+        "PlayerID": 1,
+        "Type": {
+          "Name": "Leave Game",
+          "ID": 87
+        },
+        "Reason": {
+          "Name": "Quit",
+          "ID": 1
+        }
+      }
+    ],
+    "ChatCmds": [
+      {
+        "Frame": 7128,
+        "PlayerID": 0,
+        "Type": {
+          "Name": "Chat",
+          "ID": 92
+        },
+        "SenderSlotID": 3,
+        "Message": "?"
+      }
+    ],
+    "WinnerTeam": 1,
+    "RepSaverPlayerID": 0,
+    "PlayerDescs": [
+      {
+        "PlayerID": 0,
+        "LastCmdFrame": 7247,
+        "CmdCount": 2088,
+        "APM": 412,
+        "EffectiveCmdCount": 1206,
+        "EAPM": 238,
+        "StartLocation": {
+          "X": 288,
+          "Y": 3824
+        },
+        "StartDirection": 7
+      },
+      {
+        "PlayerID": 1,
+        "LastCmdFrame": 7199,
+        "CmdCount": 1755,
+        "APM": 348,
+        "EffectiveCmdCount": 1235,
+        "EAPM": 245,
+        "StartLocation": {
+          "X": 3808,
+          "Y": 3824
+        },
+        "StartDirection": 5
+      }
+    ]
+  },
+  "Engine": {
+    "Version": "v0.0.0-20261015103116-7e02a0fa6202+dirty",
+    "ScrepVersion": "v1.13.8",
+    "OpenBWCommit": "4b046d5",
+    "DataHash": "8181635ba76d7df600e09d270a2762e56fda71a30e27a45a8bfc0e1879532dda",
+    "SourceFormat": "1.21+",
+    "Rules": {
+      "Mode": "Auto",
+      "Limits": {
+        "Images": 10000,
+        "Sprites": 5000,
+        "LoneSprites": 1000,
+        "Bullets": 400,
+        "Orders": 4000
+      },
+      "DisabledThingyUnits": true,
+      "OrderAllocationRule": true,
+      "FlyingSCVFix": true
+    },
+    "FramesSimulated": 7250,
+    "EndFrame": 7250,
+    "ReachedEnd": true
+  },
+  "Trust": {
+    "DroppedCommands": 0,
+    "UnlinkedCommands": 0,
+    "NotExecuted": 0,
+    "Desync": {
+      "InconsistentSelects": 1,
+      "FirstFrame": 7030,
+      "Likely": false
+    },
+    "Production": [
+      {
+        "Owner": 1,
+        "PlayerID": 0,
+        "Issued": 106,
+        "Rejected": 64,
+        "NoEffect": 0
+      },
+      {
+        "Owner": 3,
+        "PlayerID": 1,
+        "Issued": 77,
+        "Rejected": 39,
+        "NoEffect": 1
+      }
+    ]
+  },
+  "Events": [
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 2049,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 288,
+      "Y": 96,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 2049,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3748,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 208,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3748,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3747,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 272,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3747,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3746,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 304,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3746,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3745,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 64,
+      "Y": 336,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3745,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3744,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 368,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3744,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3743,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 400,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3743,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3742,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 432,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3742,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3741,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 225,
+      "Y": 912,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3741,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3740,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 351,
+      "Y": 912,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3740,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3739,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 960,
+      "Y": 624,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3739,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3738,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 992,
+      "Y": 592,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3738,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3737,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 960,
+      "Y": 688,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3737,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3736,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 928,
+      "Y": 752,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3736,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3735,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 1056,
+      "Y": 592,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3735,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3734,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 960,
+      "Y": 720,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3734,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3733,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 2016,
+      "Y": 80,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3733,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3732,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 1824,
+      "Y": 224,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3732,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3731,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 1984,
+      "Y": 48,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3731,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3730,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 2080,
+      "Y": 80,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3730,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3729,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 2112,
+      "Y": 48,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3729,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3728,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 3920,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3728,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3727,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 288,
+      "Y": 3648,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3727,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3726,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 3984,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3726,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3725,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 64,
+      "Y": 3888,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3725,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3724,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 3952,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3724,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3723,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 3856,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3723,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3722,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 3760,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3722,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3721,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 96,
+      "Y": 3824,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3721,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3720,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 3808,
+      "Y": 96,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3720,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3719,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 176,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3719,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3718,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 240,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3718,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3717,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 304,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3717,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3716,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 4032,
+      "Y": 208,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3716,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3715,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 4032,
+      "Y": 272,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3715,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3714,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 368,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3714,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3713,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 432,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3713,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3712,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 400,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3712,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3711,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 4032,
+      "Y": 336,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3711,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3710,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 3808,
+      "Y": 3648,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3710,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3709,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 3984,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3709,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3708,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 3920,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3708,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3707,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 3856,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3707,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3706,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 3792,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3706,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3705,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 3728,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3705,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3704,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 4032,
+      "Y": 3888,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3704,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3703,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 4000,
+      "Y": 3952,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3703,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3702,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 4032,
+      "Y": 3824,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3702,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3701,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 4032,
+      "Y": 3760,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3701,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3700,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 2272,
+      "Y": 3872,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3700,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3699,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 1984,
+      "Y": 4048,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3699,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3698,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 2080,
+      "Y": 4016,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3698,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3697,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 2016,
+      "Y": 4016,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3697,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3696,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 2112,
+      "Y": 4048,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3696,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3695,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3168,
+      "Y": 752,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3695,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3694,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3136,
+      "Y": 688,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3694,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3693,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3136,
+      "Y": 720,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3693,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3692,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3136,
+      "Y": 624,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3692,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3691,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3104,
+      "Y": 592,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3691,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3690,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3040,
+      "Y": 592,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3690,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3689,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3168,
+      "Y": 3344,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3689,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3688,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3136,
+      "Y": 3376,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3688,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3687,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3136,
+      "Y": 3408,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3687,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3686,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3104,
+      "Y": 3504,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3686,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3685,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3136,
+      "Y": 3472,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3685,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3684,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3040,
+      "Y": 3504,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3684,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3683,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 928,
+      "Y": 3344,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3683,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3682,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 960,
+      "Y": 3376,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3682,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3681,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 960,
+      "Y": 3408,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3681,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3680,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 960,
+      "Y": 3472,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3680,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3679,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 1056,
+      "Y": 3504,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3679,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3678,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 992,
+      "Y": 3504,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3678,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3677,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 225,
+      "Y": 3184,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3677,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3676,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 351,
+      "Y": 3184,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3676,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3675,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3745,
+      "Y": 912,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3675,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3674,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3871,
+      "Y": 912,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3674,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3673,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3745,
+      "Y": 3184,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3673,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3672,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3871,
+      "Y": 3184,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3672,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3671,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 576,
+      "Y": 2240,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3671,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3670,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 384,
+      "Y": 2160,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3670,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3669,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 384,
+      "Y": 2096,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3669,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3668,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 384,
+      "Y": 2000,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3668,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3667,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 352,
+      "Y": 2128,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3667,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3666,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 384,
+      "Y": 2032,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3666,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3665,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 352,
+      "Y": 2064,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3665,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3664,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 384,
+      "Y": 1936,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3664,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3663,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 3520,
+      "Y": 1888,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3663,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3662,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3712,
+      "Y": 1968,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3662,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3661,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3744,
+      "Y": 2064,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3661,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3660,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3712,
+      "Y": 2128,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3660,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3659,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3712,
+      "Y": 2192,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3659,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3658,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3712,
+      "Y": 2032,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3658,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3657,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3744,
+      "Y": 2000,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3657,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3656,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3712,
+      "Y": 2096,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3656,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3655,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 2208,
+      "Y": 4016,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3655,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3654,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 1920,
+      "Y": 4016,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3654,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3653,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 1904,
+      "Y": 80,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3653,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3652,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 2176,
+      "Y": 80,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3652,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3651,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 1920,
+      "Y": 48,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3651,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3650,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 2176,
+      "Y": 4048,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3650,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3649,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 320,
+      "Y": 1344,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3649,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3648,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 160,
+      "Y": 1328,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3648,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3647,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 1264,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3647,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3646,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 1296,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3646,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3645,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 1200,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3645,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3644,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 1136,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3644,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3643,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 112,
+      "Y": 1168,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3643,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3642,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 112,
+      "Y": 1232,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3642,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3641,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 3776,
+      "Y": 1344,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3641,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3640,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3936,
+      "Y": 1328,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3640,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3639,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3984,
+      "Y": 1232,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3639,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3638,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3984,
+      "Y": 1168,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3638,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3637,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 1296,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3637,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3636,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 1200,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3636,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3635,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 1136,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3635,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3634,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 1264,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3634,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3633,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 320,
+      "Y": 2752,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3633,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3632,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 160,
+      "Y": 2768,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3632,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3631,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 2832,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3631,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3630,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 2896,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3630,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3629,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 2960,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3629,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3628,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 112,
+      "Y": 2864,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3628,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3627,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 112,
+      "Y": 2928,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3627,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3626,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 128,
+      "Y": 2800,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3626,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3625,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "X": 3776,
+      "Y": 2752,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3625,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3624,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3936,
+      "Y": 2768,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3624,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3623,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 2832,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3623,
+      "Type": {
+        "Name": "Mineral Field (Type 3)",
+        "ID": 178
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3622,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 2800,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3622,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3621,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 2896,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3621,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3620,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 3968,
+      "Y": 2960,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3620,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3619,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3984,
+      "Y": 2928,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3619,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3618,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 3984,
+      "Y": 2864,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3618,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3617,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "X": 192,
+      "Y": 3984,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3617,
+      "Type": {
+        "Name": "Mineral Field (Type 2)",
+        "ID": 177
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3616,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 64,
+      "Y": 3792,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3616,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3615,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 192,
+      "Y": 432,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3615,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3614,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "X": 64,
+      "Y": 240,
+      "Source": "Map",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3614,
+      "Type": {
+        "Name": "Mineral Field (Type 1)",
+        "ID": 176
+      },
+      "Owner": 11,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3613,
+      "Type": {
+        "Name": "Command Center",
+        "ID": 106
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3613,
+      "Type": {
+        "Name": "Command Center",
+        "ID": 106
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3612,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3612,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3611,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3611,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3610,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3610,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3609,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3609,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3608,
+      "Type": {
+        "Name": "Nexus",
+        "ID": 154
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3608,
+      "Type": {
+        "Name": "Nexus",
+        "ID": 154
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3607,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3607,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3606,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3606,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3605,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3605,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 0,
+      "Unit": 3604,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Source": "Start",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 0,
+      "Unit": 3604,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4,
+      "Cmd": 2,
+      "Unit": 3603,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6,
+      "Cmd": 4,
+      "Unit": 3602,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 305,
+      "Unit": 3603,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 307,
+      "Unit": 3602,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 360,
+      "Cmd": 233,
+      "Unit": 3601,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 363,
+      "Cmd": 235,
+      "Unit": 3600,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 661,
+      "Unit": 3601,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 662,
+      "Cmd": 320,
+      "Unit": 3599,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 664,
+      "Unit": 3600,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 665,
+      "Cmd": 355,
+      "Unit": 3598,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 963,
+      "Unit": 3599,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 964,
+      "Cmd": 452,
+      "Unit": 3597,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 966,
+      "Unit": 3598,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 967,
+      "Cmd": 504,
+      "Unit": 3596,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1128,
+      "Cmd": 589,
+      "Unit": 3595,
+      "Type": {
+        "Name": "Pylon",
+        "ID": 156
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 3552,
+      "Parent": 3606,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1265,
+      "Unit": 3597,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1266,
+      "Cmd": 646,
+      "Unit": 3594,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1268,
+      "Unit": 3596,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1269,
+      "Cmd": 625,
+      "Unit": 3593,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1363,
+      "Cmd": 687,
+      "Unit": 3592,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "X": 3888,
+      "Y": 3264,
+      "Parent": 3612,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1567,
+      "Unit": 3594,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1570,
+      "Unit": 3593,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1571,
+      "Cmd": 767,
+      "Unit": 3591,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1649,
+      "Unit": 3595,
+      "Type": {
+        "Name": "Pylon",
+        "ID": 156
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1649,
+      "Cmd": 724,
+      "Unit": 3590,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1872,
+      "Unit": 3591,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1950,
+      "Unit": 3590,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1951,
+      "Cmd": 1017,
+      "Unit": 3589,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 1965,
+      "Unit": 3592,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 1965,
+      "Cmd": 993,
+      "Unit": 3588,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2044,
+      "Cmd": 1203,
+      "Unit": 3587,
+      "Type": {
+        "Name": "Barracks",
+        "ID": 111
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3344,
+      "Parent": 3612,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2252,
+      "Unit": 3589,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2253,
+      "Cmd": 1018,
+      "Unit": 3586,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2266,
+      "Unit": 3588,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2267,
+      "Cmd": 1305,
+      "Unit": 3585,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 2368,
+      "Unit": 3710,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "From": 11,
+      "To": 3,
+      "Reason": "Refinery",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitMorphed",
+      "Frame": 2368,
+      "Unit": 3710,
+      "From": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "To": {
+        "Name": "Refinery",
+        "ID": 110
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2532,
+      "Cmd": 1628,
+      "Unit": 3584,
+      "Type": {
+        "Name": "Nexus",
+        "ID": 154
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 2928,
+      "Parent": 3604,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2554,
+      "Unit": 3586,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2568,
+      "Unit": 3585,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2569,
+      "Cmd": 1619,
+      "Unit": 3583,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2632,
+      "Cmd": 1735,
+      "Unit": 3582,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2870,
+      "Unit": 3583,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2871,
+      "Cmd": 1827,
+      "Unit": 3581,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "ProductionCancelled",
+      "Frame": 2928,
+      "Cmd": 1928,
+      "Owner": 1,
+      "Producer": 3606,
+      "What": "Building",
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Why": "Command"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2933,
+      "Unit": 3582,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 2953,
+      "Cmd": 1928,
+      "Unit": 3580,
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3536,
+      "Parent": 3606,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 2970,
+      "Unit": 3710,
+      "Type": {
+        "Name": "Refinery",
+        "ID": 110
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3018,
+      "Cmd": 1967,
+      "Unit": 3579,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3172,
+      "Unit": 3581,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3173,
+      "Cmd": 1958,
+      "Unit": 3578,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "ProductionCancelled",
+      "Frame": 3217,
+      "Cmd": 2066,
+      "Owner": 3,
+      "Producer": 3613,
+      "What": "Unit",
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Why": "Command"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3242,
+      "Cmd": 2071,
+      "Unit": 3577,
+      "Type": {
+        "Name": "Pylon",
+        "ID": 156
+      },
+      "Owner": 1,
+      "X": 576,
+      "Y": 3008,
+      "Parent": 3606,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3246,
+      "Unit": 3587,
+      "Type": {
+        "Name": "Barracks",
+        "ID": 111
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3270,
+      "Cmd": 2084,
+      "Unit": 3576,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3344,
+      "Parent": 3587,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3292,
+      "Cmd": 2079,
+      "Unit": 3575,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "X": 3728,
+      "Y": 3264,
+      "Parent": 3612,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3319,
+      "Unit": 3579,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3350,
+      "Cmd": 2126,
+      "Unit": 3574,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3474,
+      "Unit": 3578,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3610,
+      "Cmd": 2246,
+      "Unit": 3573,
+      "Type": {
+        "Name": "Factory",
+        "ID": 113
+      },
+      "Owner": 3,
+      "X": 3616,
+      "Y": 3472,
+      "Parent": 3578,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3631,
+      "Unit": 3576,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3651,
+      "Unit": 3574,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3682,
+      "Cmd": 2289,
+      "Unit": 3572,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3699,
+      "Cmd": 2266,
+      "Unit": 3571,
+      "Type": {
+        "Name": "Forge",
+        "ID": 166
+      },
+      "Owner": 1,
+      "X": 400,
+      "Y": 3648,
+      "Parent": 3606,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3723,
+      "Cmd": 2319,
+      "Unit": 3570,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3763,
+      "Unit": 3577,
+      "Type": {
+        "Name": "Pylon",
+        "ID": 156
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3765,
+      "Cmd": 2347,
+      "Unit": 3569,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3344,
+      "Parent": 3587,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3894,
+      "Unit": 3575,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3924,
+      "Unit": 3580,
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3928,
+      "Cmd": 2438,
+      "Unit": 3568,
+      "Type": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3536,
+      "Parent": 3580,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 3983,
+      "Unit": 3572,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 3984,
+      "Cmd": 2434,
+      "Unit": 3567,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4024,
+      "Unit": 3570,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4038,
+      "Cmd": 2484,
+      "Unit": 3566,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4126,
+      "Unit": 3569,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4127,
+      "Cmd": 2465,
+      "Unit": 3565,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3344,
+      "Parent": 3587,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4285,
+      "Unit": 3567,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4303,
+      "Cmd": 2635,
+      "Unit": 3564,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4339,
+      "Unit": 3566,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4370,
+      "Unit": 3571,
+      "Type": {
+        "Name": "Forge",
+        "ID": 166
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4402,
+      "Cmd": 2677,
+      "Unit": 3563,
+      "Type": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "Owner": 1,
+      "X": 512,
+      "Y": 3008,
+      "Parent": 3606,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4403,
+      "Unit": 3584,
+      "Type": {
+        "Name": "Nexus",
+        "ID": 154
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4416,
+      "Cmd": 2685,
+      "Unit": 3562,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 2928,
+      "Parent": 3584,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4464,
+      "Cmd": 2710,
+      "Unit": 3561,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4488,
+      "Unit": 3565,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4520,
+      "Cmd": 2725,
+      "Unit": 3560,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "X": 3792,
+      "Y": 3904,
+      "Parent": 3567,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4529,
+      "Unit": 3568,
+      "Type": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4530,
+      "Cmd": 2738,
+      "Unit": 3559,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3344,
+      "Parent": 3587,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4604,
+      "Unit": 3564,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4605,
+      "Cmd": 2703,
+      "Unit": 3558,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 4662,
+      "Unit": 3727,
+      "Type": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "From": 11,
+      "To": 1,
+      "Reason": "Refinery",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitMorphed",
+      "Frame": 4662,
+      "Unit": 3727,
+      "From": {
+        "Name": "Vespene Geyser",
+        "ID": 188
+      },
+      "To": {
+        "Name": "Assimilator",
+        "ID": 157
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4717,
+      "Unit": 3562,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4754,
+      "Cmd": 2831,
+      "Unit": 3557,
+      "Type": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3536,
+      "Parent": 3580,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4765,
+      "Unit": 3561,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4812,
+      "Unit": 3573,
+      "Type": {
+        "Name": "Factory",
+        "ID": 113
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 4829,
+      "Cmd": 2864,
+      "Unit": 3556,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "X": 3616,
+      "Y": 3472,
+      "Parent": 3573,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4891,
+      "Unit": 3559,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 4906,
+      "Unit": 3558,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5029,
+      "Cmd": 2946,
+      "Unit": 3555,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5031,
+      "Cmd": 2947,
+      "Unit": 3554,
+      "Type": {
+        "Name": "Cybernetics Core",
+        "ID": 164
+      },
+      "Owner": 1,
+      "X": 176,
+      "Y": 3648,
+      "Parent": 3601,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5081,
+      "Cmd": 2970,
+      "Unit": 3553,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5122,
+      "Unit": 3560,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 5150,
+      "Unit": 3604,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 3284,
+      "Y": 2941,
+      "Reason": "Damage",
+      "Killer": 3569,
+      "KillerType": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "KillerOwner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5205,
+      "Cmd": 3014,
+      "Unit": 3552,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 2928,
+      "Parent": 3584,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5223,
+      "Unit": 3563,
+      "Type": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5280,
+      "Unit": 3556,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5330,
+      "Unit": 3555,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5332,
+      "Unit": 3727,
+      "Type": {
+        "Name": "Assimilator",
+        "ID": 157
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5355,
+      "Unit": 3557,
+      "Type": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5366,
+      "Cmd": 3071,
+      "Unit": 5652,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "X": 3616,
+      "Y": 3472,
+      "Parent": 3573,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5382,
+      "Unit": 3553,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5506,
+      "Unit": 3552,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5521,
+      "Cmd": 3140,
+      "Unit": 3551,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5562,
+      "Cmd": 3152,
+      "Unit": 3550,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5638,
+      "Cmd": 3178,
+      "Unit": 3549,
+      "Type": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3536,
+      "Parent": 3580,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5699,
+      "Cmd": 3194,
+      "Unit": 3548,
+      "Type": {
+        "Name": "Pylon",
+        "ID": 156
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 3904,
+      "Parent": 3574,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 5799,
+      "Unit": 3585,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 164,
+      "Y": 3492,
+      "Reason": "Damage",
+      "Killer": 3553,
+      "KillerType": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5817,
+      "Unit": 5652,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5818,
+      "Cmd": 3259,
+      "Unit": 3547,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "X": 3616,
+      "Y": 3472,
+      "Parent": 3573,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5822,
+      "Unit": 3551,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 5863,
+      "Unit": 3550,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5864,
+      "Cmd": 3238,
+      "Unit": 5633,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5897,
+      "Cmd": 3287,
+      "Unit": 3546,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5902,
+      "Cmd": 3193,
+      "Unit": 3545,
+      "Type": {
+        "Name": "Command Center",
+        "ID": 106
+      },
+      "Owner": 3,
+      "X": 3776,
+      "Y": 2928,
+      "Parent": 3555,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5905,
+      "Cmd": 3274,
+      "Unit": 3544,
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Owner": 1,
+      "X": 96,
+      "Y": 3536,
+      "Parent": 3553,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 5961,
+      "Cmd": 3297,
+      "Unit": 3543,
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3440,
+      "Parent": 3553,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6002,
+      "Unit": 3554,
+      "Type": {
+        "Name": "Cybernetics Core",
+        "ID": 164
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6120,
+      "Cmd": 3354,
+      "Unit": 3542,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "X": 3792,
+      "Y": 4032,
+      "Parent": 3572,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6165,
+      "Unit": 5633,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6169,
+      "Cmd": 3391,
+      "Unit": 3541,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 2928,
+      "Parent": 3584,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6198,
+      "Unit": 3546,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6220,
+      "Unit": 3548,
+      "Type": {
+        "Name": "Pylon",
+        "ID": 156
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6234,
+      "Cmd": 3418,
+      "Unit": 3540,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 288,
+      "Y": 3824,
+      "Parent": 3608,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6239,
+      "Unit": 3549,
+      "Type": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6240,
+      "Cmd": 3353,
+      "Unit": 3539,
+      "Type": {
+        "Name": "Dragoon",
+        "ID": 66
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3536,
+      "Parent": 3580,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6269,
+      "Unit": 3547,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6270,
+      "Cmd": 3422,
+      "Unit": 3538,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "X": 3616,
+      "Y": 3472,
+      "Parent": 3573,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 6315,
+      "Unit": 3552,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 1935,
+      "Y": 2651,
+      "Reason": "Damage",
+      "Killer": 3576,
+      "KillerType": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "KillerOwner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6419,
+      "Cmd": 3488,
+      "Unit": 3537,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 3808,
+      "Y": 3824,
+      "Parent": 3613,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "ProductionCancelled",
+      "Frame": 6445,
+      "Cmd": 3495,
+      "Owner": 1,
+      "Producer": 3561,
+      "What": "Building",
+      "Type": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "Why": "Command"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6470,
+      "Unit": 3541,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6504,
+      "Cmd": 3495,
+      "Unit": 5600,
+      "Type": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "Owner": 1,
+      "X": 512,
+      "Y": 2944,
+      "Parent": 3561,
+      "Source": "Built",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6535,
+      "Unit": 3540,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "ResearchStarted",
+      "Frame": 6660,
+      "Cmd": 3592,
+      "Owner": 1,
+      "Unit": 3554,
+      "Research": {
+        "Upgrade": {
+          "Name": "Singularity Charge (Dragoon Range)",
+          "ID": 33
+        }
+      },
+      "Level": 1
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6720,
+      "Unit": 3537,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6721,
+      "Unit": 3538,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6722,
+      "Unit": 3542,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "Owner": 3,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6876,
+      "Unit": 3544,
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6898,
+      "Cmd": 3714,
+      "Unit": 3536,
+      "Type": {
+        "Name": "Dragoon",
+        "ID": 66
+      },
+      "Owner": 1,
+      "X": 96,
+      "Y": 3536,
+      "Parent": 3544,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6932,
+      "Unit": 3543,
+      "Type": {
+        "Name": "Gateway",
+        "ID": 160
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 6953,
+      "Unit": 3565,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 700,
+      "Y": 3035,
+      "Reason": "Damage",
+      "Killer": 3563,
+      "KillerType": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 6990,
+      "Unit": 3569,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 614,
+      "Y": 2982,
+      "Reason": "Damage",
+      "Killer": 3568,
+      "KillerType": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCompleted",
+      "Frame": 6991,
+      "Unit": 3539,
+      "Type": {
+        "Name": "Dragoon",
+        "ID": 66
+      },
+      "Owner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 6992,
+      "Cmd": 3754,
+      "Unit": 3535,
+      "Type": {
+        "Name": "Dragoon",
+        "ID": 66
+      },
+      "Owner": 1,
+      "X": 224,
+      "Y": 3536,
+      "Parent": 3580,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7028,
+      "Unit": 5652,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "X": 696,
+      "Y": 2995,
+      "Reason": "Damage",
+      "Killer": 3557,
+      "KillerType": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7077,
+      "Unit": 3559,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 699,
+      "Y": 3008,
+      "Reason": "Damage",
+      "Killer": 3557,
+      "KillerType": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7085,
+      "Unit": 3547,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "Owner": 3,
+      "X": 640,
+      "Y": 2931,
+      "Reason": "Damage",
+      "Killer": 3563,
+      "KillerType": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7098,
+      "Unit": 3576,
+      "Type": {
+        "Name": "Marine",
+        "ID": 0
+      },
+      "Owner": 3,
+      "X": 564,
+      "Y": 2868,
+      "Reason": "Damage",
+      "Killer": 3597,
+      "KillerType": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7127,
+      "Unit": 3551,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 644,
+      "Y": 3002,
+      "Reason": "Damage",
+      "Killer": 3557,
+      "KillerType": {
+        "Name": "Zealot",
+        "ID": 65
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitCreated",
+      "Frame": 7145,
+      "Cmd": 3816,
+      "Unit": 5613,
+      "Type": {
+        "Name": "Probe",
+        "ID": 64
+      },
+      "Owner": 1,
+      "X": 320,
+      "Y": 2928,
+      "Parent": 3584,
+      "Source": "Trained",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7149,
+      "Unit": 3583,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 582,
+      "Y": 2937,
+      "Reason": "Damage",
+      "Killer": 3563,
+      "KillerType": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7181,
+      "Unit": 3558,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 3,
+      "X": 658,
+      "Y": 2977,
+      "Reason": "Damage",
+      "Killer": 3563,
+      "KillerType": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "PlayerLeft",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Owner": 3,
+      "Dropped": false
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3537,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3538,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3542,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3545,
+      "Type": {
+        "Name": "Command Center",
+        "ID": 106
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3546,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3555,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3556,
+      "Type": {
+        "Name": "Vulture",
+        "ID": 2
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3560,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3564,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3567,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3572,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3573,
+      "Type": {
+        "Name": "Factory",
+        "ID": 113
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3575,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3578,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3581,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3710,
+      "Type": {
+        "Name": "Refinery",
+        "ID": 110
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3587,
+      "Type": {
+        "Name": "Barracks",
+        "ID": 111
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3588,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3591,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3592,
+      "Type": {
+        "Name": "Supply Depot",
+        "ID": 109
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3593,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3596,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3598,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3600,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3602,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3609,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3610,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3611,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3612,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitOwnerChanged",
+      "Frame": 7199,
+      "Cmd": 3827,
+      "Unit": 3613,
+      "Type": {
+        "Name": "Command Center",
+        "ID": 106
+      },
+      "From": 3,
+      "To": 11,
+      "Reason": "PlayerLeft",
+      "Class": "Normal"
+    },
+    {
+      "Kind": "UnitDestroyed",
+      "Frame": 7220,
+      "Unit": 3600,
+      "Type": {
+        "Name": "SCV",
+        "ID": 7
+      },
+      "Owner": 11,
+      "X": 547,
+      "Y": 3040,
+      "Reason": "Damage",
+      "Killer": 3563,
+      "KillerType": {
+        "Name": "Photon Cannon",
+        "ID": 162
+      },
+      "KillerOwner": 1,
+      "Class": "Normal"
+    },
+    {
+      "Kind": "PlayerWon",
+      "Frame": 7225,
+      "Owner": 1,
+      "State": 3
+    }
+  ],
+  "Stats": [
+    {
+      "Frame": 240,
+      "Owner": 1,
+      "Minerals": 32,
+      "Gas": 0,
+      "GatheredMinerals": 82,
+      "GatheredGas": 0,
+      "SupplyUsed": 5,
+      "SupplyMax": 9,
+      "Workers": 4,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 200,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 240,
+      "Owner": 3,
+      "Minerals": 32,
+      "Gas": 0,
+      "GatheredMinerals": 82,
+      "GatheredGas": 0,
+      "SupplyUsed": 5,
+      "SupplyMax": 10,
+      "Workers": 4,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 200,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 480,
+      "Owner": 1,
+      "Minerals": 22,
+      "Gas": 0,
+      "GatheredMinerals": 122,
+      "GatheredGas": 0,
+      "SupplyUsed": 6,
+      "SupplyMax": 9,
+      "Workers": 5,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 250,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 480,
+      "Owner": 3,
+      "Minerals": 22,
+      "Gas": 0,
+      "GatheredMinerals": 122,
+      "GatheredGas": 0,
+      "SupplyUsed": 6,
+      "SupplyMax": 10,
+      "Workers": 5,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 250,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 720,
+      "Owner": 1,
+      "Minerals": 44,
+      "Gas": 0,
+      "GatheredMinerals": 194,
+      "GatheredGas": 0,
+      "SupplyUsed": 7,
+      "SupplyMax": 9,
+      "Workers": 6,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 300,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 720,
+      "Owner": 3,
+      "Minerals": 36,
+      "Gas": 0,
+      "GatheredMinerals": 186,
+      "GatheredGas": 0,
+      "SupplyUsed": 7,
+      "SupplyMax": 10,
+      "Workers": 6,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 300,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 960,
+      "Owner": 1,
+      "Minerals": 66,
+      "Gas": 0,
+      "GatheredMinerals": 266,
+      "GatheredGas": 0,
+      "SupplyUsed": 7,
+      "SupplyMax": 9,
+      "Workers": 6,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 300,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 960,
+      "Owner": 3,
+      "Minerals": 50,
+      "Gas": 0,
+      "GatheredMinerals": 250,
+      "GatheredGas": 0,
+      "SupplyUsed": 7,
+      "SupplyMax": 10,
+      "Workers": 6,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 300,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 1200,
+      "Owner": 1,
+      "Minerals": 38,
+      "Gas": 0,
+      "GatheredMinerals": 338,
+      "GatheredGas": 0,
+      "SupplyUsed": 8,
+      "SupplyMax": 9,
+      "Workers": 7,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 350,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 1200,
+      "Owner": 3,
+      "Minerals": 64,
+      "Gas": 0,
+      "GatheredMinerals": 314,
+      "GatheredGas": 0,
+      "SupplyUsed": 8,
+      "SupplyMax": 10,
+      "Workers": 7,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 350,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 1440,
+      "Owner": 1,
+      "Minerals": 18,
+      "Gas": 0,
+      "GatheredMinerals": 418,
+      "GatheredGas": 0,
+      "SupplyUsed": 9,
+      "SupplyMax": 9,
+      "Workers": 8,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 400,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 1440,
+      "Owner": 3,
+      "Minerals": 52,
+      "Gas": 0,
+      "GatheredMinerals": 402,
+      "GatheredGas": 0,
+      "SupplyUsed": 9,
+      "SupplyMax": 10,
+      "Workers": 8,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 400,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 1680,
+      "Owner": 1,
+      "Minerals": 122,
+      "Gas": 0,
+      "GatheredMinerals": 522,
+      "GatheredGas": 0,
+      "SupplyUsed": 10,
+      "SupplyMax": 17,
+      "Workers": 9,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 450,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 1680,
+      "Owner": 3,
+      "Minerals": 82,
+      "Gas": 0,
+      "GatheredMinerals": 482,
+      "GatheredGas": 0,
+      "SupplyUsed": 10,
+      "SupplyMax": 10,
+      "Workers": 9,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 450,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 1920,
+      "Owner": 1,
+      "Minerals": 126,
+      "Gas": 0,
+      "GatheredMinerals": 626,
+      "GatheredGas": 0,
+      "SupplyUsed": 10,
+      "SupplyMax": 17,
+      "Workers": 9,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 450,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 1920,
+      "Owner": 3,
+      "Minerals": 112,
+      "Gas": 0,
+      "GatheredMinerals": 562,
+      "GatheredGas": 0,
+      "SupplyUsed": 10,
+      "SupplyMax": 10,
+      "Workers": 10,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 1,
+      "UnitScore": 500,
+      "BuildingScore": 400
+    },
+    {
+      "Frame": 2160,
+      "Owner": 1,
+      "Minerals": 246,
+      "Gas": 0,
+      "GatheredMinerals": 746,
+      "GatheredGas": 0,
+      "SupplyUsed": 11,
+      "SupplyMax": 17,
+      "Workers": 10,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 500,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2160,
+      "Owner": 3,
+      "Minerals": 24,
+      "Gas": 0,
+      "GatheredMinerals": 674,
+      "GatheredGas": 0,
+      "SupplyUsed": 11,
+      "SupplyMax": 18,
+      "Workers": 10,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 500,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2400,
+      "Owner": 1,
+      "Minerals": 350,
+      "Gas": 0,
+      "GatheredMinerals": 850,
+      "GatheredGas": 0,
+      "SupplyUsed": 12,
+      "SupplyMax": 17,
+      "Workers": 11,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 550,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2400,
+      "Owner": 3,
+      "Minerals": 4,
+      "Gas": 0,
+      "GatheredMinerals": 754,
+      "GatheredGas": 0,
+      "SupplyUsed": 12,
+      "SupplyMax": 18,
+      "Workers": 11,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 550,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2640,
+      "Owner": 1,
+      "Minerals": 20,
+      "Gas": 0,
+      "GatheredMinerals": 970,
+      "GatheredGas": 0,
+      "SupplyUsed": 13,
+      "SupplyMax": 17,
+      "Workers": 12,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 600,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2640,
+      "Owner": 3,
+      "Minerals": 82,
+      "Gas": 0,
+      "GatheredMinerals": 882,
+      "GatheredGas": 0,
+      "SupplyUsed": 13,
+      "SupplyMax": 18,
+      "Workers": 12,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 600,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2880,
+      "Owner": 1,
+      "Minerals": 140,
+      "Gas": 0,
+      "GatheredMinerals": 1090,
+      "GatheredGas": 0,
+      "SupplyUsed": 13,
+      "SupplyMax": 17,
+      "Workers": 12,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 600,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 2880,
+      "Owner": 3,
+      "Minerals": 120,
+      "Gas": 0,
+      "GatheredMinerals": 970,
+      "GatheredGas": 0,
+      "SupplyUsed": 14,
+      "SupplyMax": 18,
+      "Workers": 13,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 650,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 3120,
+      "Owner": 1,
+      "Minerals": 44,
+      "Gas": 0,
+      "GatheredMinerals": 1194,
+      "GatheredGas": 0,
+      "SupplyUsed": 14,
+      "SupplyMax": 17,
+      "Workers": 13,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 650,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 3120,
+      "Owner": 3,
+      "Minerals": 132,
+      "Gas": 8,
+      "GatheredMinerals": 1082,
+      "GatheredGas": 8,
+      "SupplyUsed": 14,
+      "SupplyMax": 18,
+      "Workers": 13,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 3,
+      "UnitScore": 650,
+      "BuildingScore": 500
+    },
+    {
+      "Frame": 3360,
+      "Owner": 1,
+      "Minerals": 22,
+      "Gas": 0,
+      "GatheredMinerals": 1322,
+      "GatheredGas": 0,
+      "SupplyUsed": 15,
+      "SupplyMax": 17,
+      "Workers": 14,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 700,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 3360,
+      "Owner": 3,
+      "Minerals": 128,
+      "Gas": 56,
+      "GatheredMinerals": 1178,
+      "GatheredGas": 56,
+      "SupplyUsed": 16,
+      "SupplyMax": 18,
+      "Workers": 14,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 4,
+      "UnitScore": 700,
+      "BuildingScore": 575
+    },
+    {
+      "Frame": 3600,
+      "Owner": 1,
+      "Minerals": 134,
+      "Gas": 0,
+      "GatheredMinerals": 1434,
+      "GatheredGas": 0,
+      "SupplyUsed": 15,
+      "SupplyMax": 17,
+      "Workers": 14,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 2,
+      "UnitScore": 700,
+      "BuildingScore": 450
+    },
+    {
+      "Frame": 3600,
+      "Owner": 3,
+      "Minerals": 208,
+      "Gas": 104,
+      "GatheredMinerals": 1258,
+      "GatheredGas": 104,
+      "SupplyUsed": 16,
+      "SupplyMax": 18,
+      "Workers": 15,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 4,
+      "UnitScore": 750,
+      "BuildingScore": 575
+    },
+    {
+      "Frame": 3840,
+      "Owner": 1,
+      "Minerals": 86,
+      "Gas": 0,
+      "GatheredMinerals": 1586,
+      "GatheredGas": 0,
+      "SupplyUsed": 16,
+      "SupplyMax": 25,
+      "Workers": 15,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 3,
+      "UnitScore": 750,
+      "BuildingScore": 500
+    },
+    {
+      "Frame": 3840,
+      "Owner": 3,
+      "Minerals": 36,
+      "Gas": 20,
+      "GatheredMinerals": 1386,
+      "GatheredGas": 120,
+      "SupplyUsed": 18,
+      "SupplyMax": 18,
+      "Workers": 15,
+      "Army": 1,
+      "ArmyMinerals": 50,
+      "ArmyGas": 0,
+      "Buildings": 4,
+      "UnitScore": 800,
+      "BuildingScore": 575
+    },
+    {
+      "Frame": 4080,
+      "Owner": 1,
+      "Minerals": 56,
+      "Gas": 0,
+      "GatheredMinerals": 1706,
+      "GatheredGas": 0,
+      "SupplyUsed": 19,
+      "SupplyMax": 25,
+      "Workers": 16,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 4,
+      "UnitScore": 800,
+      "BuildingScore": 575
+    },
+    {
+      "Frame": 4080,
+      "Owner": 3,
+      "Minerals": 56,
+      "Gas": 36,
+      "GatheredMinerals": 1506,
+      "GatheredGas": 136,
+      "SupplyUsed": 19,
+      "SupplyMax": 26,
+      "Workers": 16,
+      "Army": 1,
+      "ArmyMinerals": 50,
+      "ArmyGas": 0,
+      "Buildings": 5,
+      "UnitScore": 850,
+      "BuildingScore": 625
+    },
+    {
+      "Frame": 4320,
+      "Owner": 1,
+      "Minerals": 168,
+      "Gas": 0,
+      "GatheredMinerals": 1818,
+      "GatheredGas": 0,
+      "SupplyUsed": 19,
+      "SupplyMax": 25,
+      "Workers": 16,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 4,
+      "UnitScore": 800,
+      "BuildingScore": 575
+    },
+    {
+      "Frame": 4320,
+      "Owner": 3,
+      "Minerals": 134,
+      "Gas": 60,
+      "GatheredMinerals": 1634,
+      "GatheredGas": 160,
+      "SupplyUsed": 21,
+      "SupplyMax": 26,
+      "Workers": 17,
+      "Army": 2,
+      "ArmyMinerals": 100,
+      "ArmyGas": 0,
+      "Buildings": 5,
+      "UnitScore": 950,
+      "BuildingScore": 625
+    },
+    {
+      "Frame": 4560,
+      "Owner": 1,
+      "Minerals": 86,
+      "Gas": 0,
+      "GatheredMinerals": 1986,
+      "GatheredGas": 0,
+      "SupplyUsed": 21,
+      "SupplyMax": 34,
+      "Workers": 17,
+      "Army": 1,
+      "ArmyMinerals": 100,
+      "ArmyGas": 0,
+      "Buildings": 6,
+      "UnitScore": 950,
+      "BuildingScore": 1075
+    },
+    {
+      "Frame": 4560,
+      "Owner": 3,
+      "Minerals": 62,
+      "Gas": 76,
+      "GatheredMinerals": 1762,
+      "GatheredGas": 176,
+      "SupplyUsed": 22,
+      "SupplyMax": 26,
+      "Workers": 17,
+      "Army": 3,
+      "ArmyMinerals": 150,
+      "ArmyGas": 0,
+      "Buildings": 5,
+      "UnitScore": 1000,
+      "BuildingScore": 625
+    },
+    {
+      "Frame": 4800,
+      "Owner": 1,
+      "Minerals": 22,
+      "Gas": 0,
+      "GatheredMinerals": 2122,
+      "GatheredGas": 0,
+      "SupplyUsed": 23,
+      "SupplyMax": 34,
+      "Workers": 19,
+      "Army": 1,
+      "ArmyMinerals": 100,
+      "ArmyGas": 0,
+      "Buildings": 6,
+      "UnitScore": 1050,
+      "BuildingScore": 1075
+    },
+    {
+      "Frame": 4800,
+      "Owner": 3,
+      "Minerals": 198,
+      "Gas": 100,
+      "GatheredMinerals": 1898,
+      "GatheredGas": 200,
+      "SupplyUsed": 23,
+      "SupplyMax": 26,
+      "Workers": 18,
+      "Army": 3,
+      "ArmyMinerals": 150,
+      "ArmyGas": 0,
+      "Buildings": 5,
+      "UnitScore": 1050,
+      "BuildingScore": 625
+    },
+    {
+      "Frame": 5040,
+      "Owner": 1,
+      "Minerals": 30,
+      "Gas": 0,
+      "GatheredMinerals": 2330,
+      "GatheredGas": 0,
+      "SupplyUsed": 23,
+      "SupplyMax": 34,
+      "Workers": 19,
+      "Army": 1,
+      "ArmyMinerals": 100,
+      "ArmyGas": 0,
+      "Buildings": 6,
+      "UnitScore": 1050,
+      "BuildingScore": 1075
+    },
+    {
+      "Frame": 5040,
+      "Owner": 3,
+      "Minerals": 201,
+      "Gas": 156,
+      "GatheredMinerals": 2026,
+      "GatheredGas": 256,
+      "SupplyUsed": 26,
+      "SupplyMax": 26,
+      "Workers": 19,
+      "Army": 4,
+      "ArmyMinerals": 200,
+      "ArmyGas": 0,
+      "Buildings": 6,
+      "UnitScore": 1150,
+      "BuildingScore": 825
+    },
+    {
+      "Frame": 5280,
+      "Owner": 1,
+      "Minerals": 114,
+      "Gas": 0,
+      "GatheredMinerals": 2514,
+      "GatheredGas": 0,
+      "SupplyUsed": 24,
+      "SupplyMax": 34,
+      "Workers": 18,
+      "Army": 1,
+      "ArmyMinerals": 100,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1050,
+      "BuildingScore": 1175
+    },
+    {
+      "Frame": 5280,
+      "Owner": 3,
+      "Minerals": 337,
+      "Gas": 204,
+      "GatheredMinerals": 2162,
+      "GatheredGas": 304,
+      "SupplyUsed": 26,
+      "SupplyMax": 34,
+      "Workers": 19,
+      "Army": 5,
+      "ArmyMinerals": 275,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1225,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 5520,
+      "Owner": 1,
+      "Minerals": 322,
+      "Gas": 0,
+      "GatheredMinerals": 2722,
+      "GatheredGas": 0,
+      "SupplyUsed": 24,
+      "SupplyMax": 34,
+      "Workers": 20,
+      "Army": 2,
+      "ArmyMinerals": 200,
+      "ArmyGas": 0,
+      "Buildings": 8,
+      "UnitScore": 1250,
+      "BuildingScore": 1225
+    },
+    {
+      "Frame": 5520,
+      "Owner": 3,
+      "Minerals": 374,
+      "Gas": 252,
+      "GatheredMinerals": 2274,
+      "GatheredGas": 352,
+      "SupplyUsed": 28,
+      "SupplyMax": 34,
+      "Workers": 20,
+      "Army": 5,
+      "ArmyMinerals": 275,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1275,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 5760,
+      "Owner": 1,
+      "Minerals": 240,
+      "Gas": 40,
+      "GatheredMinerals": 2890,
+      "GatheredGas": 40,
+      "SupplyUsed": 27,
+      "SupplyMax": 34,
+      "Workers": 20,
+      "Army": 2,
+      "ArmyMinerals": 200,
+      "ArmyGas": 0,
+      "Buildings": 8,
+      "UnitScore": 1250,
+      "BuildingScore": 1225
+    },
+    {
+      "Frame": 5760,
+      "Owner": 3,
+      "Minerals": 452,
+      "Gas": 308,
+      "GatheredMinerals": 2402,
+      "GatheredGas": 408,
+      "SupplyUsed": 29,
+      "SupplyMax": 34,
+      "Workers": 20,
+      "Army": 5,
+      "ArmyMinerals": 275,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1275,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 6000,
+      "Owner": 1,
+      "Minerals": 50,
+      "Gas": 96,
+      "GatheredMinerals": 3050,
+      "GatheredGas": 96,
+      "SupplyUsed": 28,
+      "SupplyMax": 34,
+      "Workers": 21,
+      "Army": 2,
+      "ArmyMinerals": 200,
+      "ArmyGas": 0,
+      "Buildings": 8,
+      "UnitScore": 1300,
+      "BuildingScore": 1225
+    },
+    {
+      "Frame": 6000,
+      "Owner": 3,
+      "Minerals": 71,
+      "Gas": 356,
+      "GatheredMinerals": 2546,
+      "GatheredGas": 456,
+      "SupplyUsed": 31,
+      "SupplyMax": 34,
+      "Workers": 20,
+      "Army": 6,
+      "ArmyMinerals": 350,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1400,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 6240,
+      "Owner": 1,
+      "Minerals": 25,
+      "Gas": 94,
+      "GatheredMinerals": 3250,
+      "GatheredGas": 144,
+      "SupplyUsed": 32,
+      "SupplyMax": 42,
+      "Workers": 22,
+      "Army": 3,
+      "ArmyMinerals": 300,
+      "ArmyGas": 0,
+      "Buildings": 10,
+      "UnitScore": 1450,
+      "BuildingScore": 1375
+    },
+    {
+      "Frame": 6240,
+      "Owner": 3,
+      "Minerals": 75,
+      "Gas": 404,
+      "GatheredMinerals": 2650,
+      "GatheredGas": 504,
+      "SupplyUsed": 31,
+      "SupplyMax": 34,
+      "Workers": 21,
+      "Army": 6,
+      "ArmyMinerals": 350,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1450,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 6480,
+      "Owner": 1,
+      "Minerals": 193,
+      "Gas": 150,
+      "GatheredMinerals": 3418,
+      "GatheredGas": 200,
+      "SupplyUsed": 31,
+      "SupplyMax": 42,
+      "Workers": 22,
+      "Army": 3,
+      "ArmyMinerals": 300,
+      "ArmyGas": 0,
+      "Buildings": 10,
+      "UnitScore": 1500,
+      "BuildingScore": 1375
+    },
+    {
+      "Frame": 6480,
+      "Owner": 3,
+      "Minerals": 70,
+      "Gas": 420,
+      "GatheredMinerals": 2770,
+      "GatheredGas": 520,
+      "SupplyUsed": 34,
+      "SupplyMax": 34,
+      "Workers": 21,
+      "Army": 7,
+      "ArmyMinerals": 425,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1525,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 6720,
+      "Owner": 1,
+      "Minerals": 85,
+      "Gas": 48,
+      "GatheredMinerals": 3610,
+      "GatheredGas": 248,
+      "SupplyUsed": 31,
+      "SupplyMax": 42,
+      "Workers": 23,
+      "Army": 3,
+      "ArmyMinerals": 300,
+      "ArmyGas": 0,
+      "Buildings": 10,
+      "UnitScore": 1550,
+      "BuildingScore": 1375
+    },
+    {
+      "Frame": 6720,
+      "Owner": 3,
+      "Minerals": 190,
+      "Gas": 444,
+      "GatheredMinerals": 2890,
+      "GatheredGas": 544,
+      "SupplyUsed": 34,
+      "SupplyMax": 34,
+      "Workers": 22,
+      "Army": 7,
+      "ArmyMinerals": 425,
+      "ArmyGas": 0,
+      "Buildings": 7,
+      "UnitScore": 1575,
+      "BuildingScore": 875
+    },
+    {
+      "Frame": 6960,
+      "Owner": 1,
+      "Minerals": 152,
+      "Gas": 46,
+      "GatheredMinerals": 3802,
+      "GatheredGas": 296,
+      "SupplyUsed": 33,
+      "SupplyMax": 42,
+      "Workers": 23,
+      "Army": 3,
+      "ArmyMinerals": 300,
+      "ArmyGas": 0,
+      "Buildings": 12,
+      "UnitScore": 1550,
+      "BuildingScore": 1525
+    },
+    {
+      "Frame": 6960,
+      "Owner": 3,
+      "Minerals": 318,
+      "Gas": 460,
+      "GatheredMinerals": 3018,
+      "GatheredGas": 560,
+      "SupplyUsed": 33,
+      "SupplyMax": 42,
+      "Workers": 22,
+      "Army": 7,
+      "ArmyMinerals": 450,
+      "ArmyGas": 0,
+      "Buildings": 8,
+      "UnitScore": 1650,
+      "BuildingScore": 925
+    },
+    {
+      "Frame": 7200,
+      "Owner": 1,
+      "Minerals": 97,
+      "Gas": 52,
+      "GatheredMinerals": 3922,
+      "GatheredGas": 352,
+      "SupplyUsed": 36,
+      "SupplyMax": 42,
+      "Workers": 23,
+      "Army": 4,
+      "ArmyMinerals": 425,
+      "ArmyGas": 50,
+      "Buildings": 12,
+      "UnitScore": 1800,
+      "BuildingScore": 1525
+    },
+    {
+      "Frame": 7200,
+      "Owner": 3,
+      "Minerals": 454,
+      "Gas": 476,
+      "GatheredMinerals": 3154,
+      "GatheredGas": 576,
+      "SupplyUsed": 0,
+      "SupplyMax": 0,
+      "Workers": 0,
+      "Army": 0,
+      "ArmyMinerals": 0,
+      "ArmyGas": 0,
+      "Buildings": 0,
+      "UnitScore": 1650,
+      "BuildingScore": 925
+    }
+  ]
+}

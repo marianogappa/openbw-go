@@ -1,6 +1,6 @@
 # Public API spec
 
-Status: spec, not implemented. It refines [DESIGN.md](DESIGN.md) into Go signatures. The core signatures (`Open`, `Events`, `Run`, the event and ID types) compile against the current `bwgame`, `downgrade` and screp packages. A working `iter.Seq` prototype checked the stream behaviour (lazy steps, resume after `break`, panic handling).
+Status: implemented in package `openbw` (module root) and `cmd/openbw`. It refines [DESIGN.md](DESIGN.md) into Go signatures. Where the implementation differs from the first draft, the text below is updated and [Implementation notes](#implementation-notes) lists the change.
 
 Package `openbw`, import `github.com/marianogappa/openbw-go`. The output is JSON in screp's style. L3 analyses are out of scope, except one example program.
 
@@ -319,6 +319,8 @@ OnBuildQueue        func(u *Unit, op BuildQueueOp, index int)
 OnAddonBuildType    func(u *Unit, set bool)
 OnUnitDamaged       func(u, source *Unit, sourceOwner int32, damage Fp8) // raw only; no event kind
 ```
+
+Every unit event (`UnitCreated`, `UnitCompleted`, `UnitMorphed`, `MorphStarted`, `UnitDestroyed`, `UnitOwnerChanged`) has a `Class UnitClass` field. The struct listings below show it only on `UnitCreated`.
 
 Implemented in `bwgame/hooks.go`. `OnMorphStarted` also passes `from`, because the unit's type has already changed to the egg or building when it fires. `CancelReason` has a zero value `CancelOther` for cancels the engine makes on its own (a lifted building with an addon in construction, a failed training unit placement). Hook context (kill reason, owner reason, cancel reason) is stored only when its hook is set.
 
@@ -767,7 +769,7 @@ const (
 )
 ```
 
-`Run` uses only `Open`, `Events`, `Stats`, `Units` and `Info`. It always subscribes `KindCommandResult` (for trust signals) and `KindTick` (at the GCD of `StatsEvery` and `UnitSnapshots.Every`), and drops them from `Events` in the output.
+`Run` uses only `Open`, `Events`, `Stats`, `Units` and `Info`. It always subscribes `KindCommandResult` (for trust signals), `KindUnitCreated` and `KindMorphStarted` (for `Produced`), and ticks (at the GCD of `StatsEvery` and `UnitSnapshots.Every`). It drops the kinds that the caller did not ask for, and always `CommandResult` and `Tick`, from `Events` in the output. Unit snapshots use the same `Classes` filter as the events.
 
 ### Result
 
@@ -829,7 +831,7 @@ type CommandResultRow struct {
 ```
 
 - The desync threshold (20) is the tag test's: clean games have 0-10 inconsistent commands (DESYNC.md). `Likely` is a signal, not a proof.
-- A high `(Rejected + NoEffect) / Issued` for one player also signals a desync.
+- `(Rejected + NoEffect) / Issued` is not a desync signal by itself. On clean SC:R games it is often 20-60%: players spam Train when they have no minerals, and the engine refuses each one (`Minerals`). Compare it between players and games, not against a fixed threshold.
 - The output is deterministic: no times, no map iteration order in arrays. Two runs give the same bytes.
 
 ### Player stats
@@ -872,8 +874,8 @@ type UnitSnapshot struct {
 	HP        []int32 `json:",omitempty"` // integer part
 	Shields   []int32 `json:",omitempty"`
 	Energy    []int32 `json:",omitempty"`
-	Order     []uint8 `json:",omitempty"`
-	State     []uint8 `json:",omitempty"`
+	Order     []uint16 `json:",omitempty"` // []uint8 would be base64 in encoding/json
+	State     []uint16 `json:",omitempty"` // StateCompleted, StateBurrowed, StateCloaked, StateLoaded, StateDying, StateHallucination
 	BuildTime []int32 `json:",omitempty"`
 }
 ```
@@ -966,7 +968,7 @@ Final   : Z  supply 142/200  workers 58  army value 4150/2900
           T  supply  96/134  workers 41  army value 2900/1050
 ```
 
-The one L3 example is `examples/buildorder`: about 30 lines that print each player's `MorphStarted` and non-neutral `UnitCreated` with `Source` Built or Trained, in the first 6 minutes, from the stream with `MaxFrame`.
+The L3 examples are Go examples in `example_test.go`: `Example_buildOrder` (the stream with `MaxFrame`: `MorphStarted`, `UnitCreated` with `Source` Built or Trained, and `ResearchStarted` in the first 8 minutes), `Example_killsPerPlayer` and `ExampleRun`. `TestExamples` runs them against real data and checks their output; it skips when the data or the replay is missing.
 
 ## 8. Cost
 
@@ -1095,3 +1097,27 @@ An adversarial review checked the spec against `bwgame/` and screp. These are th
 | Replay viewer | `KindTick`, `TickEvery: 1`, `Units()`, `Engine()` for sprites and bullets | No seek: replay from frame 0 (about 1 s per game) until checkpoints exist |
 | Classifier at 8 minutes | `MaxFrame: 8*60*24` or `break` | None |
 | screpdb ingestion | `Run` JSON; rows keyed by replay and event index (`Seq` is not in the JSON); `ScrepIndex` joins screp commands | None |
+
+## Implementation notes
+
+Changes from the first draft of this spec, found while implementing it:
+
+| Change | Why |
+|---|---|
+| `Class` on every unit event | The text said "every unit event has a `Class`", but only `UnitCreated` had the field; loss counters filter `UnitDestroyed` by class. |
+| `MorphStarted` of a Drone building takes the command from the front that `reinitializeUnitType` cleared | `morphUnit` of a Drone into a grounded building calls `buildQueueClearSingle`, so the queue is empty when `MorphStarted` fires. The shadow queue keeps the last cleared front of each unit. Only `MorphStarted` reads it; the Nydus exit stays unlinked. |
+| `Run` also subscribes `UnitCreated` and `MorphStarted` | `Produced` is built from them. They are dropped from the output when not asked for. |
+| `UnitSnapshot.Order` and `State` are `[]uint16`; `State` has a `StateHallucination` bit | `encoding/json` writes `[]uint8` as base64. |
+| `TickEvery > 0` alone enables ticks | Ticks are opt-in through `TickEvery`; `KindTick` in `Kinds` is not needed. |
+| `EventBase.Frame` and `Cmd` are written by each event's `MarshalJSON`; `KillerType` is omitted without a killer, `KillerOwner` when -1; `ProductionCancelled` has either `Type` or `Research` | Smaller JSON, and no ambiguous zero values (unit type 0 is the Marine, tech 0 is Stim Packs). Decoding restores -1. |
+| `Result.Events` is `omitempty` | `cmd/openbw -events=false` omits the field. |
+| `RulesInfo.Mode` is a string: `Auto`, `OpenBW` or `Custom` | `CustomRules` has no `RulesMode` value. |
+| `Data.FilesHash` hashes each file's path, size and content | Two data sets with the same bytes in other files must not collide. |
+| `Units()` leaves out turret subunits | Events never report them. |
+| `Player.Left` is also true after a defeat | `removePlayer` sets the controller to "user left" in both cases. |
+| Production rejection rate is not a desync signal | See Trust above. |
+| Extra exported helpers: `Game.PlayingSlots`, `Game.Prepared`, `Version`, `ParseKinds`, `ParseResultsMode`, `ParseUnitFields`, `Classes`, `ClassSet.Has`, `OpenBWCommit`, `SchemaVersion`, `DefaultStatsEvery`, `UnknownEnum`, `downgrade.LegacyUnitTag` | The CLI, `Run` and `UnitID.MatchesSCRTag` need them, and stream users need the same playing slots as `Run`. |
+| The L3 example is Go examples, not `examples/buildorder` | Examples show in godoc and are compile-checked; `TestExamples` runs them. |
+| `cmd/openbw` also has screp's `-maptiles` and `-mapres`; exit code 2 also covers data and map load errors | Same output as screp for `-map`. |
+
+Verification (all pass): `go test ./...` with stream invariants on 6 replays (4 SC:R 1v1, an 8-player team game, a legacy replay): unit lifecycle order, `Seq` and `Frame` order, every `ScrepIndex` checked against screp, shadow queue length equal to the engine's on every tick, the final state hash equal to a run without hooks, `Trust.Desync` equal to the tag test, stream resume after `break`, deterministic and round-tripping JSON, and 4 parallel games on one `Data` under `-race`. `tools/difftest` stays 20/20 in default mode and with `-scr-rules` against the patched harness. Overhead of `Open` with `AllKinds` and of `Run` with defaults is below the noise of the benchmark (about 0.9 s for MM-CB157510 in all three modes).
