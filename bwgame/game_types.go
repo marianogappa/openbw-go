@@ -1010,6 +1010,7 @@ type Unit struct {
 
 	UnitFinderBoundingBox Rect
 	UnitFinderVisited     [4]bool
+	unitFinderIndexHints  [4]int
 	UnitFinderIndexFrom   uint
 	UnitFinderIndexTo     uint
 }

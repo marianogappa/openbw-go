@@ -13,6 +13,16 @@ func unitFinderIndexOf(vec []UnitFinderEntry, value int32, u *Unit) int {
 	return i
 }
 
+func unitFinderIndexOfWithHint(vec []UnitFinderEntry, value int32, u *Unit, hint int) int {
+	for _, offset := range [5]int{0, -1, 1, -2, 2} {
+		i := hint + offset
+		if uint(i) < uint(len(vec)) && vec[i].U == u && vec[i].Value == value {
+			return i
+		}
+	}
+	return unitFinderIndexOf(vec, value, u)
+}
+
 func (f *StateFunctions) errorIfUnitFinderSearchActive() {
 	if f.unitFinderSearchIndex != 0 {
 		throwError("attempt to modify unit finder while search is active")
@@ -66,11 +76,15 @@ func (f *StateFunctions) unitFinderInsertBB(u *Unit, bb Rect) {
 	u.UnitFinderBoundingBox = bb
 }
 
-func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, newValue int32) {
+func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, newValue int32, indexHint *int) {
 	if oldValue == newValue {
 		return
 	}
-	i := unitFinderIndexOf(vec, oldValue, u)
+	i := unitFinderIndexOfWithHint(vec, oldValue, u, *indexHint)
+	*indexHint = unitFinderMoveEntry(vec, i, u, oldValue, newValue)
+}
+
+func unitFinderMoveEntry(vec []UnitFinderEntry, i int, u *Unit, oldValue int32, newValue int32) int {
 	if newValue > oldValue {
 		ni := i + 1
 		for ni != len(vec) && vec[ni].Value < newValue {
@@ -79,7 +93,7 @@ func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, new
 			ni++
 		}
 		vec[i] = UnitFinderEntry{U: u, Value: newValue}
-		return
+		return i
 	}
 	for i != 0 {
 		ni := i
@@ -91,25 +105,27 @@ func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, new
 		vec[ni] = vec[i]
 	}
 	vec[i] = UnitFinderEntry{U: u, Value: newValue}
+	return i
 }
 
 func (f *StateFunctions) unitFinderReinsertBB(u *Unit, bb Rect) {
 	f.errorIfUnitFinderSearchActive()
 	st := f.st
 	old := u.UnitFinderBoundingBox
+	hints := &u.unitFinderIndexHints
 	if bb.From.X <= old.From.X {
-		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X)
-		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X)
+		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X, &hints[0])
+		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X, &hints[1])
 	} else {
-		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X)
-		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X)
+		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X, &hints[1])
+		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X, &hints[0])
 	}
 	if bb.From.Y <= old.From.Y {
-		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y)
-		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y)
+		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y, &hints[2])
+		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y, &hints[3])
 	} else {
-		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y)
-		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y)
+		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y, &hints[3])
+		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y, &hints[2])
 	}
 	u.UnitFinderBoundingBox = bb
 }
