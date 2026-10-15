@@ -12,8 +12,8 @@ import (
 	"github.com/marianogappa/openbw-go/scrrules"
 )
 
-// StreamOptions configures Open.
-type StreamOptions struct {
+// Options configures Open.
+type Options struct {
 	// Data is the game data; nil loads $OPENBW_DATA once per process.
 	Data *Data
 	// Kinds are the event kinds to emit; 0 means DefaultKinds.
@@ -28,7 +28,7 @@ type StreamOptions struct {
 	Rules RulesMode
 	// CustomRules overrides Rules when not nil.
 	CustomRules *bwgame.Rules
-	// Hooks are raw engine callbacks, called after the stream's own hooks. They must not change state.
+	// Hooks are raw engine callbacks (L1), called after the stream's own hooks. They must not change engine state.
 	Hooks bwgame.Hooks
 }
 
@@ -45,9 +45,8 @@ type Game struct {
 	st       *bwgame.State
 	funcs    *bwgame.ReplayFunctions
 	rules    RulesInfo
-	links    commandLinks
+	links    screpLinks
 	playing  []int
-	army     []armyCost
 
 	buf          []Event
 	head         int
@@ -64,7 +63,7 @@ const legacyFormat = "legacy"
 
 // Open prepares a replay (SC:R or legacy bytes) and returns a game at frame 0.
 // The events of the map load (frame 0) come first from Events.
-func Open(replay []byte, opts StreamOptions) (*Game, error) {
+func Open(replay []byte, opts Options) (*Game, error) {
 	data, err := dataOrDefault(opts.Data)
 	if err != nil {
 		return nil, err
@@ -93,8 +92,8 @@ func Open(replay []byte, opts StreamOptions) (*Game, error) {
 	if g.classes == 0 {
 		g.classes = AllClasses
 	}
-	rules := chooseRules(opts, prepared)
-	g.rules = rulesInfo(opts, rules)
+	rules, source := chooseRules(opts, prepared)
+	g.rules = rulesInfo(source, rules)
 	g.st = bwgame.NewState(data.global, bwgame.NewGameState())
 	g.st.Game.Rules = rules
 	g.funcs = bwgame.NewReplayFunctions(g.st, &bwgame.ActionState{}, &bwgame.ReplayState{})
@@ -105,18 +104,25 @@ func Open(replay []byte, opts StreamOptions) (*Game, error) {
 	}
 	g.commandsNext = true
 	g.playing = playingSlots(g.st)
-	g.army = armyCosts(g.st)
 	return g, nil
 }
 
-func chooseRules(opts StreamOptions, prepared *downgrade.Prepared) bwgame.Rules {
+type rulesSource uint8
+
+const (
+	rulesFromOpenBW rulesSource = iota
+	rulesFromSCR
+	rulesFromCustom
+)
+
+func chooseRules(opts Options, prepared *downgrade.Prepared) (bwgame.Rules, rulesSource) {
 	switch {
 	case opts.CustomRules != nil:
-		return *opts.CustomRules
+		return *opts.CustomRules, rulesFromCustom
 	case opts.Rules == RulesOpenBW, prepared.Report.SourceFormat == legacyFormat:
-		return bwgame.DefaultRules()
+		return bwgame.DefaultRules(), rulesFromOpenBW
 	}
-	return scrrules.FromSettings(prepared.Settings)
+	return scrrules.FromSettings(prepared.Settings), rulesFromSCR
 }
 
 func (g *Game) load(loadable []byte) (err error) {
@@ -205,7 +211,7 @@ func (g *Game) Replay() *rep.Replay { return g.replay }
 // Engine gives the engine (L0). It has no stability promise.
 func (g *Game) Engine() *bwgame.ReplayFunctions { return g.funcs }
 
-// Prepared is the downgrade output: the loadable replay, the SC:R settings, the drop report and the command index.
+// Prepared is the downgrade output: the loadable replay, the SC:R settings, the dropped commands and the command index.
 func (g *Game) Prepared() *downgrade.Prepared { return g.prepared }
 
 func (g *Game) emit(e Event, cmd int32) {

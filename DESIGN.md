@@ -1,6 +1,6 @@
-# Design: a screp that knows what the engine knows
+# Design: a foundation that knows what the engine knows
 
-Status: draft for discussion.
+Status: implemented. [API.md](API.md) has the Go API.
 
 ## The key idea: the replay is the storage
 
@@ -12,18 +12,20 @@ The engine is deterministic. The replay plus the engine version together hold al
 ## Layers
 
 ```
- L3  analyses       build order, army value curve, fights, ...   (optional packages)
- L2  recorder       events + sampled stats → Result (JSON / rows)  (the screp-like product)
+ L3  analyses       build order, army value curve, fights, ...   (other tools)
+ L2  recorders      events + sampled state → stored rows         (other tools)
+ --- this module ---------------------------------------------------------
+ API stream         Open, Events, Unit/Units/Player, CommandResult
  L1  observer hooks  OnUnitCreated, OnUnitDestroyed, ...           (zero cost if unused)
  L0  engine         Load, Step, full state access                  (the Go port)
 ```
 
-Each layer uses only the layer below it. People who need something unusual go down one layer instead of asking us for a new flag.
+The product is L0 + L1 + the streaming API. Each layer uses only the layer below it. People who need something unusual go down one layer instead of asking for a new flag.
 
 - **L0 engine**: for power users and viewers. Full access, no stability promise on internals.
 - **L1 hooks**: a small, stable set of callbacks at points where the engine already makes a decision. A hook that nobody registers costs one nil check.
-- **L2 recorder**: the default product, like screp's output. It is built only from L1 hooks and public L0 reads.
-- **L3 analyses**: separate packages. They read an L2 `Result`. They never touch the engine, so they work the same on cached results.
+- **Streaming API**: `openbw.Open` and `Game.Events`. It turns L1 hooks into typed events, links them to commands, and gives copies of live state between events. The output is Go values, never a file.
+- **L2 recorders and L3 analyses** belong to other tools. They choose what to keep, how to store it and what to derive. This module has no recorder, no output format and no derived statistics.
 
 ## L1 events (the stable foundation)
 
@@ -45,52 +47,21 @@ Unit IDs: `unit_id_t` (index + generation) gives an ID that is unique within a g
 
 The left-out ones are on purpose: order changes, every attack and every mining trip would add millions of events. Anyone who needs them can register an L1 hook.
 
-## L2 recorder: what costs what
+## Cost
 
-| Output | Default | Size (15 min 1v1) | Notes |
-|---|---|---|---|
-| Header, players, map | on | tiny | from screp |
-| Events | on | ~5–20k rows | |
-| Enriched commands | on | ~same as screp | screp commands plus engine outcome: accepted or rejected, which units were selected, what each one produced |
-| Player stats every N frames | on, N=24 (1 s) | ~1k rows/player | minerals, gas, supply used/max, workers, army value, income |
-| Unit snapshots every M frames | **off** | large | opt-in field set: position, hp, shields, energy, order |
-| State checkpoints | **off** | MBs | for viewers that seek; uses OpenBW's state_copier |
-
-Options follow screp's style (opt-in flags):
-
-```go
-res, err := openbw.Run(rep, openbw.Options{
-    MaxFrame:       8 * 60 * 24,
-    StatsEvery:     24,
-    UnitSnapshots:  &openbw.UnitSnapshotOptions{Every: 240, Fields: openbw.Position | openbw.HP},
-})
-```
-
-Cost control:
-- **CPU**: the simulation time grows with frames, not with the output. `MaxFrame` lets classifiers stop after the opening. A full game is still a fixed cost per replay, so measure it early (target: under 1 s for a 15 min 1v1).
-- **Storage**: events and stats are small and fit in rows (frame, type, player, unit, ...), so they load straight into screpdb's SQL. Large output is opt-in and can be thrown away.
+- **CPU**: the simulation time grows with frames, not with the output. `MaxFrame` or a `break` stops early. Unsubscribed kinds install no hooks.
+- **Memory**: one shared `Data` per process; a game holds the engine state and a small event buffer for one half-step.
 
 ## Enriched commands: the link to screp
 
 Today screp says "player 1 issued Train Zergling at frame 3000". With the engine we can add:
 - The command was rejected (not enough minerals, no larva, supply blocked).
-- It made units 812 and 813.
+- It made units 812 and 813 (`UnitCreated` events whose `Cmd` is the command).
 
-That answers the question screp users ask most: "what actually happened, not just what was clicked". It also gives a quality signal for free.
+That answers the question screp users ask most: "what actually happened, not just what was clicked".
 
-## Trust signals in every Result
+## Out of scope
 
-A desync makes every engine-derived number wrong without any error. So every `Result` carries:
-- engine version and a hash of the game data files,
-- frames simulated, and whether the game reached its end,
-- the rate of rejected Train/Build/Morph commands per player (high means a likely desync),
-- commands dropped by the downgrade.
-
-Consumers can filter out results that look wrong instead of trusting them.
-
-## Open questions
-
-1. One `Run` with options, or a streaming API (`for ev := range sim.Events()`) that lets the caller decide what to keep? The streaming API is more general, and `Run` can be built on it.
-2. Should L3 analyses (build order, fights) live in this repo or in screpdb?
-3. Output format: JSON like screp, plus a row/columnar export (Parquet or SQLite) for screpdb?
-4. Name of the public package: `openbw` (root), or a separate repo when it is stable?
+- Recorders, output formats (JSON, Parquet, SQLite) and CLIs that write reports.
+- Derived numbers: army value, income, build orders, fights, desync or trust heuristics.
+- State checkpoints for seeking. A viewer replays from frame 0 (about 1 s per game).

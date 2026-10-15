@@ -8,7 +8,6 @@ import (
 
 const (
 	playerSlots   = 12
-	neutralOwner  = 11
 	maxSupply     = 200
 	fixedOneShift = 8
 	raceCount     = 3

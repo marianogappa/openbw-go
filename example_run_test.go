@@ -35,17 +35,21 @@ func TestExamples(t *testing.T) {
 		}
 		t.Setenv("OPENBW_DATA", dir)
 	}
-	if _, err := os.Stat(exampleReplay); err != nil {
-		t.Skip("no example replay")
+	for _, path := range exampleReplays {
+		if _, err := os.Stat(path); err != nil {
+			t.Skip("no example replay")
+		}
 	}
 	examples := []struct {
 		name string
 		run  func()
 		want []string
 	}{
-		{"buildOrder", Example_buildOrder, []string{" 0:43 1 Barracks\n", " 1:03 0 Spawning Pool\n", " 4:40 0 Metabolic Boost (Zergling Speed)\n"}},
-		{"killsPerPlayer", Example_killsPerPlayer, []string{"player 0 killed 58 units\nplayer 1 killed 28 units\n"}},
-		{"Run", ExampleRun, []string{"reached end: true\nlikely desync: false\nplayer 0 at 10:00: 45 workers, army value 2375/900\nplayer 1 at 10:00: 34 workers, army value 1350/125\n"}},
+		{"Example", Example, []string{"3380 SCV of player 1 killed by Zergling of player 0\n", "end frame 21140\n"}},
+		{"filterKinds", Example_filterKinds, []string{"1039 1 Built Barracks\n", "1513 0 Morph Spawning Pool\n"}},
+		{"readState", Example_readState, []string{"frame 4320 player 1: 172 minerals, 0 gas, supply 19/26\n"}},
+		{"earlyStop", Example_earlyStop, []string{"frame 370: player 1 command 0x1f rejected: [{3615 Minerals}]\nselected Command Center at 288,2960\nstopped at frame 370 of 21140\n"}},
+		{"parallel", Example_parallel, []string{"game 0: 224 units destroyed\ngame 1: 338 units destroyed\n"}},
 	}
 	for _, ex := range examples {
 		out := captureStdout(t, ex.run)

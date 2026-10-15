@@ -1,9 +1,6 @@
 package openbw
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/icza/screp/rep/repcmd"
 	"github.com/marianogappa/openbw-go/bwgame"
 	"github.com/marianogappa/openbw-go/downgrade"
@@ -42,7 +39,7 @@ func (id UnitID) MatchesSCRTag(tag uint32) bool {
 	return id != 0 && downgrade.LegacyUnitTag(tag) == id.LegacyTag()
 }
 
-// UnitType is a units.dat ID. It marshals to JSON as screp's {"Name", "ID"} object.
+// UnitType is a units.dat ID.
 type UnitType uint16
 
 func unitTypeOf(t *bwgame.UnitTypeT) UnitType {
@@ -55,22 +52,10 @@ func unitTypeOf(t *bwgame.UnitTypeT) UnitType {
 // Name is screp's name of the type.
 func (t UnitType) Name() string { return repcmd.UnitByID(uint16(t)).Name }
 
+// String is Name.
 func (t UnitType) String() string { return t.Name() }
 
-func (t UnitType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(repcmd.UnitByID(uint16(t)))
-}
-
-func (t *UnitType) UnmarshalJSON(data []byte) error {
-	var v struct{ ID uint16 }
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	*t = UnitType(v.ID)
-	return nil
-}
-
-// Research is a tech or an upgrade.
+// Research is a tech (techdata.dat ID) or an upgrade (upgrades.dat ID).
 type Research struct {
 	Upgrade bool
 	ID      uint8
@@ -78,35 +63,10 @@ type Research struct {
 
 func researchOf(r bwgame.Research) Research { return Research{Upgrade: r.Upgrade, ID: r.ID} }
 
+// String is screp's name of the tech or upgrade.
 func (r Research) String() string {
 	if r.Upgrade {
 		return repcmd.UpgradeByID(r.ID).Name
 	}
 	return repcmd.TechByID(r.ID).Name
-}
-
-func (r Research) MarshalJSON() ([]byte, error) {
-	if r.Upgrade {
-		return json.Marshal(struct{ Upgrade *repcmd.Upgrade }{repcmd.UpgradeByID(r.ID)})
-	}
-	return json.Marshal(struct{ Tech *repcmd.Tech }{repcmd.TechByID(r.ID)})
-}
-
-func (r *Research) UnmarshalJSON(data []byte) error {
-	var v struct {
-		Tech    *struct{ ID uint8 }
-		Upgrade *struct{ ID uint8 }
-	}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch {
-	case v.Upgrade != nil:
-		*r = Research{Upgrade: true, ID: v.Upgrade.ID}
-	case v.Tech != nil:
-		*r = Research{ID: v.Tech.ID}
-	default:
-		return fmt.Errorf("openbw: research without Tech or Upgrade: %s", data)
-	}
-	return nil
 }

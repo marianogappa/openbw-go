@@ -13,23 +13,23 @@ const OpenBWCommit = "4b046d5"
 
 const modulePath = "github.com/marianogappa/openbw-go"
 
-// EngineInfo says which engine, data and rules produced the output, and how far the game ran.
+// EngineInfo identifies the engine, the data and the rules of a game.
 type EngineInfo struct {
-	Version         string
-	ScrepVersion    string
-	OpenBWCommit    string
-	DataHash        string
-	SourceFormat    string
-	Rules           RulesInfo
-	FramesSimulated int32
-	EndFrame        int32
-	ReachedEnd      bool
-	Error           string `json:",omitempty"`
+	Version      string
+	ScrepVersion string
+	OpenBWCommit string
+	DataHash     string
+	// SourceFormat is the replay format that the downgrade read, for example "legacy".
+	SourceFormat string
+	Rules        RulesInfo
 }
 
-// RulesInfo is the engine rules a game ran with. Mode is "Auto", "OpenBW" or "Custom".
+// RulesInfo is the engine rules a game runs with.
 type RulesInfo struct {
-	Mode                string
+	// SCR is true when the rules come from the replay's SC:R settings.
+	SCR bool
+	// Custom is true when Options.CustomRules gave the rules.
+	Custom              bool
 	Limits              ObjectLimits
 	DisabledThingyUnits bool
 	OrderAllocationRule bool
@@ -41,14 +41,11 @@ type ObjectLimits struct {
 	Images, Sprites, LoneSprites, Bullets, Orders uint
 }
 
-func rulesInfo(opts StreamOptions, rules bwgame.Rules) RulesInfo {
-	mode := opts.Rules.String()
-	if opts.CustomRules != nil {
-		mode = "Custom"
-	}
+func rulesInfo(source rulesSource, rules bwgame.Rules) RulesInfo {
 	limits := rules.ObjectLimits()
 	return RulesInfo{
-		Mode:                mode,
+		SCR:                 source == rulesFromSCR,
+		Custom:              source == rulesFromCustom,
 		Limits:              ObjectLimits{Images: limits.Images, Sprites: limits.Sprites, LoneSprites: limits.LoneSprites, Bullets: limits.Bullets, Orders: limits.Orders},
 		DisabledThingyUnits: rules.DisabledThingyUnits,
 		OrderAllocationRule: rules.OrderAllocationRule,
@@ -75,21 +72,14 @@ var moduleVersion = sync.OnceValue(func() string {
 // Version is this module's version from the build info, or "devel".
 func Version() string { return moduleVersion() }
 
-// Info says which engine, data and rules this game uses, and how far it ran.
+// Info identifies the engine, the data and the rules of this game.
 func (g *Game) Info() EngineInfo {
-	info := EngineInfo{
-		Version:         Version(),
-		ScrepVersion:    repparser.Version,
-		OpenBWCommit:    OpenBWCommit,
-		DataHash:        g.data.FilesHash(),
-		SourceFormat:    g.prepared.Report.SourceFormat,
-		Rules:           g.rules,
-		FramesSimulated: g.Frame(),
-		EndFrame:        g.EndFrame(),
-		ReachedEnd:      g.Frame() == g.EndFrame(),
+	return EngineInfo{
+		Version:      Version(),
+		ScrepVersion: repparser.Version,
+		OpenBWCommit: OpenBWCommit,
+		DataHash:     g.data.FilesHash(),
+		SourceFormat: g.prepared.Report.SourceFormat,
+		Rules:        g.rules,
 	}
-	if g.err != nil {
-		info.Error = g.err.Error()
-	}
-	return info
 }

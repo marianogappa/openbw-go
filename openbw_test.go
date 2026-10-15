@@ -1,8 +1,6 @@
 package openbw
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -141,7 +139,7 @@ func plainEngineHash(t *testing.T, data *Data, replay []byte, frame int32) uint6
 		t.Fatal(err)
 	}
 	st := bwgame.NewState(data.Global(), bwgame.NewGameState())
-	st.Game.Rules = chooseRules(StreamOptions{}, prepared)
+	st.Game.Rules, _ = chooseRules(Options{}, prepared)
 	funcs := bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	if err := funcs.LoadReplayData(prepared.Loadable); err != nil {
 		t.Fatal(err)
@@ -158,7 +156,7 @@ func TestStreamInvariants(t *testing.T) {
 	data := testData(t)
 	forEachReplay(t, func(t *testing.T, replay []byte) {
 		damaged := 0
-		g, err := Open(replay, StreamOptions{
+		g, err := Open(replay, Options{
 			Data: data, Kinds: AllKinds, Classes: AllClasses, TickEvery: 24, MaxFrame: testMaxFrame,
 			Hooks: bwgame.Hooks{OnUnitDamaged: func(u, source *bwgame.Unit, owner int32, damage bwgame.Fp8) { damaged++ }},
 		})
@@ -200,7 +198,11 @@ func TestStreamInvariants(t *testing.T) {
 		if counts[KindUnitCreated] == 0 || counts[KindUnitDestroyed] == 0 || counts[KindTick] == 0 || damaged == 0 {
 			t.Errorf("too few events: %v, damaged %d", counts, damaged)
 		}
-		if g.prepared.Report.SourceFormat != "legacy" && linked < results*99/100 {
+		legacy := g.prepared.Report.SourceFormat == legacyFormat
+		if info := g.Info(); info.Rules.SCR == legacy || info.Rules.Custom || info.DataHash == "" {
+			t.Errorf("engine info %+v for source format %s", info, g.prepared.Report.SourceFormat)
+		}
+		if !legacy && linked < results*99/100 {
 			t.Errorf("%d of %d command results linked to screp", linked, results)
 		}
 		if got, want := bwgame.StateHash(g.st), plainEngineHash(t, data, replay, g.Frame()); got != want {
@@ -246,7 +248,7 @@ func collectEvents(t *testing.T, g *Game, breakEvery int) []string {
 func TestStreamResumesAfterBreak(t *testing.T) {
 	data := testData(t)
 	replay := readReplay(t, testReplays[0])
-	opts := StreamOptions{Data: data, Kinds: AllKinds, TickEvery: 100, MaxFrame: 24 * 60 * 3}
+	opts := Options{Data: data, Kinds: AllKinds, TickEvery: 100, MaxFrame: 24 * 60 * 3}
 	whole, err := Open(replay, opts)
 	if err != nil {
 		t.Fatal(err)
@@ -266,7 +268,7 @@ func TestStreamResumesAfterBreak(t *testing.T) {
 
 func TestEventsInsideLoopPanics(t *testing.T) {
 	data := testData(t)
-	g, err := Open(readReplay(t, testReplays[0]), StreamOptions{Data: data, MaxFrame: 10})
+	g, err := Open(readReplay(t, testReplays[0]), Options{Data: data, MaxFrame: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,72 +280,6 @@ func TestEventsInsideLoopPanics(t *testing.T) {
 	for range g.Events() {
 		for range g.Events() {
 		}
-	}
-}
-
-func TestRunJSONIsDeterministicAndRoundTrips(t *testing.T) {
-	data := testData(t)
-	replay := readReplay(t, testReplays[0])
-	opts := Options{
-		StreamOptions:  StreamOptions{Data: data, MaxFrame: 24 * 60 * 5},
-		CommandResults: ResultsAll,
-		UnitSnapshots:  &UnitSnapshotOptions{Every: 240, Fields: Position | HP | State | Order},
-	}
-	first, err := Run(replay, opts)
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := Run(replay, opts)
-	if err != nil {
-		t.Fatal(err)
-	}
-	a, _ := json.Marshal(first)
-	b, _ := json.Marshal(second)
-	if !bytes.Equal(a, b) {
-		t.Fatal("two runs give different JSON")
-	}
-	var decoded Result
-	if err := json.Unmarshal(a, &decoded); err != nil {
-		t.Fatal(err)
-	}
-	c, err := json.Marshal(&decoded)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(a, c) {
-		t.Fatalf("JSON does not round-trip: %d bytes, %d after decoding", len(a), len(c))
-	}
-	if len(decoded.Events) == 0 || len(decoded.CommandResults) == 0 || len(decoded.Stats) == 0 || len(decoded.UnitSnapshots) == 0 {
-		t.Fatal("empty parts in the result")
-	}
-}
-
-func TestRunDefaults(t *testing.T) {
-	data := testData(t)
-	res, err := Run(readReplay(t, testReplays[0]), Options{StreamOptions: StreamOptions{Data: data}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !res.Engine.ReachedEnd || res.Engine.DataHash == "" || res.Header == nil || res.Computed == nil {
-		t.Fatalf("engine info %+v", res.Engine)
-	}
-	produced := 0
-	for _, r := range res.CommandResults {
-		if isSelectAction(r.ActionID) && r.MissingTags+r.ForeignTags == 0 {
-			t.Fatalf("select result kept by default: %+v", r)
-		}
-		produced += len(r.Produced)
-	}
-	for _, e := range res.Events {
-		if e.Kind() == KindCommandResult || e.Kind() == KindTick {
-			t.Fatalf("%T in Events", e)
-		}
-		if u, ok := e.(*UnitCreated); ok && (u.Class == ClassFighter || u.Class == ClassSpell) {
-			t.Fatalf("class %v in default events", u.Class)
-		}
-	}
-	if produced == 0 || len(res.Stats) == 0 || len(res.Trust.Production) != 2 || res.Trust.NotExecuted != 0 {
-		t.Fatalf("produced %d, stats %d, trust %+v", produced, len(res.Stats), res.Trust)
 	}
 }
 
@@ -377,11 +313,25 @@ func (c *tagChecker) beforeAction(owner, actionID int32, payload []byte) {
 	}
 }
 
-func TestDesyncSignalMatchesTagTest(t *testing.T) {
+func TestTagCountsMatchTagTest(t *testing.T) {
 	data := testData(t)
 	forEachReplay(t, func(t *testing.T, replay []byte) {
-		res, err := Run(replay, Options{StreamOptions: StreamOptions{Data: data, MaxFrame: testMaxFrame}, StatsEvery: -1})
+		g, err := Open(replay, Options{Data: data, Kinds: KindCommandResult, MaxFrame: testMaxFrame})
 		if err != nil {
+			t.Fatal(err)
+		}
+		inconsistent := 0
+		var first int32
+		for e := range g.Events() {
+			r := e.(*CommandResult)
+			if r.MissingTags+r.ForeignTags > 0 {
+				inconsistent++
+				if first == 0 {
+					first = r.Frame
+				}
+			}
+		}
+		if err := g.Err(); err != nil {
 			t.Fatal(err)
 		}
 		prepared, err := downgrade.Prepare(replay)
@@ -389,7 +339,7 @@ func TestDesyncSignalMatchesTagTest(t *testing.T) {
 			t.Fatal(err)
 		}
 		st := bwgame.NewState(data.Global(), bwgame.NewGameState())
-		st.Game.Rules = chooseRules(StreamOptions{}, prepared)
+		st.Game.Rules, _ = chooseRules(Options{}, prepared)
 		c := &tagChecker{funcs: bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})}
 		c.funcs.BeforeAction = c.beforeAction
 		if err := c.funcs.LoadReplayData(prepared.Loadable); err != nil {
@@ -400,11 +350,20 @@ func TestDesyncSignalMatchesTagTest(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		got := res.Trust.Desync
-		if got.InconsistentSelects != c.inconsistent || got.FirstFrame != c.first {
-			t.Fatalf("desync signal %+v, tag test %d first %d", got, c.inconsistent, c.first)
+		if inconsistent != c.inconsistent || first != c.first {
+			t.Fatalf("%d results with bad tags, first at %d; tag test %d, first at %d", inconsistent, first, c.inconsistent, c.first)
 		}
 	})
+}
+
+func drain(replay []byte, opts Options) error {
+	g, err := Open(replay, opts)
+	if err != nil {
+		return err
+	}
+	for range g.Events() {
+	}
+	return g.Err()
 }
 
 func TestGamesShareData(t *testing.T) {
@@ -416,7 +375,7 @@ func TestGamesShareData(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, errs[i] = Run(replay, Options{StreamOptions: StreamOptions{Data: data, MaxFrame: 24 * 60 * 3}})
+			errs[i] = drain(replay, Options{Data: data, Kinds: AllKinds, MaxFrame: 24 * 60 * 3})
 		}()
 	}
 	wg.Wait()
@@ -463,21 +422,11 @@ func BenchmarkStreamAllKinds(b *testing.B) {
 	data := testData(b)
 	replay := readReplay(b, testReplays[0])
 	for b.Loop() {
-		g, err := Open(replay, StreamOptions{Data: data, Kinds: AllKinds, Classes: AllClasses})
+		g, err := Open(replay, Options{Data: data, Kinds: AllKinds, Classes: AllClasses})
 		if err != nil {
 			b.Fatal(err)
 		}
 		for range g.Events() {
-		}
-	}
-}
-
-func BenchmarkRun(b *testing.B) {
-	data := testData(b)
-	replay := readReplay(b, testReplays[0])
-	for b.Loop() {
-		if _, err := Run(replay, Options{StreamOptions: StreamOptions{Data: data}}); err != nil {
-			b.Fatal(err)
 		}
 	}
 }

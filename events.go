@@ -8,11 +8,13 @@ type Event interface {
 }
 
 // EventBase has the fields that every event has.
-// Frame and Cmd are written by the event's own JSON encoding; Cmd is omitted when -1.
 type EventBase struct {
-	Seq   int64 `json:"-"`
-	Frame int32 `json:"-"`
-	Cmd   int32 `json:"-"`
+	// Seq is 1, 2, 3, ... in emission order within a game.
+	Seq int64
+	// Frame is the engine frame when the event fired.
+	Frame int32
+	// Cmd is the Action of the command that caused the event, or -1. It is set only when KindCommandResult is subscribed.
+	Cmd int32
 }
 
 // Base gives the common fields.
@@ -23,11 +25,12 @@ func (*EventBase) isEvent() {}
 // UnitCreated fires when the engine creates a unit. A trained unit is created when its production starts.
 type UnitCreated struct {
 	EventBase
-	Unit   UnitID
-	Type   UnitType
-	Owner  int8
-	X, Y   int32
-	Parent UnitID `json:",omitzero"`
+	Unit  UnitID
+	Type  UnitType
+	Owner int8
+	X, Y  int32
+	// Parent is the producer, the Larva's Hatchery, the copied unit, ...; 0 if none.
+	Parent UnitID
 	Source CreateSource
 	Class  UnitClass
 }
@@ -65,18 +68,22 @@ type MorphStarted struct {
 // A refinery death has Reverted set: the ID lives on as a neutral Vespene Geyser.
 type UnitDestroyed struct {
 	EventBase
-	Unit         UnitID
-	Type         UnitType
-	Owner        int8
-	X, Y         int32
-	Reason       DeathReason
-	Killer       UnitID
-	KillerType   UnitType
-	KillerOwner  int8
+	Unit   UnitID
+	Type   UnitType
+	Owner  int8
+	X, Y   int32
+	Reason DeathReason
+	// Killer is the unit that killed it, 0 if none. KillerType is valid only when Killer is not 0.
+	Killer     UnitID
+	KillerType UnitType
+	// KillerOwner is -1 if unknown. It can be set when Killer is 0, for example Irradiate after the caster died.
+	KillerOwner int8
+	// KillerParent is the Carrier or Reaver when Killer is an Interceptor or a Scarab.
 	KillerParent UnitID
-	Container    UnitID
-	Reverted     bool
-	Class        UnitClass
+	// Container is the transport or Bunker when Reason is ReasonContainer.
+	Container UnitID
+	Reverted  bool
+	Class     UnitClass
 }
 
 // UnitOwnerChanged fires when a unit changes owner.
@@ -96,7 +103,9 @@ type ProductionCancelled struct {
 	Producer UnitID
 	Unit     UnitID
 	What     ProductionKind
-	Type     UnitType
+	// Type is valid when What is not ProductionResearch or ProductionUpgrade.
+	Type UnitType
+	// Research is valid when What is ProductionResearch or ProductionUpgrade.
 	Research Research
 	Why      CancelReason
 }
@@ -139,28 +148,37 @@ type PlayerWon struct {
 	State int32
 }
 
-// CommandResult is what the engine did with one command.
+// CommandResult is what the engine did with one command. It comes after the events that the command caused.
 type CommandResult struct {
 	EventBase
-	Action      int32
-	ScrepIndex  int32
-	PlayerID    byte
-	Owner       int8
-	ActionID    byte
-	Outcome     Outcome
-	Rejections  []Rejection `json:",omitempty"`
-	Selection   []UnitID    `json:",omitempty"`
-	MissingTags uint8       `json:",omitzero"`
-	ForeignTags uint8       `json:",omitzero"`
+	// Action is the index in the engine's action stream. Cmd equals Action.
+	Action int32
+	// ScrepIndex is the index in screp's Commands.Cmds, or -1 if the link is not exact.
+	ScrepIndex int32
+	// PlayerID is screp's player ID; Owner is the engine slot.
+	PlayerID byte
+	Owner    int8
+	// ActionID is the legacy action ID that the engine executed.
+	ActionID byte
+	Outcome  Outcome
+	// Rejections are the engine's reasons for refusing the command or some of its units.
+	Rejections []Rejection
+	// Selection is the selection after a Select, Shift Select or Deselect, else the units the command acts on.
+	Selection []UnitID
+	// MissingTags counts Select and Shift Select tags that resolve to no unit.
+	MissingTags uint8
+	// ForeignTags counts tags of another player's units in a Select or Shift Select of 2 or more tags.
+	ForeignTags uint8
 }
 
 // Rejection is one reason why the engine refused a command.
 type Rejection struct {
-	Unit   UnitID `json:",omitzero"`
+	// Unit is the selected unit that refused, or 0 for the command as a whole.
+	Unit   UnitID
 	Reason RejectReason
 }
 
-// Tick is emitted every StreamOptions.TickEvery frames, last in the frame.
+// Tick is emitted every Options.TickEvery frames, last in the frame.
 type Tick struct{ EventBase }
 
 func (*UnitCreated) Kind() Kind         { return KindUnitCreated }
@@ -177,37 +195,3 @@ func (*PlayerDefeated) Kind() Kind      { return KindPlayerDefeated }
 func (*PlayerWon) Kind() Kind           { return KindPlayerWon }
 func (*CommandResult) Kind() Kind       { return KindCommandResult }
 func (*Tick) Kind() Kind                { return KindTick }
-
-func newEvent(kind Kind) Event {
-	switch kind {
-	case KindUnitCreated:
-		return &UnitCreated{}
-	case KindUnitCompleted:
-		return &UnitCompleted{}
-	case KindUnitMorphed:
-		return &UnitMorphed{}
-	case KindMorphStarted:
-		return &MorphStarted{}
-	case KindUnitDestroyed:
-		return &UnitDestroyed{}
-	case KindUnitOwnerChanged:
-		return &UnitOwnerChanged{}
-	case KindProductionCancelled:
-		return &ProductionCancelled{}
-	case KindResearchStarted:
-		return &ResearchStarted{}
-	case KindResearchCompleted:
-		return &ResearchCompleted{}
-	case KindPlayerLeft:
-		return &PlayerLeft{}
-	case KindPlayerDefeated:
-		return &PlayerDefeated{}
-	case KindPlayerWon:
-		return &PlayerWon{}
-	case KindCommandResult:
-		return &CommandResult{}
-	case KindTick:
-		return &Tick{}
-	}
-	return nil
-}

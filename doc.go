@@ -1,9 +1,10 @@
-// Package openbw runs the OpenBW StarCraft: Brood War engine on a replay and reports what the engine knows:
-// unit lifecycles, kills, production, research, command outcomes and player stats.
+// Package openbw runs the OpenBW StarCraft: Brood War engine on a replay and streams what the engine knows:
+// unit lifecycles with killers, owner changes, production, research, player results and what the engine
+// did with each command. Between events, the caller can read units, players and resources.
 //
-// The base API is a stream: Open returns a Game, and Game.Events steps the engine as the caller pulls events.
-// Run is built on the stream and records a Result, which marshals to JSON in the style of screp.
-// Game.Engine gives the engine itself (package bwgame) for what the events leave out.
+// Open returns a Game, and Game.Events steps the engine as the caller pulls events. The package reports
+// raw engine facts only; aggregation and analysis belong to the caller. Game.Engine gives the engine
+// itself (package bwgame) for what the events leave out.
 //
 // The engine needs the Blizzard game data files; see LoadData.
 package openbw

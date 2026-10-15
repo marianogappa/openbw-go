@@ -10,28 +10,16 @@ import (
 )
 
 const (
-	actionSelect        = 0x09
-	actionShiftSelect   = 0x0a
-	actionDeselect      = 0x0b
-	actionBuild         = 0x0c
-	actionTrain         = 0x1f
-	actionUnitMorph     = 0x23
-	actionTrainFighter  = 0x27
-	actionBuildingMorph = 0x35
-	legacyTagSize       = 2
-	selectionOwners     = 8
+	actionSelect      = 0x09
+	actionShiftSelect = 0x0a
+	actionDeselect    = 0x0b
+	actionBuild       = 0x0c
+	legacyTagSize     = 2
+	selectionOwners   = 8
 )
 
 func isSelectAction(id byte) bool {
 	return id == actionSelect || id == actionShiftSelect || id == actionDeselect
-}
-
-func isProductionAction(id byte) bool {
-	switch id {
-	case actionTrain, actionTrainFighter, actionUnitMorph, actionBuildingMorph, actionBuild:
-		return true
-	}
-	return false
 }
 
 type shadowQueue struct {
@@ -203,32 +191,29 @@ func (g *Game) afterAction(owner, actionID int32, ok bool) {
 	g.emit(r, r.Action)
 }
 
-type commandLinks struct {
-	screp    []int32
-	unlinked int
-}
+type screpLinks []int32
 
-func (l commandLinks) screpIndex(action int32) int32 {
-	if action < 0 || int(action) >= len(l.screp) {
+func (l screpLinks) screpIndex(action int32) int32 {
+	if action < 0 || int(action) >= len(l) {
 		return -1
 	}
-	return l.screp[action]
+	return l[action]
 }
 
 func screpIDMatches(sourceID, screpID byte) bool {
 	return sourceID == screpID || sourceID == repcmd.TypeIDBuild && screpID == repcmd.VirtualTypeIDLand
 }
 
-func linkCommands(r *rep.Replay, p *downgrade.Prepared) commandLinks {
+func linkCommands(r *rep.Replay, p *downgrade.Prepared) screpLinks {
 	actions := 0
 	for _, c := range p.Commands {
 		if c.Action >= 0 {
 			actions++
 		}
 	}
-	links := commandLinks{screp: make([]int32, actions)}
-	for i := range links.screp {
-		links.screp[i] = -1
+	links := make(screpLinks, actions)
+	for i := range links {
+		links[i] = -1
 	}
 	if r.Commands == nil {
 		return links
@@ -241,7 +226,6 @@ func linkCommands(r *rep.Replay, p *downgrade.Prepared) commandLinks {
 	}
 	cutoff := parseErrorCutoffs(r.Commands, byFrame)
 	stopped := map[uint32]bool{}
-	linked := 0
 	for _, c := range p.Commands {
 		f := c.Frame
 		if stopped[f] {
@@ -262,11 +246,9 @@ func linkCommands(r *rep.Replay, p *downgrade.Prepared) commandLinks {
 			continue
 		}
 		if c.Action >= 0 && int(c.Action) < actions {
-			links.screp[c.Action] = int32(frameCmds[c.Position])
-			linked++
+			links[c.Action] = int32(frameCmds[c.Position])
 		}
 	}
-	links.unlinked = len(cmds) - linked
 	return links
 }
 
