@@ -1,6 +1,9 @@
 package bwgame
 
-import "iter"
+import (
+	"iter"
+	"unsafe"
+)
 
 type unitIDRaw interface {
 	~uint16 | ~uint32
@@ -39,13 +42,21 @@ type LinkAccessor[T any] interface {
 }
 
 type IntrusiveList[T any, A LinkAccessor[T]] struct {
-	first *T
-	last  *T
+	first             *T
+	last              *T
+	linkOffsetPlusOne uintptr
 }
 
 func (l *IntrusiveList[T, A]) link(v *T) *Link[T] {
+	if l.linkOffsetPlusOne == 0 {
+		l.linkOffsetPlusOne = linkOffset[T, A](v) + 1
+	}
+	return (*Link[T])(unsafe.Add(unsafe.Pointer(v), l.linkOffsetPlusOne-1))
+}
+
+func linkOffset[T any, A LinkAccessor[T]](v *T) uintptr {
 	var accessor A
-	return accessor.Link(v)
+	return uintptr(unsafe.Pointer(accessor.Link(v))) - uintptr(unsafe.Pointer(v))
 }
 
 func (l *IntrusiveList[T, A]) Empty() bool {
@@ -505,6 +516,8 @@ type Regions struct {
 	SplitRegions []SplitRegion
 
 	Contours [4][]Contour
+
+	contourIndexes [4]contourIndex
 }
 
 func NewRegions() Regions {
