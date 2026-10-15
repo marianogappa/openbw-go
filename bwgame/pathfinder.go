@@ -54,13 +54,13 @@ func (scratch *longPathScratch) newNode() *longPathNode {
 	return n
 }
 
-func pfPartitionPoint(n int, isBefore func(i int) bool) int {
+func firstColumnAfter(columns []pfVisitedColumn, x int32) int {
 	first := 0
-	length := n
+	length := len(columns)
 	for length > 0 {
 		half := length / 2
 		mid := first + half
-		if isBefore(mid) {
+		if columns[mid].x <= x {
 			first = mid + 1
 			length -= half + 1
 		} else {
@@ -68,6 +68,15 @@ func pfPartitionPoint(n int, isBefore func(i int) bool) int {
 		}
 	}
 	return first
+}
+
+func indexOfNeighborAt(neighbors []pfNeighbor, pos Xy) int {
+	for i := range neighbors {
+		if neighbors[i].pos == pos {
+			return i
+		}
+	}
+	return -1
 }
 
 func (f *StateFunctions) pathfinderFindLongPath(pf *Pathfinder) bool {
@@ -902,7 +911,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 	areaVisited := append(scratch.areaVisited, scratch.newColumn(0, nil), scratch.newColumn(int32(f.gameSt.MapWidth), nil))
 
 	columnAfter := func(x int32) int {
-		return pfPartitionPoint(len(areaVisited), func(i int) bool { return !(x < areaVisited[i].x) })
+		return firstColumnAfter(areaVisited, x)
 	}
 
 	pfRemoveVisitedFlags := func(pos Xy, flags int32) int32 {
@@ -1172,7 +1181,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			if isGoal || w.neighbors.Empty() {
 				w.neighbors.PushBack(pfNeighbor{pos: pos, flags: flags, isGoal: isGoal})
 			} else {
-				i := slices.IndexFunc(w.neighbors.Values(), func(v pfNeighbor) bool { return v.pos == pos })
+				i := indexOfNeighborAt(w.neighbors.Values(), pos)
 				if i != -1 {
 					w.neighbors.Ptr(i).flags &= flags
 				} else {

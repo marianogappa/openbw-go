@@ -236,3 +236,19 @@ func TestResizeSlice(t *testing.T) {
 		t.Errorf("grow = %v", s)
 	}
 }
+
+func pfPartitionPoint(n int, isBefore func(i int) bool) int {
+	first := 0
+	length := n
+	for length > 0 {
+		half := length / 2
+		mid := first + half
+		if isBefore(mid) {
+			first = mid + 1
+			length -= half + 1
+		} else {
+			length = half
+		}
+	}
+	return first
+}

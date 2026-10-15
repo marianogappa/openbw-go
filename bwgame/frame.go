@@ -17,7 +17,7 @@ func (f *StateFunctions) revealSightAt(pos Xy, rangeValue int32, revealTo int32,
 			heightMask = TileFlagVeryHigh | TileFlagHigh | TileFlagMiddle
 		}
 	}
-	var visionPropagation [revealSightMaxWidth * revealSightMaxWidth]uint32
+	visionPropagation := &f.visionPropagation
 	requiredTileMask := uint32(heightMask)<<16 | uint32(uint8(^visibilityMask))<<8 | uint32(uint8(^visibilityMask))
 	sightVals := &f.gameSt.SightValues[rangeValue]
 	tileX := uint(pos.X) / 32
