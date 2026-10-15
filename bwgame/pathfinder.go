@@ -814,9 +814,46 @@ type pfVisitedColumn struct {
 const pfMaxVisitedColumns = 128 + 1
 const pfMaxVisitedRanges = 10
 
+const shortPathNodeIndexSlots = 1024
+
+type shortPathNodeIndexSlot struct {
+	generation uint32
+	node       int32
+}
+
+type shortPathNodeIndex struct {
+	generation uint32
+	slots      [shortPathNodeIndexSlots]shortPathNodeIndexSlot
+}
+
+func shortPathNodeIndexHash(pos Xy) uint32 {
+	return (uint32(pos.X)*0x9e3779b1 ^ uint32(pos.Y)*0x85ebca77) >> 22
+}
+
+func (index *shortPathNodeIndex) find(nodes []shortPathNode, pos Xy) int {
+	for slot := shortPathNodeIndexHash(pos); ; slot = (slot + 1) % shortPathNodeIndexSlots {
+		entry := &index.slots[slot]
+		if entry.generation != index.generation {
+			return -1
+		}
+		if nodes[entry.node].pos == pos {
+			return int(entry.node)
+		}
+	}
+}
+
+func (index *shortPathNodeIndex) add(pos Xy, node int) {
+	slot := shortPathNodeIndexHash(pos)
+	for index.slots[slot].generation == index.generation {
+		slot = (slot + 1) % shortPathNodeIndexSlots
+	}
+	index.slots[slot] = shortPathNodeIndexSlot{generation: index.generation, node: int32(node)}
+}
+
 type shortPathScratch struct {
 	search       pfSearch
 	allNodes     StaticVector[shortPathNode, [250]shortPathNode]
+	nodeIndex    shortPathNodeIndex
 	areaVisited  []pfVisitedColumn
 	rangeBuffers [pfMaxVisitedColumns][pfMaxVisitedRanges]pfVisitedRange
 	usedBuffers  int
@@ -829,6 +866,7 @@ func (f *StateFunctions) resetShortPathScratch() *shortPathScratch {
 	scratch := f.shortPath
 	scratch.search.reset()
 	scratch.allNodes.Clear()
+	scratch.nodeIndex.generation++
 	scratch.areaVisited = scratch.areaVisited[:0]
 	scratch.usedBuffers = 0
 	return scratch
@@ -2041,15 +2079,12 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			}
 			totalCost := cur.totalCost.Add(cost)
 			var n *shortPathNode
-			existingNodes := allNodes.Values()
-			for i := 1; i != len(existingNodes); i++ {
-				if existingNodes[i].pos == v.pos {
-					n = &existingNodes[i]
-					break
-				}
+			if i := scratch.nodeIndex.find(allNodes.Values(), v.pos); i != -1 {
+				n = allNodes.Ptr(i)
 			}
 			if n == nil {
 				allNodes.PushBack(shortPathNode{})
+				scratch.nodeIndex.add(v.pos, allNodes.Size()-1)
 				n = allNodes.Ptr(allNodes.Size() - 1)
 				n.prev = cur
 				n.pos = v.pos
