@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"slices"
 	"strings"
 	"sync"
@@ -17,7 +18,12 @@ import (
 )
 
 func main() {
-	mode := flag.String("mode", "validate", "select, validate, cost or trace")
+	defer func() { os.Exit(exitCode) }()
+	run()
+}
+
+func run() {
+	mode := flag.String("mode", "validate", "select, validate, cost, scaling or trace")
 	list := flag.String("list", "", "file with one replay path per line, relative to $OPENBW_REPLAYS ('#' starts a comment line)")
 	dataDir := flag.String("data", "testdata/bwdata", "game data directory")
 	workers := flag.Int("j", runtime.NumCPU(), "parallel games")
@@ -26,10 +32,22 @@ func main() {
 	otherDir := flag.String("other", "", "select: directory of team and older replays")
 	otherCount := flag.Int("other-n", 40, "select: other replays to take")
 	costGames := flag.Int("cost-n", 20, "cost: replays for the serial measurements")
+	scalingWorkers := flag.String("scaling-j", "1,2,4,8,12", "scaling: worker counts")
+	scalingGames := flag.Int("scaling-n", 4, "scaling: replays that every worker plays")
+	scalingRounds := flag.Int("scaling-rounds", 2, "scaling: rounds per worker count; the fastest counts")
 	traceReplay := flag.String("replay", "", "trace: replay file")
 	traceID := flag.Uint("unit", 0, "trace: unit ID")
+	cpuProfile := flag.String("cpuprofile", "", "write a CPU profile to this file")
 	flag.Parse()
 	plainData.dir = *dataDir
+	if *cpuProfile != "" {
+		stop, err := startCPUProfile(*cpuProfile)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "apivalidate:", err)
+			os.Exit(1)
+		}
+		defer stop()
+	}
 
 	var err error
 	switch *mode {
@@ -43,7 +61,7 @@ func main() {
 		if data, err = openbw.LoadData(*dataDir); err == nil {
 			err = traceUnit(data, *traceReplay, openbw.UnitID(*traceID))
 		}
-	case "validate", "cost":
+	case "validate", "cost", "scaling":
 		var paths []string
 		var data *openbw.Data
 		if paths, err = readList(*list); err != nil {
@@ -52,18 +70,41 @@ func main() {
 		if data, err = openbw.LoadData(*dataDir); err != nil {
 			break
 		}
-		if *mode == "validate" {
+		switch *mode {
+		case "validate":
 			err = validate(data, paths, *workers)
-		} else {
+		case "cost":
 			err = measureCost(data, paths, *workers, *costGames)
+		default:
+			var counts []int
+			if counts, err = parseWorkerCounts(*scalingWorkers); err == nil {
+				err = measureScaling(data, paths, counts, *scalingGames, *scalingRounds, openbw.DefaultKinds)
+			}
 		}
 	default:
 		err = fmt.Errorf("unknown mode %q", *mode)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "apivalidate:", err)
-		os.Exit(1)
+		exitCode = 1
 	}
+}
+
+var exitCode int
+
+func startCPUProfile(path string) (func(), error) {
+	f, err := os.Create(path)
+	if err != nil {
+		return nil, err
+	}
+	if err := pprof.StartCPUProfile(f); err != nil {
+		f.Close()
+		return nil, err
+	}
+	return func() {
+		pprof.StopCPUProfile()
+		f.Close()
+	}, nil
 }
 
 func readList(path string) ([]string, error) {
