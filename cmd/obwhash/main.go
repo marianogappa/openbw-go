@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/marianogappa/openbw-go/bwgame"
 	"github.com/marianogappa/openbw-go/downgrade"
+	"github.com/marianogappa/openbw-go/scrrules"
 )
 
 const defaultDataDirectory = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/openbw-go/testdata/bwdata"
@@ -266,7 +266,8 @@ func (r *runner) loadableReplay() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read SC:R settings: %w", err)
 		}
-		return loadable, applySCRRules(settings)
+		r.applySCRRules(settings)
+		return loadable, nil
 	}
 	if err != nil {
 		return data, nil
@@ -274,10 +275,10 @@ func (r *runner) loadableReplay() ([]byte, error) {
 	return loadable, nil
 }
 
-func applySCRRules(settings downgrade.SCRSettings) error {
-	fmt.Fprintf(os.Stderr, "scr_settings limits=%+v bfix=%x game_config=%+v order_allocation_rule=%t\n",
-		settings.Limits, settings.BugFixes, gameConfigText(settings.GameConfig), settings.OrderAllocationRule())
-	return errors.New("-scr-rules: the engine has no SC:R rules option yet")
+func (r *runner) applySCRRules(settings downgrade.SCRSettings) {
+	fmt.Fprintf(os.Stderr, "scr_settings limits=%+v bfix=%x game_config=%+v order_allocation_rule=%t flying_scv_fix=%t\n",
+		settings.Limits, settings.BugFixes, gameConfigText(settings.GameConfig), settings.OrderAllocationRule(), settings.FlyingSCVFix())
+	r.st.Game.Rules = scrrules.FromSettings(settings)
 }
 
 func gameConfigText(config *downgrade.GameConfig) string {
