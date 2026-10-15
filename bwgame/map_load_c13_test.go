@@ -9,7 +9,7 @@ import (
 	"github.com/marianogappa/openbw-go/downgrade"
 )
 
-const defaultC13ReplayDir = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl"
+var defaultC13ReplayDir = testReplayPath("cwalggdl")
 
 type fnvHasher struct {
 	value uint64
@@ -130,9 +130,6 @@ func countContourTies(g *GameState) int {
 }
 
 func c13ReplayDir() string {
-	if dir := os.Getenv("DOWNGRADE_REPLAY_DIR"); dir != "" {
-		return dir
-	}
 	return defaultC13ReplayDir
 }
 

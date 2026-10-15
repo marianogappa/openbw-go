@@ -419,7 +419,7 @@ These parts are for rendering, sound, UI or other tools. A replay engine does no
 | `flag_redraw` writes | `L13245`, `L13254`, `L13260`, `L13276`, `L14738`, `L14747` | Rendering only. Harmless to keep. |
 | `get_image_map_position`, `frozen_y_value` | `L13334`–`L13345`, `L5112`, `L5226`, `L6422` | Rendering only. Optional. |
 | `get_map_string` and Korean decoding | `L21196`–`L21204` | Trigger text only. Return raw bytes. |
-| `load_map_file`, `load_map` (MPQ) | `L21219`–`L21228` | Skip. screp gives the CHK bytes to `load_map_data`. |
+| `load_map_file`, `load_map` (MPQ) | `L21219`–`L21228` | Skip. The replay's CHK bytes go to `load_map_data`. |
 | `state_copier`, `copy_state` | `L19556`–`L19761`, `A24`–`A37` | Skip. Port later only if the API needs snapshots. |
 | `string_table_data` | `L21966`–`L21980` | Skip. |
 | `global_init` | `L21982`–`L22336` | Data phase (PLAN phase 1), not this map. It builds `iscript.program_data`, image GRPs, lo offsets and `melee_trg`, which C09 and C13 need. |

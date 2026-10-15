@@ -15,10 +15,18 @@ import (
 	"github.com/marianogappa/openbw-go/downgrade"
 )
 
-const (
-	compressedLegacyReplayPath = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/scmapanalyzer/replays/2486 LimperT qeywro78Z.rep"
-	scrReplayDir               = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl"
+var (
+	compressedLegacyReplayPath = testReplayPath("scmapanalyzer/replays/2486 LimperT qeywro78Z.rep")
+	scrReplayDir               = testReplayPath("cwalggdl")
 )
+
+func testReplayPath(name string) string {
+	dir := os.Getenv("OPENBW_REPLAYS")
+	if dir == "" {
+		dir = "../testdata/replays"
+	}
+	return filepath.Join(dir, name)
+}
 
 type replaySections struct {
 	gameInfo []byte

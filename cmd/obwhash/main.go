@@ -15,7 +15,7 @@ import (
 	"github.com/marianogappa/openbw-go/scrrules"
 )
 
-const defaultDataDirectory = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/openbw-go/testdata/bwdata"
+const defaultDataDirectory = "testdata/bwdata"
 
 type options struct {
 	dataDirectory  string

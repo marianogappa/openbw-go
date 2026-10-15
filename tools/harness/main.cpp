@@ -15,7 +15,7 @@
 
 namespace {
 
-const char* default_data_directory = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/openbw-go/testdata/bwdata";
+const char* default_data_directory = "testdata/bwdata";
 
 struct options {
 	std::string data_directory;

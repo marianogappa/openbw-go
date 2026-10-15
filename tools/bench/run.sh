@@ -3,6 +3,7 @@ set -eu
 
 repo_root=$(cd "$(dirname "$0")/../.." && pwd)
 replay_list=${REPLAYS:-$repo_root/tools/bench/replays.txt}
+replays_dir=${OPENBW_REPLAYS:-$repo_root/testdata/replays}
 runs=${RUNS:-3}
 work=${OUT:-${TMPDIR:-/tmp}/openbw-bench}
 every=1000000000
@@ -33,7 +34,8 @@ frames_of() {
 }
 
 printf "%-40s %8s %8s %9s %8s %9s %7s\n" replay frames cpp_s cpp_fps go_s go_fps go/cpp
-sed -e '/^#/d' -e '/^$/d' "$replay_list" | while IFS= read -r replay; do
+sed -e '/^#/d' -e '/^$/d' "$replay_list" | while IFS= read -r entry; do
+	replay="$replays_dir/$entry"
 	name=$(basename "$replay" .rep)
 	legacy="$work/$name.116.rep"
 	"$work/downgrade" "$replay" "$legacy" 2>/dev/null

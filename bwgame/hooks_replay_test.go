@@ -10,11 +10,11 @@ import (
 )
 
 var hookTestReplays = []string{
-	"/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-Horang2[._.]/MM-39C48C10-35DD-11F1-A3DD-FA167B5461B6.rep",
-	"/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-491926A2-11BC-11F1-A3DD-FA167B5461B6.rep",
-	"/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-CB157510-11C2-11F1-A3DD-FA167B5461B6.rep",
-	"/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-SST_JumJaJungJi/MM-AAA58B20-12F9-11F1-A3DD-FA167B5461B6.rep",
-	"/Users/mariano.gappa/Code/go/src/github.com/marianogappa/scmapanalyzer/replays/2v2v2v2 BGH !! Favourite!!!.rep",
+	testReplayPath("cwalggdl/replays-cwal-dl/30-NEW-Horang2[._.]/MM-39C48C10-35DD-11F1-A3DD-FA167B5461B6.rep"),
+	testReplayPath("cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-491926A2-11BC-11F1-A3DD-FA167B5461B6.rep"),
+	testReplayPath("cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-CB157510-11C2-11F1-A3DD-FA167B5461B6.rep"),
+	testReplayPath("cwalggdl/replays-cwal-dl/30-MORE-SST_JumJaJungJi/MM-AAA58B20-12F9-11F1-A3DD-FA167B5461B6.rep"),
+	testReplayPath("scmapanalyzer/replays/2v2v2v2 BGH !! Favourite!!!.rep"),
 	compressedLegacyReplayPath,
 }
 

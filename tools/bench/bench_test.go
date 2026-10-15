@@ -19,6 +19,13 @@ func dataDirectory() string {
 	return defaultDataDirectory
 }
 
+func replaysDirectory() string {
+	if fromEnv := os.Getenv("OPENBW_REPLAYS"); fromEnv != "" {
+		return fromEnv
+	}
+	return "../../testdata/replays"
+}
+
 func replayListPath() string {
 	if fromEnv := os.Getenv("REPLAYS"); fromEnv != "" {
 		return fromEnv
@@ -35,7 +42,7 @@ func readReplayList(b *testing.B) []string {
 	for _, line := range strings.Split(string(data), "\n") {
 		line = strings.TrimSpace(line)
 		if line != "" && !strings.HasPrefix(line, "#") {
-			replays = append(replays, line)
+			replays = append(replays, filepath.Join(replaysDirectory(), line))
 		}
 	}
 	return replays
