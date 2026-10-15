@@ -13,11 +13,20 @@ func printOverview(out io.Writer, res *openbw.Result) {
 	h := res.Header
 	fmt.Fprintf(out, "Engine  : %s %s   openbw %s (OpenBW %s), rules %s\n", h.Engine.ShortName, h.Version,
 		res.Engine.Version, res.Engine.OpenBWCommit, rulesText(res.Engine))
-	fmt.Fprintln(out, "Map     :", h.Map)
+	fmt.Fprintln(out, "Map     :", printable(h.Map))
 	fmt.Fprintf(out, "Length  : %s (%d frames), %s\n", h.Frames, h.Frames, simulatedText(res.Engine))
 	fmt.Fprintln(out, "Players :", playersText(h))
 	fmt.Fprintln(out, "Trust   :", trustText(res.Trust))
 	printFinal(out, res)
+}
+
+func printable(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r < ' ' {
+			return -1
+		}
+		return r
+	}, s)
 }
 
 func rulesText(e openbw.EngineInfo) string {
