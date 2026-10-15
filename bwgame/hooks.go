@@ -55,6 +55,9 @@ const (
 	ReasonDetonated
 	ReasonLinked
 	ReasonTrigger
+	ReasonOffCreep
+	ReasonCrushed
+	ReasonBlocked
 )
 
 type KillContext struct {

@@ -205,11 +205,11 @@ func hasLoadedUnits(u *bwgame.Unit) bool {
 }
 
 func killerOf(kill bwgame.KillContext) killerInfo {
-	info := killerInfo{killerOwner: int8(kill.KillerOwner)}
+	info := killerInfo{killerType: UnitTypeNone, killerOwner: int8(kill.KillerOwner)}
 	if k := kill.Killer; k != nil {
 		info.killer = unitIDOf(k)
 		info.killerType = unitTypeOf(k.UnitType)
-		if k.UnitType.ID == bwgame.UnitTypesProtossInterceptor || k.UnitType.ID == bwgame.UnitTypesProtossScarab {
+		if k.UnitType.ID == bwgame.UnitTypesProtossInterceptor {
 			info.parent = unitIDOf(k.Fighter.Parent)
 		}
 	}
@@ -272,11 +272,12 @@ func (g *Game) onProductionCancel(c bwgame.ProductionCancel) {
 		Producer: unitIDOf(c.Producer),
 		Unit:     unitIDOf(c.Unit),
 		What:     ProductionKind(c.What),
-		Research: researchOf(c.Research),
+		Type:     unitTypeOf(c.Type),
+		Research: NoResearch,
 		Why:      CancelReason(c.Why),
 	}
-	if c.Type != nil {
-		e.Type = unitTypeOf(c.Type)
+	if e.What == ProductionResearch || e.What == ProductionUpgrade {
+		e.Research = researchOf(c.Research)
 	}
 	g.emit(e, g.syncCmd())
 }

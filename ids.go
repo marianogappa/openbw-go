@@ -42,15 +42,23 @@ func (id UnitID) MatchesSCRTag(tag uint32) bool {
 // UnitType is a units.dat ID.
 type UnitType uint16
 
+// UnitTypeNone is the type of no unit, for example KillerType when there is no killer.
+const UnitTypeNone = UnitType(bwgame.UnitTypesNone)
+
 func unitTypeOf(t *bwgame.UnitTypeT) UnitType {
 	if t == nil {
-		return UnitType(bwgame.UnitTypesNone)
+		return UnitTypeNone
 	}
 	return UnitType(t.ID)
 }
 
-// Name is screp's name of the type.
-func (t UnitType) Name() string { return repcmd.UnitByID(uint16(t)).Name }
+// Name is screp's name of the type, or "None" for UnitTypeNone.
+func (t UnitType) Name() string {
+	if t == UnitTypeNone {
+		return "None"
+	}
+	return repcmd.UnitByID(uint16(t)).Name
+}
 
 // String is Name.
 func (t UnitType) String() string { return t.Name() }
@@ -61,10 +69,21 @@ type Research struct {
 	ID      uint8
 }
 
+const noResearchID = 0xff
+
+// NoResearch is the Research of no tech or upgrade, for example in a ProductionCancelled of a unit.
+var NoResearch = Research{ID: noResearchID}
+
+// Valid tells if r is a tech or an upgrade, not NoResearch.
+func (r Research) Valid() bool { return r.ID != noResearchID }
+
 func researchOf(r bwgame.Research) Research { return Research{Upgrade: r.Upgrade, ID: r.ID} }
 
-// String is screp's name of the tech or upgrade.
+// String is screp's name of the tech or upgrade, or "None" for NoResearch.
 func (r Research) String() string {
+	if !r.Valid() {
+		return "None"
+	}
 	if r.Upgrade {
 		return repcmd.UpgradeByID(r.ID).Name
 	}

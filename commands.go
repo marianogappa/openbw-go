@@ -14,12 +14,20 @@ const (
 	actionShiftSelect = 0x0a
 	actionDeselect    = 0x0b
 	actionBuild       = 0x0c
+	actionHotkey      = 0x13
+	hotkeyRecall      = 1
 	legacyTagSize     = 2
 	selectionOwners   = 8
 )
 
-func isSelectAction(id byte) bool {
-	return id == actionSelect || id == actionShiftSelect || id == actionDeselect
+func changesSelection(id byte, payload []byte) bool {
+	switch id {
+	case actionSelect, actionShiftSelect, actionDeselect:
+		return true
+	case actionHotkey:
+		return len(payload) > 0 && payload[0] == hotkeyRecall
+	}
+	return false
 }
 
 type shadowQueue struct {
@@ -29,11 +37,12 @@ type shadowQueue struct {
 }
 
 type commandTracker struct {
-	executed int32
-	current  *CommandResult
-	queues   [bwgame.UnitLimit]shadowQueue
-	addons   [bwgame.UnitLimit]int32
-	eggs     map[UnitID]int32
+	executed       int32
+	current        *CommandResult
+	selectionAfter bool
+	queues         [bwgame.UnitLimit]shadowQueue
+	addons         [bwgame.UnitLimit]int32
+	eggs           map[UnitID]int32
 }
 
 func newCommandTracker() *commandTracker {
@@ -52,7 +61,7 @@ func (t *commandTracker) sync() int32 {
 	return t.current.Action
 }
 
-func (t *commandTracker) abort() { t.current = nil }
+func (t *commandTracker) abort() { t.current, t.selectionAfter = nil, false }
 
 func (t *commandTracker) front(u *bwgame.Unit) int32 {
 	if u == nil {
@@ -134,11 +143,11 @@ func (g *Game) beforeAction(owner, actionID int32, payload []byte) {
 		Owner:      int8(owner),
 		ActionID:   byte(actionID),
 	}
-	switch byte(actionID) {
-	case actionSelect, actionShiftSelect:
+	if byte(actionID) == actionSelect || byte(actionID) == actionShiftSelect {
 		r.MissingTags, r.ForeignTags = g.tagTest(owner, payload)
-	case actionDeselect:
-	default:
+	}
+	t.selectionAfter = changesSelection(byte(actionID), payload)
+	if !t.selectionAfter {
 		r.Selection = g.selection(owner)
 	}
 	t.current = r
@@ -172,10 +181,12 @@ func (g *Game) tagTest(owner int32, payload []byte) (missing, foreign uint8) {
 func (g *Game) afterAction(owner, actionID int32, ok bool) {
 	t := g.cmd
 	r := t.current
+	selectionAfter := t.selectionAfter
 	if r == nil {
 		r = &CommandResult{Action: t.executed, ScrepIndex: g.links.screpIndex(t.executed), Owner: int8(owner), ActionID: byte(actionID)}
+		selectionAfter = false
 	}
-	t.current = nil
+	t.current, t.selectionAfter = nil, false
 	t.executed++
 	switch {
 	case !ok:
@@ -185,7 +196,7 @@ func (g *Game) afterAction(owner, actionID int32, ok bool) {
 	default:
 		r.Outcome = Accepted
 	}
-	if isSelectAction(byte(actionID)) {
+	if selectionAfter {
 		r.Selection = g.selection(owner)
 	}
 	g.emit(r, r.Action)

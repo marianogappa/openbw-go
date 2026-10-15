@@ -627,7 +627,7 @@ func (f *StateFunctions) orderLarva(u *Unit) {
 		return
 	}
 	if (hatchery == nil || u.MoveTarget.Unit != hatchery) && !f.tileHasCreep(u.Sprite.Position) {
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonOffCreep))
 		return
 	}
 	rv := f.lcgRand(20)
@@ -1546,6 +1546,9 @@ func (f *StateFunctions) warpInProtossBuilding(u *Unit, buildType *UnitTypeT) {
 	var buildUnit *Unit
 	if buildType.ID == UnitTypesProtossAssimilator {
 		buildUnit = f.buildRefinery(u, buildType)
+		if buildUnit != nil {
+			f.onMorphStarted(buildUnit, u, f.getUnitType(UnitTypesResourceVespeneGeyser), buildType)
+		}
 	} else {
 		buildUnit = f.createUnit(buildType, u.OrderTarget.Pos, u.Owner)
 		if buildUnit != nil {
@@ -1756,6 +1759,7 @@ func (f *StateFunctions) orderCompletingArchonSummon(u *Unit) {
 			f.setQueuedOrder(u, false, u.UnitType.HumanAiIdle.Get(), OrderTarget{})
 			f.uUnsetStatusFlag(u, UnitStatusFlagOrderNotInterruptible)
 			f.orderDone(u, OrderTarget{})
+			f.onUnitCompleted(u)
 		}
 	}
 }

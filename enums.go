@@ -34,10 +34,16 @@ const (
 	KindTick
 
 	AllKinds Kind = KindTick<<1 - 1
+
+	// NoKinds in Options.Kinds subscribes to no kind, for games read through state, AdvanceTo or Options.Hooks.
+	NoKinds Kind = 1 << 31
 )
 
-// DefaultKinds is every kind except CommandResult and Tick.
-const DefaultKinds = AllKinds &^ (KindCommandResult | KindTick)
+// DefaultKinds are the unit, production, research and player kinds; not CommandResult or Tick.
+// A kind added in a later version is not in DefaultKinds.
+const DefaultKinds = KindUnitCreated | KindUnitCompleted | KindUnitMorphed | KindMorphStarted | KindUnitDestroyed |
+	KindUnitOwnerChanged | KindProductionCancelled | KindResearchStarted | KindResearchCompleted |
+	KindPlayerLeft | KindPlayerDefeated | KindPlayerWon
 
 var kindNames = []string{
 	"UnitCreated", "UnitCompleted", "UnitMorphed", "MorphStarted", "UnitDestroyed", "UnitOwnerChanged",
@@ -123,7 +129,8 @@ func (s CreateSource) String() string { return enumName(s, sourceNames) }
 // DeathReason tells why a unit died.
 type DeathReason uint8
 
-// The death reasons.
+// The death reasons. ReasonOffCreep is a Larva off creep, ReasonCrushed a unit under a landing building
+// (Killer is the building) and ReasonBlocked a Siege Tank that sieges on a building.
 const (
 	ReasonOther DeathReason = iota
 	ReasonDamage
@@ -136,10 +143,14 @@ const (
 	ReasonDetonated
 	ReasonLinked
 	ReasonTrigger
+	ReasonOffCreep
+	ReasonCrushed
+	ReasonBlocked
 )
 
 var deathNames = []string{
 	"Other", "Damage", "Container", "Spell", "Cancelled", "Expired", "Depleted", "Removed", "Detonated", "Linked", "Trigger",
+	"OffCreep", "Crushed", "Blocked",
 }
 
 func (r DeathReason) String() string { return enumName(r, deathNames) }

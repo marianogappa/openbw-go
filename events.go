@@ -11,7 +11,8 @@ type Event interface {
 type EventBase struct {
 	// Seq is 1, 2, 3, ... in emission order within a game.
 	Seq int64
-	// Frame is the engine frame when the event fired.
+	// Frame is the engine frame when the event fired. A CommandResult has the frame of its command;
+	// the processing that follows the commands of frame F emits events with frame F+1.
 	Frame int32
 	// Cmd is the Action of the command that caused the event, or -1. It is set only when KindCommandResult is subscribed.
 	Cmd int32
@@ -36,6 +37,7 @@ type UnitCreated struct {
 }
 
 // UnitCompleted fires when a unit completes, once for each type it completes as.
+// An Archon or Dark Archon completes when its summon ends.
 type UnitCompleted struct {
 	EventBase
 	Unit  UnitID
@@ -53,7 +55,8 @@ type UnitMorphed struct {
 	Class    UnitClass
 }
 
-// MorphStarted fires when a Zerg morph is paid for.
+// MorphStarted fires when a Zerg morph or a refinery is paid for. For a Refinery, an Extractor or an
+// Assimilator, Unit is the Vespene Geyser and Morpher is the worker.
 type MorphStarted struct {
 	EventBase
 	Unit    UnitID
@@ -64,8 +67,9 @@ type MorphStarted struct {
 	Class   UnitClass
 }
 
-// UnitDestroyed fires when the engine decides that a unit dies.
-// A refinery death has Reverted set: the ID lives on as a neutral Vespene Geyser.
+// UnitDestroyed fires when the engine decides that a unit dies, once per unit life.
+// A refinery death has Reverted set: the ID lives on as a neutral Vespene Geyser, so a rebuilt refinery
+// with the same ID can die again.
 type UnitDestroyed struct {
 	EventBase
 	Unit   UnitID
@@ -73,12 +77,16 @@ type UnitDestroyed struct {
 	Owner  int8
 	X, Y   int32
 	Reason DeathReason
-	// Killer is the unit that killed it, 0 if none. KillerType is valid only when Killer is not 0.
-	Killer     UnitID
+	// Killer is the unit that dealt the killing damage, 0 if none. A Scarab's damage names the Reaver.
+	// A Spider Mine or a Scourge dies when it hits, so its kills have Killer 0 and only KillerOwner.
+	// With ReasonContainer, it is the killer of the Container.
+	Killer UnitID
+	// KillerType is UnitTypeNone when Killer is 0.
 	KillerType UnitType
-	// KillerOwner is -1 if unknown. It can be set when Killer is 0, for example Irradiate after the caster died.
+	// KillerOwner is the player who fired the attack, or -1 if unknown. It is set when the attack was fired,
+	// so it can differ from the Killer's current owner, and it can be set when Killer is 0.
 	KillerOwner int8
-	// KillerParent is the Carrier or Reaver when Killer is an Interceptor or a Scarab.
+	// KillerParent is the Carrier when Killer is an Interceptor.
 	KillerParent UnitID
 	// Container is the transport or Bunker when Reason is ReasonContainer.
 	Container UnitID
@@ -103,9 +111,9 @@ type ProductionCancelled struct {
 	Producer UnitID
 	Unit     UnitID
 	What     ProductionKind
-	// Type is valid when What is not ProductionResearch or ProductionUpgrade.
+	// Type is UnitTypeNone when What is ProductionResearch or ProductionUpgrade.
 	Type UnitType
-	// Research is valid when What is ProductionResearch or ProductionUpgrade.
+	// Research is NoResearch unless What is ProductionResearch or ProductionUpgrade.
 	Research Research
 	Why      CancelReason
 }
@@ -163,7 +171,7 @@ type CommandResult struct {
 	Outcome  Outcome
 	// Rejections are the engine's reasons for refusing the command or some of its units.
 	Rejections []Rejection
-	// Selection is the selection after a Select, Shift Select or Deselect, else the units the command acts on.
+	// Selection is the selection after a Select, Shift Select, Deselect or Hotkey recall, else the units the command acts on.
 	Selection []UnitID
 	// MissingTags counts Select and Shift Select tags that resolve to no unit.
 	MissingTags uint8
@@ -178,7 +186,9 @@ type Rejection struct {
 	Reason RejectReason
 }
 
-// Tick is emitted every Options.TickEvery frames, last in the frame.
+// Tick is emitted every Options.TickEvery frames, at the end of the processing half-step that makes
+// Frame. The CommandResults of the same Frame, and the events they cause, follow it.
+// State read at a Tick is the state that the commands of Frame see.
 type Tick struct{ EventBase }
 
 func (*UnitCreated) Kind() Kind         { return KindUnitCreated }

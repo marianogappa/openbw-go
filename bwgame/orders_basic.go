@@ -889,6 +889,9 @@ func (f *StateFunctions) startPlacedBuilding(u *Unit, unitType *UnitTypeT) {
 	var buildUnit *Unit
 	if unitType.ID == UnitTypesTerranRefinery {
 		buildUnit = f.buildRefinery(u, unitType)
+		if buildUnit != nil {
+			f.onMorphStarted(buildUnit, u, f.getUnitType(UnitTypesResourceVespeneGeyser), unitType)
+		}
 	} else {
 		buildUnit = f.createUnit(unitType, u.OrderTarget.Pos, u.Owner)
 		if buildUnit != nil {
@@ -1695,7 +1698,7 @@ func (f *StateFunctions) finishLanding(u *Unit) {
 			continue
 		}
 		if (!f.unitCanMove(n) && f.unitCanAttack(n)) || f.uBurrowed(n) {
-			f.killUnit(n)
+			f.killUnitWith(n, killedBy(ReasonCrushed, u))
 		}
 	}
 	if !u.OrderQueue.Empty() {
@@ -1924,7 +1927,7 @@ func (f *StateFunctions) startSieging(u *Unit, turret *Unit) (killed bool) {
 		if f.uNoCollide(n) {
 			continue
 		}
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonBlocked))
 		return true
 	}
 	return false
