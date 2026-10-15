@@ -45,6 +45,7 @@ func parseConfig() (config, []string, error) {
 	var cfg config
 	harnessPath := flag.String("harness", "tools/harness/harness", "C++ harness binary")
 	obwhashPath := flag.String("obwhash", "", "obwhash binary (default: build ./cmd/obwhash)")
+	obwhashArgs := flag.String("obwhash-args", "", "extra arguments for obwhash, for example \"-scr-rules\" (obwhash then reads the original replay)")
 	data := flag.String("data", "", "data directory passed to both engines")
 	flag.StringVar(&cfg.outDir, "out", filepath.Join(os.TempDir(), "openbw-difftest"), "directory for downgraded replays")
 	flag.IntVar(&cfg.maxFrames, "max-frames", -1, "stop both engines at this frame")
@@ -72,7 +73,7 @@ func parseConfig() (config, []string, error) {
 		*obwhashPath = built
 	}
 	cfg.harness = engine{name: "harness", path: *harnessPath, data: *data}
-	cfg.obwhash = engine{name: "obwhash", path: *obwhashPath, data: *data}
+	cfg.obwhash = engine{name: "obwhash", path: *obwhashPath, data: *data, extraArgs: strings.Fields(*obwhashArgs)}
 	args := flag.Args()
 	if *listPath != "" {
 		listed, err := readReplayList(*listPath)
@@ -164,14 +165,23 @@ func compareReplay(cfg config, replay string) bool {
 		fmt.Printf("  skipped: %v\n", err)
 		return false
 	}
-	a := cfg.harness.run(legacy, cfg.engineArgs(frameArgs(cfg.maxFrames))...)
-	b := cfg.obwhash.run(legacy, cfg.engineArgs(frameArgs(cfg.maxFrames))...)
+	inputs := replayInputs{harness: legacy, obwhash: legacy}
+	if cfg.obwhash.readsSCRSettings() {
+		inputs.obwhash = replay
+	}
+	a := cfg.harness.run(inputs.harness, cfg.engineArgs(frameArgs(cfg.maxFrames))...)
+	b := cfg.obwhash.run(inputs.obwhash, cfg.engineArgs(frameArgs(cfg.maxFrames))...)
 	frame, differs := firstDifferentFrame(a, b)
 	if !differs {
 		return reportMatch(cfg, a, b)
 	}
-	reportDifference(cfg, legacy, frame, a, b)
+	reportDifference(cfg, inputs, frame, a, b)
 	return false
+}
+
+type replayInputs struct {
+	harness string
+	obwhash string
 }
 
 func reportMatch(cfg config, a, b *runOutput) bool {
@@ -197,14 +207,14 @@ func reportMatch(cfg config, a, b *runOutput) bool {
 	return true
 }
 
-func reportDifference(cfg config, legacy string, frame int, a, b *runOutput) {
+func reportDifference(cfg config, inputs replayInputs, frame int, a, b *runOutput) {
 	fmt.Printf("  first different frame: %d\n", frame)
 	fmt.Printf("    %s: %s\n", cfg.harness.name, hashOrFailure(a, frame))
 	fmt.Printf("    %s: %s\n", cfg.obwhash.name, hashOrFailure(b, frame))
 	if frame > 0 {
-		printSnapshotAt(cfg, legacy, frame-1)
+		printSnapshotAt(cfg, inputs, frame-1)
 	}
-	printSnapshotAt(cfg, legacy, frame)
+	printSnapshotAt(cfg, inputs, frame)
 }
 
 func (cfg config) engineArgs(args []string) []string {
@@ -221,9 +231,9 @@ func hashOrFailure(out *runOutput, frame int) string {
 	return "no hash (" + out.describeFailure() + ")"
 }
 
-func printSnapshotAt(cfg config, legacy string, frame int) {
+func printSnapshotAt(cfg config, inputs replayInputs, frame int) {
 	args := []string{"-every", "1000000000", "-max-frames", fmt.Sprint(frame), "-dump-units", fmt.Sprint(frame)}
-	a := cfg.harness.run(legacy, cfg.engineArgs(args)...)
-	b := cfg.obwhash.run(legacy, cfg.engineArgs(args)...)
+	a := cfg.harness.run(inputs.harness, cfg.engineArgs(args)...)
+	b := cfg.obwhash.run(inputs.obwhash, cfg.engineArgs(args)...)
 	printSnapshotDiff(os.Stdout, frame, cfg.harness.name, cfg.obwhash.name, a, b, cfg.maxLines)
 }

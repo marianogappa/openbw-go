@@ -1,0 +1,90 @@
+--- a/bwgame.h
++++ b/bwgame.h
+@@ -299,14 +299,14 @@
+ 	object_container<unit_t, 1700, 17> units_container;
+ 
+ 	intrusive_list<bullet_t, default_link_f> active_bullets;
+-	object_container<bullet_t, 100, 10> bullets_container;
++	object_container<bullet_t, 400, 10> bullets_container;
+ 
+ 	a_vector<intrusive_list<sprite_t, default_link_f>> sprites_on_tile_line;
+-	object_container<sprite_t, 2500, 25> sprites_container;
+-
+-	object_container<image_t, 5000, 50> images_container;
++	object_container<sprite_t, 5000, 25> sprites_container;
+ 
+-	object_container<order_t, 2000, 20> orders_container;
++	object_container<image_t, 10000, 50> images_container;
++
++	object_container<order_t, 4000, 20> orders_container;
+ 
+ 	intrusive_list<path_t, default_link_f> free_paths;
+ 	a_list<path_t> paths;
+@@ -14539,7 +14539,7 @@
+ 			st.free_thingies.pop_front();
+ 			return r;
+ 		}
+-		if (st.thingies.size() >= 500) return nullptr;
++		if (st.thingies.size() >= 1000) return nullptr;
+ 		return &*st.thingies.emplace(st.thingies.end());
+ 	}
+ 
+@@ -16811,6 +16811,12 @@
+ 				break;
+ 			}
+ 		}
++	}
++
++	bool can_allocate_order(const unit_t* u, const order_type_t* order_type) const {
++		if (st.active_orders_size < 3600 && u->order_queue_count < 8) return true;
++		if (u->order_type->id == Orders::Die || u->order_type->id == Orders::ResetHarvestCollision) return true;
++		return u->order_queue_count >= 8 && u->order_type->id == Orders::ConstructingBuilding && order_type->id == Orders::ResetCollision;
+ 	}
+ 
+ 	void set_queued_order(unit_t* u, bool interrupt, const order_type_t* order_type, order_target_t target) {
+@@ -16821,6 +16827,7 @@
+ 			if ((!interrupt || !o->order_type->can_be_interrupted) && o->order_type != order_type) break;
+ 			remove_queued_order(u, o);
+ 		}
++		if (!can_allocate_order(u, order_type)) return;
+ 		if (order_type->id == Orders::Cloak) {
+ 			error("cloak fixme");
+ 		} else {
+@@ -16848,7 +16855,7 @@
+ 			}
+ 		}
+ 		if (queue) {
+-			if (u->order_queue_count < 8 && st.active_orders_size < 1800) {
++			if (u->order_queue_count < 8 && st.active_orders_size < 3600) {
+ 				queue_order_back(u, order_type, target);
+ 			}
+ 		} else {
+@@ -19560,10 +19567,10 @@
+ 	state_copier(const state&st, state& r) : st(st), r(r), funcs(r) {}
+ 
+ 	std::array<bool, 1700> unit_copied{};
+-	std::array<bool, 100> bullet_copied{};
+-	std::array<bool, 2500> sprite_copied{};
+-	std::array<bool, 5000> image_copied{};
+-	std::array<bool, 2000> order_copied{};
++	std::array<bool, 400> bullet_copied{};
++	std::array<bool, 5000> sprite_copied{};
++	std::array<bool, 10000> image_copied{};
++	std::array<bool, 4000> order_copied{};
+ 	unit_t* unit(const unit_t* v) {
+ 		size_t index = v->index;
+ 		auto* u = r.units_container.get(index, false);
+@@ -21392,8 +21399,11 @@
+ 					if (unit_type == UnitTypes::Special_Pit_Door) owner = 11;
+ 					if (unit_type == UnitTypes::Special_Right_Pit_Door) owner = 11;
+ 					if (use_map_settings || owner == 11) {
+-						create_initial_unit(get_unit_type(unit_type), xy(x, y), owner);
+-						if (flags & 0x80) error("disable thingy unit");
++						unit_t* u = create_initial_unit(get_unit_type(unit_type), xy(x, y), owner);
++						if (u && (flags & 0x80)) {
++							u_set_status_flag(u, unit_t::status_flag_disabled);
++							u_set_status_flag(u, unit_t::status_flag_no_collide);
++						}
+ 					}
+ 				}
+ 			}

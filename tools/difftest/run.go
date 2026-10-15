@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -31,12 +32,18 @@ func newRunOutput() *runOutput {
 }
 
 type engine struct {
-	name string
-	path string
-	data string
+	name      string
+	path      string
+	data      string
+	extraArgs []string
+}
+
+func (e engine) readsSCRSettings() bool {
+	return slices.Contains(e.extraArgs, "-scr-rules")
 }
 
 func (e engine) run(replay string, args ...string) *runOutput {
+	args = append(slices.Clone(e.extraArgs), args...)
 	if e.data != "" {
 		args = append([]string{"-data", e.data}, args...)
 	}
