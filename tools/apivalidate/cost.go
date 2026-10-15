@@ -1,9 +1,11 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -152,7 +154,10 @@ func measureThroughput(data *openbw.Data, paths []string, workers int) error {
 		}
 		replays[i] = replay
 	}
-	fmt.Printf("\nthroughput, %d games, %d workers, best of 2 rounds in alternating order\n", len(paths), workers)
+	if err := sortLongestFirst(data, replays); err != nil {
+		return err
+	}
+	fmt.Printf("\nthroughput, %d games, longest first, %d workers, best of 2 rounds in alternating order\n", len(paths), workers)
 	best := make([]throughputRun, len(costConfigs))
 	for _, i := range []int{0, 1, 2, 3, 3, 2, 1, 0} {
 		run := throughput(costConfigs[i], data, replays, workers)
@@ -185,4 +190,17 @@ func throughput(cfg costConfig, data *openbw.Data, replays [][]byte, workers int
 		return struct{}{}
 	})
 	return throughputRun{elapsed: time.Since(start), cpu: cpuTime() - startCPU, frames: frames.Load(), events: events.Load(), failed: failed.Load()}
+}
+
+func sortLongestFirst(data *openbw.Data, replays [][]byte) error {
+	endFrames := make(map[*byte]int32, len(replays))
+	for _, replay := range replays {
+		g, err := openbw.Open(replay, openbw.Options{Data: data, Kinds: openbw.NoKinds})
+		if err != nil {
+			return err
+		}
+		endFrames[&replay[0]] = g.EndFrame()
+	}
+	slices.SortStableFunc(replays, func(a, b []byte) int { return cmp.Compare(endFrames[&b[0]], endFrames[&a[0]]) })
+	return nil
 }
