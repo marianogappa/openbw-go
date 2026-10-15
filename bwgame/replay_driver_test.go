@@ -182,13 +182,13 @@ func TestDecompressCompressedLegacyReplay(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(got.gameInfo, want.GameInfo) {
-		t.Error("game info differs from screp")
+		t.Error("game info differs from downgrade.ReadUncompressedLegacy")
 	}
 	if !bytes.Equal(got.actions, want.Actions) {
-		t.Errorf("actions differ from screp: %d vs %d bytes", len(got.actions), len(want.Actions))
+		t.Errorf("actions differ from downgrade.ReadUncompressedLegacy: %d vs %d bytes", len(got.actions), len(want.Actions))
 	}
 	if !bytes.Equal(got.mapData, want.MapData) {
-		t.Errorf("map data differs from screp: %d vs %d bytes", len(got.mapData), len(want.MapData))
+		t.Errorf("map data differs from downgrade.ReadUncompressedLegacy: %d vs %d bytes", len(got.mapData), len(want.MapData))
 	}
 }
 

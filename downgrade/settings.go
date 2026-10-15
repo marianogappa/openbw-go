@@ -2,6 +2,7 @@ package downgrade
 
 import "encoding/binary"
 
+// ObjectLimits are the object pool sizes of a game (the SC:R LMTS section).
 type ObjectLimits struct {
 	Images      uint32
 	Sprites     uint32
@@ -12,6 +13,7 @@ type ObjectLimits struct {
 	FogSprites  uint32
 }
 
+// Legacy116Limits are the object pool sizes of 1.16.
 var Legacy116Limits = ObjectLimits{
 	Images:      5000,
 	Sprites:     2500,
@@ -22,14 +24,17 @@ var Legacy116Limits = ObjectLimits{
 	FogSprites:  500,
 }
 
+// GameConfig is the part of the SC:R GCFG section that selects engine rules.
 type GameConfig struct {
 	Build     uint32
 	Unknown10 uint8
 }
 
+// SCRSettings are the SC:R sections that change engine rules: LMTS, BFIX and GCFG.
 type SCRSettings struct {
-	Limits     ObjectLimits
-	BugFixes   [8]byte
+	Limits   ObjectLimits
+	BugFixes [8]byte
+	// GameConfig is nil when the replay has no GCFG section.
 	GameConfig *GameConfig
 }
 
@@ -42,10 +47,12 @@ const (
 	flyingSCVFixMinBuild      = 9713
 )
 
+// LegacySettings are the settings of a legacy replay: the 1.16 limits.
 func LegacySettings() SCRSettings {
 	return SCRSettings{Limits: Legacy116Limits}
 }
 
+// ReadSCRSettings reads the settings of a replay; a legacy replay gives LegacySettings.
 func ReadSCRSettings(rep []byte) (SCRSettings, error) {
 	src, err := readSourceSections(rep)
 	if err != nil {
@@ -83,6 +90,7 @@ func parseGameConfig(data []byte) *GameConfig {
 	}
 }
 
+// OrderAllocationRule tells if the game uses the SC:R order allocation rule.
 func (s SCRSettings) OrderAllocationRule() bool {
 	if s.BugFixes[0]&orderAllocationFixBit != 0 {
 		return true
@@ -93,10 +101,12 @@ func (s SCRSettings) OrderAllocationRule() bool {
 	return s.GameConfig.Unknown10 != legacyGameConfigUnknown10 || s.GameConfig.Build > orderAllocationMinBuild
 }
 
+// FlyingSCVFix tells if the game has the SC:R fix for flying SCVs.
 func (s SCRSettings) FlyingSCVFix() bool {
 	return s.OrderAllocationRule() && s.GameConfig != nil && s.GameConfig.Build >= flyingSCVFixMinBuild
 }
 
+// OrderSupplyLowThreshold is 90% of the order limit.
 func (s SCRSettings) OrderSupplyLowThreshold() uint32 {
 	return s.Limits.Orders * 9 / 10
 }

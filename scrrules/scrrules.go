@@ -5,6 +5,8 @@ import (
 	"github.com/marianogappa/openbw-go/downgrade"
 )
 
+// FromSettings gives the rules for settings: the object limits, disabled THG2 units, the order
+// allocation rule and the flying SCV fix.
 func FromSettings(settings downgrade.SCRSettings) bwgame.Rules {
 	return bwgame.Rules{
 		Limits: bwgame.ObjectLimits{

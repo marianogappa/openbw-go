@@ -30,6 +30,7 @@ const (
 	idSelectRemove121  byte = 0x65
 )
 
+// The reasons why the downgrade drops a command.
 const (
 	ReasonUnsupported        = "not read by OpenBW"
 	ReasonUnknownLength      = "unknown command, rest of frame block skipped"
@@ -71,12 +72,14 @@ var legacyIDOf121 = map[byte]byte{
 	idSelectRemove121:  idSelectRemove,
 }
 
+// DroppedCommand is a command of the input replay that the legacy replay leaves out.
 type DroppedCommand struct {
 	ID       byte
 	Frame    uint32
 	PlayerID byte
 	Count    int
-	Reason   string
+	// Reason is one of the Reason constants.
+	Reason string
 }
 
 func isSelection(id byte) bool {
@@ -121,12 +124,16 @@ type command struct {
 	payload  []byte
 }
 
+// SourceCommand is one command of the input replay.
 type SourceCommand struct {
-	Frame      uint32
-	PlayerID   byte
-	ID         byte
-	Position   int
-	Action     int32
+	Frame    uint32
+	PlayerID byte
+	ID       byte
+	// Position is the index of the command within its frame.
+	Position int
+	// Action is the index of the command in the legacy replay's action stream, or -1 if it is dropped.
+	Action int32
+	// DropReason is one of the Reason constants, or "".
 	DropReason string
 }
 
@@ -374,6 +381,7 @@ func (t *commandTranslator) drop(frame uint32, playerID, id byte, reason string)
 	t.dropped = append(t.dropped, DroppedCommand{ID: id, Frame: frame, PlayerID: playerID, Count: 1, Reason: reason})
 }
 
+// LegacyUnitTag maps a 1.21 unit tag to the 1.16 tag that the downgraded commands carry.
 func LegacyUnitTag(tag121 uint32) uint16 {
 	return legacyUnitTag(tag121)
 }

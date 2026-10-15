@@ -8,6 +8,7 @@ import (
 
 var errCompressedSegment = errors.New("compressed segment")
 
+// LegacyReplay is the sections of a legacy replay.
 type LegacyReplay struct {
 	GameInfo []byte
 	Actions  []byte
@@ -97,6 +98,7 @@ func (r *replayFileReader) getSizedSection() ([]byte, error) {
 	return r.getBytes(int(size))
 }
 
+// ReadUncompressedLegacy reads a legacy replay whose sections Downgrade wrote.
 func ReadUncompressedLegacy(data []byte) (LegacyReplay, error) {
 	r := &replayFileReader{data: data}
 	var rep LegacyReplay

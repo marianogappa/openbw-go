@@ -1,12 +1,16 @@
 package downgrade
 
+// Report tells what the downgrade did with a replay.
 type Report struct {
+	// SourceFormat is the input format; see SourceFormat.
 	SourceFormat string
 	Dropped      []DroppedCommand
-	Changes      []string
-	SCRSettings  SCRSettings
+	// Changes describe the edits to the game info and the map, one per line.
+	Changes     []string
+	SCRSettings SCRSettings
 }
 
+// DroppedByID counts the dropped commands by command ID.
 func (r Report) DroppedByID() map[byte]int {
 	counts := map[byte]int{}
 	for _, d := range r.Dropped {
@@ -15,6 +19,7 @@ func (r Report) DroppedByID() map[byte]int {
 	return counts
 }
 
+// DroppedCount is the number of dropped commands.
 func (r Report) DroppedCount() int {
 	total := 0
 	for _, d := range r.Dropped {
@@ -23,6 +28,7 @@ func (r Report) DroppedCount() int {
 	return total
 }
 
+// Downgrade converts a replay (SC:R or legacy) into the bytes of a legacy replay.
 func Downgrade(scr []byte) (legacy []byte, report Report, err error) {
 	src, err := readSourceSections(scr)
 	if err != nil {
@@ -32,13 +38,17 @@ func Downgrade(scr []byte) (legacy []byte, report Report, err error) {
 	return legacy, report, err
 }
 
+// Prepared is a replay ready for the engine.
 type Prepared struct {
+	// Loadable is a legacy replay: the input itself when it is legacy.
 	Loadable []byte
 	Settings SCRSettings
 	Report   Report
+	// Commands are the commands of the input replay, in stream order.
 	Commands []SourceCommand
 }
 
+// Prepare downgrades a replay for the engine and indexes its commands.
 func Prepare(replay []byte) (*Prepared, error) {
 	src, err := readSourceSections(replay)
 	if err != nil {
@@ -60,6 +70,7 @@ func Prepare(replay []byte) (*Prepared, error) {
 	return &Prepared{Loadable: legacy, Settings: report.SCRSettings, Report: report, Commands: commands}, nil
 }
 
+// PrepareForOpenBW is Prepare that returns only the loadable replay and the settings.
 func PrepareForOpenBW(rep []byte) (loadable []byte, settings SCRSettings, err error) {
 	prepared, err := Prepare(rep)
 	if err != nil {
