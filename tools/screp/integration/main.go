@@ -35,7 +35,7 @@ func parseFlags() config {
 	flag.StringVar(&cfg.replayDir, "replays", "", "directory with SC:R replays (searched recursively)")
 	flag.StringVar(&cfg.outDir, "out", "", "directory for downgraded replays, raw outputs and results.json")
 	flag.StringVar(&cfg.harnessPath, "harness", "tools/harness/harness", "path to the tools/harness binary")
-	flag.StringVar(&cfg.probePath, "probe", "tools/integration/probe/probe", "path to the tools/integration probe binary")
+	flag.StringVar(&cfg.probePath, "probe", "tools/screp/integration/probe/probe", "path to the tools/screp/integration probe binary")
 	flag.StringVar(&cfg.dataDir, "data", defaultDataDir(), "game data directory")
 	flag.IntVar(&cfg.count, "n", 30, "number of replays to pick")
 	flag.IntVar(&cfg.longCount, "long", 4, "number of the longest games to include")

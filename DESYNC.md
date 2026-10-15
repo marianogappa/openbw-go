@@ -227,8 +227,8 @@ Without Pole Star: 87 → 59 desynced of 1,220. 28 replays change from desynced 
   - `-watch <index>` traces one unit's order, state, position and hatchery larva timer. `-near <radius>` lists other players' units near the first watched unit. `-visible-list` prints changes in `visible_units` around the first watched unit.
   - Counterfactuals: `-rng <frame> <steps>` moves `lcg_rand`. `-drop <frame> <slot>` runs that slot's commands with an empty selection. `-starve <frame> <slot>` runs them with 0 minerals and gas. `-minerals <frame> <slot> <delta>` changes minerals. `-build-time <frame> <index> <delta>` changes a unit's remaining build time.
 - `check.sh <openbw> <out> <replays...>` builds the tracer against an OpenBW copy and writes `name first_inconsistent count end_frame` for each replay, in parallel.
-- `variant.sh <openbw> <out> [integration flags]` runs `tools/integration` with harness and probe built against an OpenBW copy.
-- `collect` downgrades SC:R replays filtered by map, race and length into `.116.rep` files, for example `go run ./tools/desync/collect -replays <dir> -out <dir> -map "Pole Star" -n 30`.
+- `variant.sh <openbw> <out> [integration flags]` runs `tools/screp/integration` with harness and probe built against an OpenBW copy.
+- `collect` downgrades SC:R replays filtered by map, race and length into `.116.rep` files, for example `go run ./tools/desync/collect -replays <dir> -out <dir> -map "Pole Star" -n 30`. It reads the map, races and length from the engine's `Header`, so it needs the game data (`-data` or `$OPENBW_DATA`).
 - `gotags [-scr-rules] <replays...>` runs the tag test on the Go engine, in parallel, and prints `name first_inconsistent count=<n> end_frame` (or `name error ...`). It reads SC:R replays directly.
 - `thg2inject in.rep out.rep` adds disabled Pit Doors to the `THG2` chunk of a 1.21 SC:R replay's map: one at the map centre and two on the way to each start location.
 - `mapinfo <legacy.rep>` lists CHK chunks, `UNIT` entries (type, owner, position, resources, property and flag masks, HP%), `THG2` entries with the disabled flag, the tileset, and the number of MTXM/TILE differences.

@@ -1,6 +1,6 @@
 CXX ?= clang++
 CXXFLAGS ?= -std=c++17 -O2 -Wall
-OPENBW ?= ../../../ref/openbw
+OPENBW ?= ../../../../ref/openbw
 
 probe: probe.cpp
 	$(CXX) $(CXXFLAGS) -isystem $(OPENBW) -o $@ probe.cpp

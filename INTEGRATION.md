@@ -14,18 +14,18 @@ A wider sample with the same tool (98 replays) gives 84 clean, 4 suspicious, 9 d
 ## How to run
 
 ```
-tools/integration/run.sh                       # the 30-replay set below
-tools/integration/run.sh -n 200 -long 30       # the 98-replay wide sample
-tools/integration/run.sh -race T -from 2026-01-01 -to 2026-03-15 -long 0 -n 60
+tools/screp/integration/run.sh                       # the 30-replay set below
+tools/screp/integration/run.sh -n 200 -long 30       # the 98-replay wide sample
+tools/screp/integration/run.sh -race T -from 2026-01-01 -to 2026-03-15 -long 0 -n 60
 ```
 
-`run.sh` builds `tools/harness/harness` and `tools/integration/probe/probe`, then runs `go run ./tools/integration`. It prints the Markdown tables below. `OUT` (default `$TMPDIR/openbw-integration`) gets the downgraded replays, the raw harness and probe output and `results.json`.
+The tool is in the `tools/screp` module, because it uses screp. `run.sh` builds `tools/harness/harness`, `tools/screp/integration/probe/probe` and the tool, then runs it on `$REPLAYS` (default `$OPENBW_REPLAYS/cwalggdl`). It prints the Markdown tables below. `OUT` (default `$TMPDIR/openbw-integration`) gets the downgraded replays, the raw harness and probe output and `results.json`.
 
 For each replay the tool:
 
 1. Downgrades it in-process with `downgrade.Downgrade`.
 2. Runs `tools/harness/harness` to the end: load, end frame, `action_fails`, final per-player state.
-3. Runs `tools/integration/probe/probe` (a second program on unmodified OpenBW) for desync evidence:
+3. Runs `tools/screp/integration/probe/probe` (a second program on unmodified OpenBW) for desync evidence:
    - units each player actually made, per type (completed units seen by index, generation and type);
    - why each Train, Build, Unit Morph and Building Morph was rejected: `no_unit`/`cannot_build` (the selection cannot do it) or `resources`/`supply`/`queue`/`already_morphing` (normal spam);
    - every selected or targeted unit tag that does not exist in the engine (`missing_tag` on stderr);

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"slices"
@@ -13,22 +11,23 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/icza/screp/rep/repcmd"
-	"github.com/icza/screp/repparser"
 )
 
 const (
-	defaultReplayDir     = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl"
 	defaultReplaysPerDir = 4
 	minimumSampleCount   = 50
 )
 
-func replayDir() string {
-	if dir := os.Getenv("DOWNGRADE_REPLAY_DIR"); dir != "" {
-		return dir
+func testReplayPath(name string) string {
+	dir := os.Getenv("OPENBW_REPLAYS")
+	if dir == "" {
+		dir = "../testdata/replays"
 	}
-	return defaultReplayDir
+	return filepath.Join(dir, name)
+}
+
+func replayDir() string {
+	return testReplayPath("cwalggdl")
 }
 
 func replaysPerDirectory() int {
@@ -186,9 +185,6 @@ func checkDowngrade(data []byte) (sampleResult, error) {
 	if err := checkGameInfoKept(data, legacy.GameInfo); err != nil {
 		return result, err
 	}
-	if err := checkActionsMatchScrep(data, parsed, slotIDs); err != nil {
-		return result, err
-	}
 	if err := checkRoundTrip(out); err != nil {
 		return result, err
 	}
@@ -240,97 +236,6 @@ func checkRoundTrip(legacy []byte) error {
 	}
 	if !bytes.Equal(again, legacy) {
 		return fmt.Errorf("round trip changed the replay")
-	}
-	return nil
-}
-
-func screpCommands(data []byte) ([]repcmd.Cmd, error) {
-	r, err := repparser.ParseConfig(data, repparser.Config{Commands: true, Logger: log.New(io.Discard, "", 0)})
-	if err != nil {
-		return nil, err
-	}
-	return r.Commands.Cmds, nil
-}
-
-func asParsedAction(cmd repcmd.Cmd) parsedAction {
-	base := cmd.BaseCmd()
-	return parsedAction{frame: uint32(base.Frame), playerID: base.PlayerID, id: screpLegacyID(cmd), fields: screpFields(cmd)}
-}
-
-func screpUnitIndex(cmd repcmd.Cmd, tag repcmd.UnitTag) uint16 {
-	if _, is121 := legacyIDOf121[cmd.BaseCmd().Type.ID]; !is121 {
-		return uint16(tag) & 0x7ff
-	}
-	index := uint16(tag) & 0x1fff
-	switch {
-	case index == 1:
-		return 1
-	case index > 1700 && index <= 3400:
-		return index - 1700
-	}
-	return 0
-}
-
-func screpFields(cmd repcmd.Cmd) string {
-	switch c := cmd.(type) {
-	case *repcmd.SelectCmd:
-		indexes := make([]uint16, len(c.UnitTags))
-		for i, tag := range c.UnitTags {
-			indexes[i] = screpUnitIndex(cmd, tag)
-		}
-		return fmt.Sprint(indexes)
-	case *repcmd.RightClickCmd:
-		return fmt.Sprint(c.Pos.X, c.Pos.Y, screpUnitIndex(cmd, c.UnitTag), c.Unit.ID, c.Queued)
-	case *repcmd.TargetedOrderCmd:
-		return fmt.Sprint(c.Pos.X, c.Pos.Y, screpUnitIndex(cmd, c.UnitTag), c.Unit.ID, c.Order.ID, c.Queued)
-	case *repcmd.UnloadCmd:
-		return fmt.Sprint(screpUnitIndex(cmd, c.UnitTag))
-	}
-	return ""
-}
-
-func screpLegacyID(cmd repcmd.Cmd) byte {
-	id := cmd.BaseCmd().Type.ID
-	if id == repcmd.VirtualTypeIDLand {
-		return repcmd.TypeIDBuild
-	}
-	if legacyID, is121 := legacyIDOf121[id]; is121 {
-		return legacyID
-	}
-	return id
-}
-
-func keptByOpenBW(action parsedAction, cmd repcmd.Cmd, slotIDs [slotCount]uint32) bool {
-	if !openBWReadableIDs[action.id] || !slices.Contains(slotIDs[:], uint32(action.playerID)) {
-		return false
-	}
-	switch c := cmd.(type) {
-	case *repcmd.SelectCmd:
-		return len(c.UnitTags) <= maxSelectionCount
-	case *repcmd.HotkeyCmd:
-		return c.Group >= controlGroupCount || c.HotkeyType.ID <= maxControlGroupSubaction
-	}
-	return true
-}
-
-func checkActionsMatchScrep(original []byte, got []parsedAction, slotIDs [slotCount]uint32) error {
-	cmds, err := screpCommands(original)
-	if err != nil {
-		return err
-	}
-	var want []parsedAction
-	for _, cmd := range cmds {
-		if action := asParsedAction(cmd); keptByOpenBW(action, cmd, slotIDs) {
-			want = append(want, action)
-		}
-	}
-	if len(want) != len(got) {
-		return fmt.Errorf("screp keeps %d commands, output has %d", len(want), len(got))
-	}
-	for i := range want {
-		if want[i] != got[i] {
-			return fmt.Errorf("command %d: screp %+v, output %+v", i, want[i], got[i])
-		}
 	}
 	return nil
 }

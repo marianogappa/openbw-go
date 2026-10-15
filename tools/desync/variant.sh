@@ -11,10 +11,11 @@ out=$2
 shift 2
 
 repo_root=$(cd "$(dirname "$0")/../.." && pwd)
-replays=${REPLAYS:-$HOME/Code/go/src/github.com/marianogappa/cwalggdl}
+replays=${REPLAYS:-${OPENBW_REPLAYS:-$repo_root/testdata/replays}/cwalggdl}
 mkdir -p "$out/bin"
 
 c++ -std=c++17 -O2 -w -isystem "$openbw" -o "$out/bin/harness" "$repo_root/tools/harness/main.cpp"
-c++ -std=c++17 -O2 -w -isystem "$openbw" -o "$out/bin/probe" "$repo_root/tools/integration/probe/probe.cpp"
+c++ -std=c++17 -O2 -w -isystem "$openbw" -o "$out/bin/probe" "$repo_root/tools/screp/integration/probe/probe.cpp"
+go -C "$repo_root/tools/screp" build -o "$out/bin/integration" ./integration
 cd "$repo_root"
-go run ./tools/integration -replays "$replays" -out "$out" -harness "$out/bin/harness" -probe "$out/bin/probe" "$@"
+"$out/bin/integration" -replays "$replays" -out "$out" -harness "$out/bin/harness" -probe "$out/bin/probe" "$@"

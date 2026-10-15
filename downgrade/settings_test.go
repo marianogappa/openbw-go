@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const settingsSampleReplay = defaultReplayDir + "/replays/30-llIlIlIIIIIlII1/MM-0CF890C4-160B-11F1-A3DD-FA167B5461B6.rep"
+var settingsSampleReplay = testReplayPath("cwalggdl/replays/30-llIlIlIIIIIlII1/MM-0CF890C4-160B-11F1-A3DD-FA167B5461B6.rep")
 
 var scrSampleLimits = ObjectLimits{Images: 10000, Sprites: 5000, LoneSprites: 1000, Units: 3400, Bullets: 400, Orders: 4000, FogSprites: 1000}
 
