@@ -1,47 +1,75 @@
 # openbw-go
 
-A pure Go port of the [OpenBW](https://github.com/OpenBW/openbw) StarCraft: Brood War engine.
+A pure Go port of the [OpenBW](https://github.com/OpenBW/openbw) StarCraft: Brood War engine, with a library that plays replays and streams what the engine knows as Go values.
 
-A library that runs the game engine on a replay and streams what the engine knows as Go values: unit lifecycles with killers, owner changes, production, research, player results, what the engine did with each command, and the live state of units and players. It writes no files and does no analysis; it is a foundation for tools that do.
+Replay parsers such as [screp](https://github.com/icza/screp) tell you what each player clicked. The engine tells you what happened: which units were made and when they finished, who killed what, which commands the engine refused and why, and the live state of every unit and player. The library writes no files and does no analysis; it is a foundation for tools that do.
 
-Status: the engine matches C++ OpenBW bit for bit. See [API.md](API.md) for the API, [DESIGN.md](DESIGN.md) for the layers and [API_VALIDATION.md](API_VALIDATION.md) for the validation on 210 replays.
+- Package `openbw` (this module's root): open a replay, range over typed events, read live state between them. See [API.md](API.md).
+- Package `bwgame`: the engine port, for low-level use. No stability promise.
+- Package `downgrade`: turns SC:R replays into legacy (1.16) replays in memory, so the engine can play both.
+- [screpsim](https://github.com/marianogappa/screpsim) joins the engine facts to screp's own commands, players and unit tags.
 
-## Usage
+## Status
 
-The engine only runs as far as you read:
+The engine is complete and plays SC:R and legacy replays to the end. The API is young: expect changes before v1.
 
-```go
-import openbw "github.com/marianogappa/openbw-go"
+### Accuracy against C++ OpenBW
 
-g, err := openbw.Open(replay, openbw.Options{
-	Kinds:    openbw.KindUnitDestroyed | openbw.KindCommandResult,
-	MaxFrame: 10 * 60 * 24,
-})
-if err != nil {
-	return err
-}
-for e := range g.Events() {
-	switch e := e.(type) {
-	case *openbw.UnitDestroyed:
-		fmt.Println(e.Frame, e.Type, "killed by", e.KillerType)
-	case *openbw.CommandResult:
-		if e.Outcome == openbw.Rejected {
-			fmt.Println(e.Frame, "player", e.Owner, "minerals", g.Player(e.Owner).Minerals, "rejected:", e.Rejections)
-		}
-	}
-}
-return g.Err()
-```
+The Go engine is bit for bit equal to C++ OpenBW at commit `4b046d5`. [tools/difftest](tools/difftest) compares a hash of the full engine state after every frame with a C++ harness:
 
-The API speaks engine terms: player slots, action indexes and unit IDs. `g.Header()` has the replay's game info, and `g.SourceCommands()` maps the replay's command stream to the engine's actions. To join the engine's facts to [screp](https://github.com/icza/screp)'s commands, players and unit tags, use [screpsim](https://github.com/marianogappa/screpsim).
+- 20 of 20 replays equal in default mode ([tools/difftest/replays.txt](tools/difftest/replays.txt)).
+- 20 of 20 equal with SC:R rules against a C++ OpenBW with the same rules ([tools/scrharness](tools/scrharness)).
+- The desync investigation repeats both checks on about 100 more replays, with the same result ([docs/desync.md](docs/desync.md)).
 
-Inside the loop, `g.Unit`, `g.Units` and `g.Player` read the live state. `break` stops early; a new `range g.Events()` continues. `Options.TickEvery` adds a `Tick` event every N frames for sampling state. `Options.Hooks` adds raw engine hooks, and `g.Engine()` gives the engine itself. See [example_test.go](example_test.go).
+### Accuracy against SC:R
 
-The game data comes from `$OPENBW_DATA`, or from `openbw.LoadData(dir)` passed as `Options.Data`. One `Data` is safe to share between games running in parallel.
+OpenBW is a reimplementation of the 1.16 engine. SC:R (Remastered) has a few gameplay differences, and a replay only plays correctly when the engine follows them. By default (`RulesAuto`), SC:R replays run with the SC:R rules that [docs/desync.md](docs/desync.md) found: larger object limits (the bullet limit matters in big fights), disabled map doors on Pole Star 1.1 and the SC:R order allocation rule.
+
+A desynced game shows itself in the command stream: players select units that do not exist in the engine. On all 1,462 distinct Terran games of a sample of 2,934 SC:R 1v1 replays ([docs/desync.md](docs/desync.md)):
+
+| | OpenBW rules | SC:R rules |
+|---|---|---|
+| Plays in sync | 1,133 (77%) | 1,401 (96%) |
+| Desyncs | 87 | 61, of which 45 on one map (Attitude 1.0) |
+| Does not load (Pole Star 1.1) | 242 | 0 |
+
+Games without a Terran desync less often: about 2% with OpenBW rules ([docs/integration.md](docs/integration.md)). The cause of the remaining desyncs is not known.
+
+### API validation
+
+[tools/apivalidate](tools/apivalidate) checks the event stream against the engine on 210 replays (SC:R and legacy, 1v1 and team): unit lifecycles, event fields, alive units and completed state at checkpoints, one command result per engine action, the same engine state as a plain engine run, and determinism under parallel runs. All checks pass. See [docs/api-validation.md](docs/api-validation.md).
+
+## Performance
+
+Apple M4 Pro (8 performance and 4 efficiency cores), Go 1.27. One game runs at about 10,500 frames per second on one core, so a 15-minute game (21,600 frames) takes about 2 seconds. The event stream costs less than the measurement noise.
+
+Games are independent, so run several in parallel. Scaling, with every worker playing the same 12 replays ([tools/apivalidate](tools/apivalidate) `-mode scaling`):
+
+| Workers | Frames/s | Speedup | Per worker |
+|---|---|---|---|
+| 1 | 10,566 | 1.00x | 100% |
+| 2 | 20,756 | 1.96x | 98% |
+| 4 | 40,150 | 3.80x | 95% |
+| 6 | 58,813 | 5.57x | 93% |
+| 8 | 71,493 | 6.77x | 85% |
+| 10 | 77,409 | 7.33x | 73% |
+| 12 | 80,052 | 7.58x | 63% |
+
+What limits it is the hardware, not the library:
+
+- **Performance cores.** Up to 8 workers, each one gets a performance core. Workers 9 to 12 run on the efficiency cores and add 12% in total.
+- **Memory.** Each game has about 4 MB of live engine state that it reads and writes every frame. At 8 workers the per-worker speed drops by 15%; a compute-only loop drops by 2.5% on the same cores, so the rest is the shared caches and memory.
+- **Not Go.** Separate processes scale the same as goroutines (8.9k frames/s each at 8, 6.7k at 12). The garbage collector uses 0.1% of the CPU, and `GOGC`, `GOMAXPROCS` and preemption settings change nothing measurable. The shared `Data` is read-only, so there is no false sharing.
+
+**Recommended worker count: the number of performance cores** (`sysctl -n hw.perflevel0.physicalcpu` on Apple silicon; on a CPU with one core type, `runtime.NumCPU()`). More workers add little throughput and make each game slower. One `Data` serves all workers; each `Game` belongs to one goroutine.
+
+For a batch, start the longest replays first (`Game.EndFrame` after `Open`, or the file size). A long 8-player game can take 40 seconds alone; at the end of the queue it leaves the other cores idle. On the 210-replay validation set with 8 workers, longest first takes 49 s instead of 74 s ([docs/api-validation.md](docs/api-validation.md)).
 
 ## Game data
 
-The engine needs Blizzard data files. They are not in this repository. Put them in `testdata/bwdata/` (git-ignored) or set `OPENBW_DATA`:
+The engine needs the game data files of StarCraft: Brood War. This repository does not include them, and you need your own copy of the game. [tools/bwdata-export](tools/bwdata-export) extracts them from a StarCraft: Remastered install into `testdata/bwdata`, which is git-ignored.
+
+Pass the folder to `openbw.LoadData`, or set `OPENBW_DATA`. The files are the classic (SD) ones, with lowercase paths:
 
 ```
 arr/{units,weapons,upgrades,techdata,flingy,sprites,images,orders}.dat
@@ -52,55 +80,94 @@ unit/**/*.grp, unit/**/*.lo?   (every file that arr/images.tbl names)
 tileset/{badlands,platform,install,ashworld,jungle,desert,ice,twilight}.{cv5,vf4}
 ```
 
-All paths are lowercase. The loader converts each requested path with `strings.ToLower(strings.ReplaceAll(p, "\\", "/"))`.
-
-These are the classic (SD) files from an SC:R install. To extract them again, use [tools/bwdata-export](tools/bwdata-export): it needs [CascLib](https://github.com/ladislav-zezula/CascLib) and SC:R installed.
-
-## Reference source
-
-`ref/openbw` is a git-ignored clone of OpenBW at commit `4b046d5` (2026-08-13), the latest upstream. The C++ tools (`tools/harness`, `tools/scrharness`, `tools/screp/integration/probe`) build against it.
-
-## Tests and tools
-
-Tests read the game data from `$OPENBW_DATA` (default `testdata/bwdata`) and replays from `$OPENBW_REPLAYS` (default `testdata/replays`). Both defaults are git-ignored, and tests skip when the files are missing. Replay paths in tests and in the `replays.txt` lists are relative to `$OPENBW_REPLAYS`, for example `cwalggdl/replays-cwal-dl/...` (cwal.gg SC:R 1v1 replays) and `scmapanalyzer/replays/...` (team and older replays).
-
-The tools in `tools/` are part of this module and use no replay parser. The tools that compare with [screp](https://github.com/icza/screp) are a separate module in [tools/screp](tools/screp), so this module's `go.mod` does not require screp:
-
-- `tools/screp/integration`: the end-to-end run in [INTEGRATION.md](INTEGRATION.md). It uses screp's command analysis.
-- `tools/screp/downgradecheck`: a test that compares each downgraded command with screp's parse of the original replay.
+## Quick start
 
 ```
-go -C tools/screp test ./...
+go get github.com/marianogappa/openbw-go
 ```
 
-The check that every screp command has exactly one command result is in screpsim (`tools/linkcheck`).
+```go
+package main
 
-## SC:R replays
+import (
+	"fmt"
+	"log"
+	"os"
 
-`cmd/obwhash` loads SC:R replays directly: it downgrades them in memory with `downgrade.PrepareForOpenBW`. Legacy replays load unchanged.
+	openbw "github.com/marianogappa/openbw-go"
+)
 
-`downgrade.ReadSCRSettings` reads the SC:R object limits (`LMTS`), bug fixes (`BFIX`) and build (`GCFG`). Legacy replays get the 1.16 defaults. See [downgrade/README.md](downgrade/README.md).
+func main() {
+	data, err := openbw.LoadData(os.Getenv("OPENBW_DATA"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	replay, err := os.ReadFile(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	g, err := openbw.Open(replay, openbw.Options{
+		Data:  data,
+		Kinds: openbw.KindUnitDestroyed | openbw.KindCommandResult,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for e := range g.Events() {
+		switch e := e.(type) {
+		case *openbw.UnitDestroyed:
+			fmt.Println(e.Frame, e.Type, "killed by", e.KillerType)
+		case *openbw.CommandResult:
+			if e.Outcome == openbw.Rejected {
+				fmt.Println(e.Frame, "player", e.Owner, "minerals", g.Player(e.Owner).Minerals, "rejected:", e.Rejections)
+			}
+		}
+	}
+	if err := g.Err(); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+The engine runs only as far as you read. `break` stops early, and a new `range g.Events()` continues. `g.Unit`, `g.Units` and `g.Player` read the live state inside the loop. `Options.TickEvery` adds a `Tick` event every N frames for sampling state, and `Options.MaxFrame` stops at a frame. `g.Header()` has the replay's game info, and `g.SourceCommands()` maps the replay's commands to the engine's actions.
+
+More: [API.md](API.md) (the whole API and its design decisions), [example_test.go](example_test.go) and the [package documentation](https://pkg.go.dev/github.com/marianogappa/openbw-go).
 
 ## SC:R rules
 
-`bwgame.GameState.Rules` selects the engine rules. Set it before the replay loads. The zero value and `bwgame.DefaultRules()` give exact OpenBW behaviour. `scrrules.FromSettings(settings)` gives the SC:R rules for a replay's `downgrade.SCRSettings`:
+`Options.Rules` selects the engine rules. `RulesAuto` (the default) uses the replay's SC:R settings (`LMTS`, `BFIX`, `GCFG`) for SC:R replays, and exact OpenBW behaviour for legacy replays. `RulesOpenBW` forces exact OpenBW behaviour. `Game.Info().Rules` tells which rules a game runs with.
 
-- Object limits from `LMTS`: bullets, sprites, images, orders and lone sprites (thingies). The "order supply low" threshold is 90% of the order limit. Only the pool sizes change. The free-list order stays the same.
-- Disabled `THG2` units (Pole Star 1.1 doors): the engine creates them and sets the disabled and no-collide status flags. Default rules stop with `disable thingy unit`, as OpenBW does.
-- The `BFIX`/`GCFG` order allocation rule and the flying SCV fix in `set_queued_order`. See [DESYNC.md](DESYNC.md).
+- Object limits from `LMTS`: bullets, sprites, images, orders and lone sprites. Only the pool sizes change; the allocation order stays the same.
+- Disabled `THG2` units (the Pole Star 1.1 doors): the engine creates them disabled and without collision. OpenBW stops with `disable thingy unit`.
+- The `BFIX`/`GCFG` order allocation rule and the flying SCV fix.
 
-The unit limit stays 1700, also with SC:R rules. An OpenBW `unit_id` has an 11-bit index, and `downgrade` maps the 1.21 unit indexes 1,701-3,400 to 1-1,700 on the assumption of a 1,700-unit array. A 3,400-unit array gives the same allocation order while fewer than 1,700 units exist, and no game in the sample comes close.
+The unit limit stays 1,700. `downgrade` maps the 1.21 unit indexes to 1.16 tags on that assumption, and no game in the samples comes close. Details: [docs/desync.md](docs/desync.md) and [downgrade/README.md](downgrade/README.md).
 
-`obwhash -scr-rules` runs the game with the replay's settings and prints them to stderr. Without the flag, the engine stays bit-for-bit identical to C++ OpenBW.
+## Development
 
-[tools/scrharness](tools/scrharness) builds a C++ harness from a patched OpenBW with the same rules. Compare the two engines with:
+Tests read the game data from `$OPENBW_DATA` (default `testdata/bwdata`) and replays from `$OPENBW_REPLAYS` (default `testdata/replays`). Both defaults are git-ignored, and tests that need the files skip when they are missing, so `go test ./...` passes on a fresh clone. Replay paths in tests and in the `replays.txt` lists are relative to `$OPENBW_REPLAYS`; the lists use SC:R 1v1 replays from [cwal.gg](https://cwal.gg) and older team replays.
 
 ```
+go test ./...
+go run ./tools/difftest -out $TMPDIR/difftest -list tools/difftest/replays.txt
 tools/scrharness/build.sh $TMPDIR/scrharness
 go run ./tools/difftest -out $TMPDIR/scr-difftest -harness $TMPDIR/scrharness/harness -obwhash-args "-scr-rules" -list tools/difftest/replays.txt
 ```
 
-With `-scr-rules` in `-obwhash-args`, difftest gives obwhash the original SC:R replay, because the downgraded copy has no `LMTS`, `BFIX` or `GCFG`.
+difftest and the C++ tools need a clone of OpenBW at commit `4b046d5` in `ref/openbw` (git-ignored).
+
+| Tool | What it does |
+|---|---|
+| [cmd/obwhash](cmd/obwhash) | Plays a replay and prints state hashes; difftest's Go side. |
+| [cmd/downgrade](cmd/downgrade) | Writes the legacy replay that `downgrade` makes. |
+| [tools/difftest](tools/difftest), [tools/harness](tools/harness), [tools/scrharness](tools/scrharness) | Frame-by-frame comparison with C++ OpenBW. |
+| [tools/apivalidate](tools/apivalidate) | Semantic checks, cost and scaling of the event stream. |
+| [tools/bench](tools/bench) | Go against C++ speed, and the PGO profile of `obwhash`. |
+| [tools/desync](tools/desync) | The SC:R desync investigation ([docs/desync.md](docs/desync.md)). |
+| [tools/genenums](tools/genenums) | Generates `bwgame/enums.go` and the name tables from OpenBW's `bwenums.h`. |
+| [tools/screp](tools/screp) | A separate module with the checks that use screp ([docs/integration.md](docs/integration.md)), so this module does not require screp. Run with `go -C tools/screp test ./...`. |
+
+Design and investigation notes are in [docs/](docs): [design](docs/design.md), [porting map](docs/porting-map.md), [integration](docs/integration.md), [desync](docs/desync.md) and [API validation](docs/api-validation.md).
 
 ## Licence
 

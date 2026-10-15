@@ -4,11 +4,14 @@ Validation of package `openbw` on 210 replays with [tools/apivalidate](../tools/
 
 Re-run after the screp split (engine terms only, screp links moved to [screpsim](https://github.com/marianogappa/screpsim)): all semantic checks pass with the same counts. screpsim's `tools/linkcheck` on the same 210 replays: every one of the 1,184,569 screp commands has exactly one command result, in order.
 
+Re-run on 2026-10-15 after the `EngineOptions` change (the validator reads the engine through `Game.Engine` on a private data copy): all semantic checks pass with the same counts.
+
 Replay paths in the list are relative to `$OPENBW_REPLAYS`.
 
 ```
 go run ./tools/apivalidate -list tools/apivalidate/replays.txt               # semantic checks
-go run ./tools/apivalidate -mode cost -list tools/apivalidate/replays.txt    # cost
+go run ./tools/apivalidate -mode cost -j 8 -list tools/apivalidate/replays.txt  # cost
+go run ./tools/apivalidate -mode scaling -scaling-n 12 -scaling-rounds 3 -list tools/apivalidate/replays.txt  # scaling
 ```
 
 ## Replay set
@@ -50,27 +53,31 @@ Each replay runs with `AllKinds`, `AllClasses` and `TickEvery: 2880` (a checkpoi
 
 ## Cost
 
-Apple M4 Pro (8 performance and 4 efficiency cores), shared with other work; times vary by about 5%.
+Apple M4 Pro (8 performance and 4 efficiency cores), Go 1.27. Measured again on 2026-10-15 after the screp split and the `EngineOptions` change, with only the usual background work running (about one core); times vary by 2-5%.
 
 Serial, 20 games (15,601 frames on average), each configuration on the same replay one after the other:
 
 | Configuration | ms/game | CPU ms/game | CPU vs plain | Events/game | Allocs/game | MB allocated/game | MB live/game |
 |---|---|---|---|---|---|---|---|
-| Plain engine (`bwgame`) | 2,137 | 2,042 | 0 | 0 | 313,077 | 13.4 | 3.6 |
-| `NoKinds` | 2,050 | 1,997 | -2.2% | 0 | 313,083 | 13.4 | 4.1 |
-| `DefaultKinds` | 2,101 | 2,033 | -0.5% | 2,203 | 315,307 | 13.5 | 4.1 |
-| `AllKinds` (no `Tick`) | 2,107 | 2,040 | -0.1% | 8,006 | 346,532 | 16.1 | 4.7 |
+| Plain engine (`bwgame`) | 1,766 | 1,767 | 0 | 0 | 322,988 | 18.4 | 5.2 |
+| `NoKinds` | 1,756 | 1,757 | -0.6% | 0 | 313,197 | 14.4 | 4.1 |
+| `DefaultKinds` | 1,772 | 1,774 | +0.4% | 2,203 | 315,421 | 14.5 | 4.1 |
+| `AllKinds` (no `Tick`) | 1,749 | 1,750 | -0.9% | 8,006 | 327,514 | 15.3 | 4.2 |
 
-The stream's CPU cost is below the measurement noise. `AllKinds` adds about 33,000 allocations and 2.7 MB per game (events, rejections, selections and, at that time, the screp parse for command links, which is now in screpsim). Live memory per game is the engine state, plus 0.5 MB that the `Game` keeps (mostly the prepared replay and its command index), plus 0.6 MB with `KindCommandResult` (the command tracking and, at that time, the screp parse). The game data is shared and not counted.
+The stream's CPU cost is below the measurement noise. `AllKinds` adds about 14,000 allocations and 0.9 MB per game (events, rejections and selections). The plain engine row includes the one-time load of its own game data in the first game. Live memory per game is the engine state, about 4 MB. The game data is shared and not counted.
 
-Throughput, 210 games on 12 workers, best of 2 rounds:
+Throughput, the 210 games on 8 workers, longest replay (`EndFrame`) first, best of 2 rounds:
 
 | Configuration | Wall | Games/s | Frames/s | Events/s | CPU ms/game |
 |---|---|---|---|---|---|
-| Plain engine | 101.1 s | 2.08 | 29k | 0 | 2,607 |
-| `NoKinds` | 102.0 s | 2.06 | 29k | 0 | 2,474 |
-| `DefaultKinds` | 108.0 s | 1.94 | 27k | 4k | 2,625 |
-| `AllKinds` | 98.9 s | 2.12 | 30k | 17k | 2,547 |
+| Plain engine | 48.9 s | 4.30 | 60k | 0 | 1,850 |
+| `NoKinds` | 50.4 s | 4.17 | 58k | 0 | 1,905 |
+| `DefaultKinds` | 49.9 s | 4.21 | 59k | 9k | 1,892 |
+| `AllKinds` | 50.5 s | 4.16 | 58k | 32k | 1,908 |
+
+The set has 8-player team games of up to 131,000 frames; the longest takes 38 s alone. In list order the long games come last and the run takes 74 s (40k frames/s), because most workers wait for them. The earlier measurement (about 2 games/s on 12 workers) was on a heavily loaded machine and in list order.
+
+Scaling with the worker count is in the [README](../README.md#performance) (`-mode scaling`).
 
 ## Engine checks
 
@@ -79,4 +86,4 @@ Throughput, 210 games on 12 workers, best of 2 rounds:
 | `tools/difftest -list tools/difftest/replays.txt` against C++ OpenBW | 20/20 match |
 | The same with the SC:R harness (`tools/scrharness`) and `-obwhash-args -scr-rules` | 20/20 match |
 | `go vet ./...` | No issues |
-| `go test ./...` | Pass (194 tests in 15 packages) |
+| `go test ./...` | Pass |
