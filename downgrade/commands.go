@@ -121,13 +121,30 @@ type command struct {
 	payload  []byte
 }
 
+type SourceCommand struct {
+	Frame      uint32
+	PlayerID   byte
+	ID         byte
+	Position   int
+	Action     int32
+	DropReason string
+}
+
 type commandTranslator struct {
 	validPlayerIDs map[byte]bool
 	dropped        []DroppedCommand
+	commands       []SourceCommand
+	written        int32
+	framePositions map[uint32]int
+}
+
+func newCommandIndexer() *commandTranslator {
+	return &commandTranslator{framePositions: map[uint32]int{}}
 }
 
 func newCommandTranslator(slotPlayerIDs [slotCount]uint32) *commandTranslator {
-	t := &commandTranslator{validPlayerIDs: map[byte]bool{}}
+	t := newCommandIndexer()
+	t.validPlayerIDs = map[byte]bool{}
 	for _, id := range slotPlayerIDs {
 		if id <= 0xff {
 			t.validPlayerIDs[byte(id)] = true
@@ -204,8 +221,53 @@ func (t *commandTranslator) appendTranslated(out []byte, original command) []byt
 		t.drop(original.frame, original.playerID, original.id, reason)
 		return out
 	}
+	t.recordWritten(original.frame, original.playerID, original.id)
 	out = append(out, cmd.playerID, cmd.id)
 	return append(out, cmd.payload...)
+}
+
+func (t *commandTranslator) recordWritten(frame uint32, playerID, id byte) {
+	t.record(frame, playerID, id, t.written, "")
+	t.written++
+}
+
+func (t *commandTranslator) record(frame uint32, playerID, id byte, action int32, dropReason string) {
+	position := t.framePositions[frame]
+	t.framePositions[frame] = position + 1
+	t.commands = append(t.commands, SourceCommand{Frame: frame, PlayerID: playerID, ID: id, Position: position, Action: action, DropReason: dropReason})
+}
+
+func indexLegacyActions(actions []byte) []SourceCommand {
+	t := newCommandIndexer()
+	for pos := 0; len(actions)-pos >= frameHeaderSize; {
+		frame := binary.LittleEndian.Uint32(actions[pos:])
+		blockStart := pos + frameHeaderSize
+		blockEnd := blockStart + int(actions[pos+4])
+		if blockEnd > len(actions) {
+			break
+		}
+		if !t.indexLegacyBlock(frame, actions[blockStart:blockEnd]) {
+			break
+		}
+		pos = blockEnd
+	}
+	return t.commands
+}
+
+func (t *commandTranslator) indexLegacyBlock(frame uint32, block []byte) bool {
+	for pos := 0; pos < len(block); {
+		if len(block)-pos < 2 {
+			return false
+		}
+		playerID, id := block[pos], block[pos+1]
+		size, known := commandPayloadSize(id, block[pos+2:])
+		if !known || pos+2+size > len(block) {
+			return false
+		}
+		t.recordWritten(frame, playerID, id)
+		pos += 2 + size
+	}
+	return true
 }
 
 func toLegacyCommand(cmd command) command {
@@ -301,6 +363,7 @@ func concat(parts ...[]byte) []byte {
 }
 
 func (t *commandTranslator) drop(frame uint32, playerID, id byte, reason string) {
+	t.record(frame, playerID, id, -1, reason)
 	if n := len(t.dropped); n > 0 {
 		last := &t.dropped[n-1]
 		if last.Frame == frame && last.ID == id && last.PlayerID == playerID && last.Reason == reason {

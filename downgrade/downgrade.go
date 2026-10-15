@@ -44,35 +44,60 @@ func Downgrade(scr []byte) (legacy []byte, report Report, err error) {
 	if err != nil {
 		return nil, report, err
 	}
-	return downgradeSections(src)
+	legacy, report, _, err = downgradeSections(src)
+	return legacy, report, err
+}
+
+type Prepared struct {
+	Loadable []byte
+	Settings SCRSettings
+	Report   Report
+	Commands []SourceCommand
+}
+
+func Prepare(replay []byte) (*Prepared, error) {
+	src, err := readSourceSections(replay)
+	if err != nil {
+		return nil, err
+	}
+	if src.format == repdecoder.RepFormatLegacy {
+		settings := src.settings()
+		return &Prepared{
+			Loadable: replay,
+			Settings: settings,
+			Report:   Report{SourceFormat: formatName(src.format), SCRSettings: settings},
+			Commands: indexLegacyActions(src.actions),
+		}, nil
+	}
+	legacy, report, commands, err := downgradeSections(src)
+	if err != nil {
+		return nil, err
+	}
+	return &Prepared{Loadable: legacy, Settings: report.SCRSettings, Report: report, Commands: commands}, nil
 }
 
 func PrepareForOpenBW(rep []byte) (loadable []byte, settings SCRSettings, err error) {
-	src, err := readSourceSections(rep)
+	prepared, err := Prepare(rep)
 	if err != nil {
 		return nil, settings, err
 	}
-	if src.format == repdecoder.RepFormatLegacy {
-		return rep, src.settings(), nil
-	}
-	legacy, report, err := downgradeSections(src)
-	return legacy, report.SCRSettings, err
+	return prepared.Loadable, prepared.Settings, nil
 }
 
-func downgradeSections(src sourceSections) (legacy []byte, report Report, err error) {
+func downgradeSections(src sourceSections) (legacy []byte, report Report, commands []SourceCommand, err error) {
 	report.SourceFormat = formatName(src.format)
 	report.SCRSettings = src.settings()
 	if src.format == repdecoder.RepFormatLegacy {
-		return encodeLegacyReplay(src.gameInfo, src.actions, src.mapData), report, nil
+		return encodeLegacyReplay(src.gameInfo, src.actions, src.mapData), report, indexLegacyActions(src.actions), nil
 	}
 	translator := newCommandTranslator(slotPlayerIDs(src.gameInfo))
 	actions, err := translator.translateActions(src.actions)
 	if err != nil {
-		return nil, report, err
+		return nil, report, nil, err
 	}
 	report.Dropped = translator.dropped
 	report.Changes = downgradePlayerColors(src.gameInfo, src.playerColors)
 	mapData, mapChanges := downgradeMap(src.mapData)
 	report.Changes = append(report.Changes, mapChanges...)
-	return encodeLegacyReplay(src.gameInfo, actions, mapData), report, nil
+	return encodeLegacyReplay(src.gameInfo, actions, mapData), report, translator.commands, nil
 }

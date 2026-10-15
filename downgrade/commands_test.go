@@ -114,3 +114,55 @@ func assertDropped(t *testing.T, got, want []DroppedCommand) {
 		}
 	}
 }
+
+func TestTranslatorIndexesSourceCommands(t *testing.T) {
+	stop := []byte{1, 0x1a, 0}
+	select121 := []byte{0, 0x63, 1, 1, 0, 0, 0}
+	keepAlive := []byte{0, 0x05}
+	unknown := []byte{0, 0xd2, 9}
+	actions := bytes.Join([][]byte{
+		frameBlock(4, stop, keepAlive, select121),
+		frameBlock(4, stop, unknown, stop),
+		frameBlock(5, stop),
+	}, nil)
+	translator := newCommandTranslator(testSlotIDs())
+	if _, err := translator.translateActions(actions); err != nil {
+		t.Fatal(err)
+	}
+	want := []SourceCommand{
+		{Frame: 4, PlayerID: 1, ID: 0x1a, Position: 0, Action: 0},
+		{Frame: 4, PlayerID: 0, ID: 0x05, Position: 1, Action: -1, DropReason: ReasonUnsupported},
+		{Frame: 4, PlayerID: 0, ID: 0x63, Position: 2, Action: 1},
+		{Frame: 4, PlayerID: 1, ID: 0x1a, Position: 3, Action: 2},
+		{Frame: 4, PlayerID: 0, ID: 0xd2, Position: 4, Action: -1, DropReason: ReasonUnknownLength},
+		{Frame: 5, PlayerID: 1, ID: 0x1a, Position: 0, Action: 3},
+	}
+	if len(translator.commands) != len(want) {
+		t.Fatalf("commands %+v, want %+v", translator.commands, want)
+	}
+	for i := range want {
+		if translator.commands[i] != want[i] {
+			t.Errorf("command %d is %+v, want %+v", i, translator.commands[i], want[i])
+		}
+	}
+}
+
+func TestIndexLegacyActionsNumbersEveryCommand(t *testing.T) {
+	stop := []byte{1, 0x1a, 0}
+	selectOne := []byte{0, 0x09, 1, 1, 0}
+	actions := append(frameBlock(2, stop, selectOne), frameBlock(3, selectOne)...)
+	got := indexLegacyActions(actions)
+	want := []SourceCommand{
+		{Frame: 2, PlayerID: 1, ID: 0x1a, Position: 0, Action: 0},
+		{Frame: 2, PlayerID: 0, ID: 0x09, Position: 1, Action: 1},
+		{Frame: 3, PlayerID: 0, ID: 0x09, Position: 0, Action: 2},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("commands %+v, want %+v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("command %d is %+v, want %+v", i, got[i], want[i])
+		}
+	}
+}
