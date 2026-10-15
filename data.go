@@ -69,7 +69,8 @@ func dataOrDefault(d *Data) (*Data, error) {
 	return defaultData.data, defaultData.err
 }
 
-// EngineError is the error that stops a game when the engine fails.
+// EngineError is the error that stops a game when the engine fails. Value is the panic value; a panic in
+// an Options.Hooks function is reported the same way.
 type EngineError struct {
 	Frame int32
 	Value any

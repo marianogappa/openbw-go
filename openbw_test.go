@@ -399,11 +399,13 @@ func TestUnitIDTags(t *testing.T) {
 func BenchmarkPlainEngine(b *testing.B) {
 	data := testData(b)
 	replay := readReplay(b, testReplays[0])
-	prepared, err := downgrade.Prepare(replay)
-	if err != nil {
-		b.Fatal(err)
-	}
+	b.ReportAllocs()
+	var frames int32
 	for b.Loop() {
+		prepared, err := downgrade.Prepare(replay)
+		if err != nil {
+			b.Fatal(err)
+		}
 		st := bwgame.NewState(data.Global(), bwgame.NewGameState())
 		st.Game.Rules = scrrules.FromSettings(prepared.Settings)
 		funcs := bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})
@@ -415,18 +417,48 @@ func BenchmarkPlainEngine(b *testing.B) {
 				b.Fatal(err)
 			}
 		}
+		frames = st.CurrentFrame
 	}
+	b.ReportMetric(float64(frames), "frames/op")
 }
 
-func BenchmarkStreamAllKinds(b *testing.B) {
+func benchmarkStream(b *testing.B, kinds Kind) {
 	data := testData(b)
 	replay := readReplay(b, testReplays[0])
+	b.ReportAllocs()
+	var frames int32
+	events := 0
 	for b.Loop() {
-		g, err := Open(replay, Options{Data: data, Kinds: AllKinds, Classes: AllClasses})
+		g, err := Open(replay, Options{Data: data, Kinds: kinds, Classes: AllClasses})
 		if err != nil {
 			b.Fatal(err)
 		}
+		events = 0
 		for range g.Events() {
+			events++
+		}
+		if err := g.Err(); err != nil {
+			b.Fatal(err)
+		}
+		frames = g.Frame()
+	}
+	b.ReportMetric(float64(frames), "frames/op")
+	b.ReportMetric(float64(events), "events/op")
+}
+
+func BenchmarkStreamNoKinds(b *testing.B) { benchmarkStream(b, NoKinds) }
+
+func BenchmarkStreamDefaultKinds(b *testing.B) { benchmarkStream(b, DefaultKinds) }
+
+func BenchmarkStreamAllKinds(b *testing.B) { benchmarkStream(b, AllKinds) }
+
+func BenchmarkOpen(b *testing.B) {
+	data := testData(b)
+	replay := readReplay(b, testReplays[0])
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := Open(replay, Options{Data: data}); err != nil {
+			b.Fatal(err)
 		}
 	}
 }

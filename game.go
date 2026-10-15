@@ -1,8 +1,11 @@
 package openbw
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"iter"
+	"log"
 	"runtime/debug"
 
 	"github.com/icza/screp/rep"
@@ -16,19 +19,21 @@ import (
 type Options struct {
 	// Data is the game data; nil loads $OPENBW_DATA once per process.
 	Data *Data
-	// Kinds are the event kinds to emit; 0 means DefaultKinds.
+	// Kinds are the event kinds to emit; 0 means DefaultKinds and NoKinds means none.
 	Kinds Kind
 	// Classes filters unit events by class; 0 means AllClasses.
 	Classes ClassSet
-	// TickEvery emits a Tick every N frames; 0 emits no ticks.
+	// TickEvery emits a Tick every N frames; 0 emits no ticks. It must not be negative.
 	TickEvery int32
-	// MaxFrame stops after processing this frame; 0 plays to the replay end.
+	// MaxFrame stops after processing this frame; 0 plays to the replay end. It must not be negative.
 	MaxFrame int32
 	// Rules selects the engine rules.
 	Rules RulesMode
 	// CustomRules overrides Rules when not nil.
 	CustomRules *bwgame.Rules
 	// Hooks are raw engine callbacks (L1), called after the stream's own hooks. They must not change engine state.
+	// They run inside Open for the map units, before Open returns the Game, and then inside Events and AdvanceTo.
+	// The Hooks API is package bwgame's and has no stability promise.
 	Hooks bwgame.Hooks
 }
 
@@ -39,14 +44,17 @@ type Game struct {
 	maxFrame int32
 	tick     int32
 
-	data     *Data
-	replay   *rep.Replay
-	prepared *downgrade.Prepared
-	st       *bwgame.State
-	funcs    *bwgame.ReplayFunctions
-	rules    RulesInfo
-	links    screpLinks
-	playing  []int
+	data      *Data
+	raw       []byte
+	replay    *rep.Replay
+	replayErr error
+	parsed    bool
+	prepared  *downgrade.Prepared
+	st        *bwgame.State
+	funcs     *bwgame.ReplayFunctions
+	rules     RulesInfo
+	links     screpLinks
+	playing   []int8
 
 	buf          []Event
 	head         int
@@ -61,16 +69,18 @@ type Game struct {
 
 const legacyFormat = "legacy"
 
+var discardLogger = log.New(io.Discard, "", 0)
+
 // Open prepares a replay (SC:R or legacy bytes) and returns a game at frame 0.
 // The events of the map load (frame 0) come first from Events.
+// The caller must not change replay while the game is in use.
 func Open(replay []byte, opts Options) (*Game, error) {
+	if opts.MaxFrame < 0 || opts.TickEvery < 0 {
+		return nil, errors.New("openbw: negative MaxFrame or TickEvery")
+	}
 	data, err := dataOrDefault(opts.Data)
 	if err != nil {
 		return nil, err
-	}
-	parsed, err := repparser.ParseConfig(replay, repparser.Config{Commands: true, MapData: true})
-	if err != nil {
-		return nil, fmt.Errorf("openbw: parse replay: %w", err)
 	}
 	prepared, err := downgrade.Prepare(replay)
 	if err != nil {
@@ -82,12 +92,15 @@ func Open(replay []byte, opts Options) (*Game, error) {
 		maxFrame:       opts.MaxFrame,
 		tick:           opts.TickEvery,
 		data:           data,
-		replay:         parsed,
+		raw:            replay,
 		prepared:       prepared,
 		containerKills: map[UnitID]killerInfo{},
 	}
-	if g.kinds == 0 {
+	switch {
+	case g.kinds == 0:
 		g.kinds = DefaultKinds
+	case g.kinds&NoKinds != 0:
+		g.kinds = 0
 	}
 	if g.classes == 0 {
 		g.classes = AllClasses
@@ -98,7 +111,11 @@ func Open(replay []byte, opts Options) (*Game, error) {
 	g.st.Game.Rules = rules
 	g.funcs = bwgame.NewReplayFunctions(g.st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	g.install(opts.Hooks)
-	g.links = linkCommands(parsed, prepared)
+	if g.wants(KindCommandResult) {
+		if parsed, err := g.Replay(); err == nil {
+			g.links = linkCommands(parsed, prepared)
+		}
+	}
 	if err := g.load(prepared.Loadable); err != nil {
 		return nil, err
 	}
@@ -139,6 +156,7 @@ func (g *Game) load(loadable []byte) (err error) {
 
 // Events steps the engine as the caller pulls events.
 // After a break, a new call continues with the next event. Calling it inside its own loop panics.
+// The loop body runs only when an event arrives; with few Kinds, TickEvery gives a heartbeat to stop early.
 func (g *Game) Events() iter.Seq[Event] {
 	return func(yield func(Event) bool) {
 		if g.iterating {
@@ -185,6 +203,16 @@ func (g *Game) step() {
 	}
 }
 
+// AdvanceTo steps the engine until the processing half-step that makes Frame() >= frame, or until Done.
+// It yields nothing: events of the subscribed Kinds stay buffered, and Events gives them next.
+// With Kinds: NoKinds, nothing is buffered. It returns Err.
+func (g *Game) AdvanceTo(frame int32) error {
+	for !g.Done() && !(g.commandsNext && g.st.CurrentFrame >= frame) {
+		g.step()
+	}
+	return g.err
+}
+
 // Err is the error that stopped the game, or nil. Check it after the loop.
 func (g *Game) Err() error { return g.err }
 
@@ -205,13 +233,25 @@ func (g *Game) Done() bool {
 	return g.funcs.IsDone() || g.maxFrame > 0 && g.st.CurrentFrame >= g.maxFrame
 }
 
-// Replay is the screp parse of the replay.
-func (g *Game) Replay() *rep.Replay { return g.replay }
+// Replay is the screp parse of the replay: header, players, map and commands.
+// The first call parses; later calls return the same values.
+func (g *Game) Replay() (*rep.Replay, error) {
+	if !g.parsed {
+		g.parsed = true
+		g.replay, g.replayErr = repparser.ParseConfig(g.raw, repparser.Config{Commands: true, MapData: true, Logger: discardLogger})
+		if g.replayErr != nil {
+			g.replayErr = fmt.Errorf("openbw: parse replay: %w", g.replayErr)
+		}
+	}
+	return g.replay, g.replayErr
+}
 
-// Engine gives the engine (L0). It has no stability promise.
+// Engine gives the engine (L0) for reads. It has no stability promise.
+// The caller must not step the engine or change its state; use Events and AdvanceTo.
 func (g *Game) Engine() *bwgame.ReplayFunctions { return g.funcs }
 
 // Prepared is the downgrade output: the loadable replay, the SC:R settings, the dropped commands and the command index.
+// It has no stability promise.
 func (g *Game) Prepared() *downgrade.Prepared { return g.prepared }
 
 func (g *Game) emit(e Event, cmd int32) {

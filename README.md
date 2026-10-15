@@ -26,7 +26,7 @@ for e := range g.Events() {
 		fmt.Println(e.Frame, e.Type, "killed by", e.KillerType)
 	case *openbw.CommandResult:
 		if e.Outcome == openbw.Rejected {
-			fmt.Println(e.Frame, "player", e.Owner, "minerals", g.Player(int(e.Owner)).Minerals, "rejected:", e.Rejections)
+			fmt.Println(e.Frame, "player", e.Owner, "minerals", g.Player(e.Owner).Minerals, "rejected:", e.Rejections)
 		}
 	}
 }

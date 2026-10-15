@@ -3,6 +3,8 @@ package openbw
 import (
 	"iter"
 
+	"github.com/icza/screp/rep"
+
 	"github.com/marianogappa/openbw-go/bwgame"
 )
 
@@ -94,7 +96,7 @@ func unitValue(u *bwgame.Unit) Unit {
 	return v
 }
 
-// Unit reads a unit's live state. It is false if the unit was removed.
+// Unit reads a unit's live state at the end of the last engine half-step. It is false if the unit was removed.
 func (g *Game) Unit(id UnitID) (Unit, bool) {
 	if id.Index() == 0 {
 		return Unit{}, false
@@ -125,10 +127,10 @@ func (g *Game) Units() iter.Seq[Unit] {
 
 func supplyValue(v bwgame.Fp1) float64 { return float64(v.RawValue) / 2 }
 
-// Player reads a player's live state. Owner is 0..11.
-func (g *Game) Player(owner int) Player {
+// Player reads a player's live state at the end of the last engine half-step. Owner is 0..11; any other owner gives a Player with only Owner set.
+func (g *Game) Player(owner int8) Player {
 	st := g.st
-	p := Player{Owner: int8(owner)}
+	p := Player{Owner: owner}
 	if owner < 0 || owner >= playerSlots {
 		return p
 	}
@@ -172,9 +174,9 @@ func isPlayingController(controller int32) bool {
 	return false
 }
 
-func playingSlots(st *bwgame.State) []int {
-	var slots []int
-	for i := range playerSlots {
+func playingSlots(st *bwgame.State) []int8 {
+	var slots []int8
+	for i := range int8(playerSlots) {
 		if isPlayingController(st.Players[i].Controller) {
 			slots = append(slots, i)
 		}
@@ -183,4 +185,19 @@ func playingSlots(st *bwgame.State) []int {
 }
 
 // PlayingSlots are the owners of the players in the game (occupied, computer or left at load).
-func (g *Game) PlayingSlots() []int { return append([]int(nil), g.playing...) }
+func (g *Game) PlayingSlots() []int8 { return append([]int8(nil), g.playing...) }
+
+// ReplayPlayer is screp's player in engine slot owner (screp's Player.SlotID), or nil.
+// It is nil also when Replay fails.
+func (g *Game) ReplayPlayer(owner int8) *rep.Player {
+	r, err := g.Replay()
+	if err != nil || r.Header == nil || owner < 0 {
+		return nil
+	}
+	for _, p := range r.Header.Players {
+		if p.SlotID == uint16(owner) {
+			return p
+		}
+	}
+	return nil
+}
