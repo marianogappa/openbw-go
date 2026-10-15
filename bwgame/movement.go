@@ -57,7 +57,7 @@ func (f *StateFunctions) unitTypeCanFitAt(unitType *UnitTypeT, pos Xy) bool {
 
 func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 	c0 := f.gameSt.Regions.Contours[0]
-	for i := contourLowerBound(c0, pos.Y); i != 0; {
+	for i := f.gameSt.Regions.contourLowerBound(0, pos.Y); i != 0; {
 		i--
 		if inner[0]+c0[i].V[0] < pos.Y {
 			break
@@ -67,7 +67,7 @@ func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 		}
 	}
 	c1 := f.gameSt.Regions.Contours[1]
-	for i := contourUpperBound(c1, pos.X); i != len(c1); i++ {
+	for i := f.gameSt.Regions.contourUpperBound(1, pos.X); i != len(c1); i++ {
 		if inner[1]+c1[i].V[0] > pos.X {
 			break
 		}
@@ -76,7 +76,7 @@ func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 		}
 	}
 	c2 := f.gameSt.Regions.Contours[2]
-	for i := contourUpperBound(c2, pos.Y); i != len(c2); i++ {
+	for i := f.gameSt.Regions.contourUpperBound(2, pos.Y); i != len(c2); i++ {
 		if inner[2]+c2[i].V[0] > pos.Y {
 			break
 		}
@@ -85,7 +85,7 @@ func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 		}
 	}
 	c3 := f.gameSt.Regions.Contours[3]
-	for i := contourLowerBound(c3, pos.X); i != 0; {
+	for i := f.gameSt.Regions.contourLowerBound(3, pos.X); i != 0; {
 		i--
 		if inner[3]+c3[i].V[0] < pos.X {
 			break
@@ -427,10 +427,10 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 	c2 := f.gameSt.Regions.Contours[2]
 	c3 := f.gameSt.Regions.Contours[3]
 
-	i0 := contourUpperBound(c0, pos.Y-inner[0])
-	i1 := contourLowerBound(c1, pos.X-inner[1])
-	i2 := contourLowerBound(c2, pos.Y-inner[2])
-	i3 := contourUpperBound(c3, pos.X-inner[3])
+	i0 := f.gameSt.Regions.contourUpperBound(0, pos.Y-inner[0])
+	i1 := f.gameSt.Regions.contourLowerBound(1, pos.X-inner[1])
+	i2 := f.gameSt.Regions.contourLowerBound(2, pos.Y-inner[2])
+	i3 := f.gameSt.Regions.contourUpperBound(3, pos.X-inner[3])
 
 	expand := func(c Contour) Contour {
 		c.V[0] += inner[c.Dir]
@@ -548,7 +548,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 	}
 
 	if newPos.Y < pos.Y {
-		for i := contourUpperBound(c0, pos.Y-inner[0]); i != 0; {
+		for i := f.gameSt.Regions.contourUpperBound(0, pos.Y-inner[0]); i != 0; {
 			i--
 			c := expand(c0[i])
 			if c.V[0] < newPos.Y {
@@ -560,7 +560,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 		}
 	}
 	if newPos.X > pos.X {
-		for i := contourLowerBound(c1, pos.X-inner[1]); i != len(c1); i++ {
+		for i := f.gameSt.Regions.contourLowerBound(1, pos.X-inner[1]); i != len(c1); i++ {
 			c := expand(c1[i])
 			if c.V[0] > newPos.X {
 				break
@@ -571,7 +571,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 		}
 	}
 	if newPos.Y > pos.Y {
-		for i := contourLowerBound(c2, pos.Y-inner[2]); i != len(c2); i++ {
+		for i := f.gameSt.Regions.contourLowerBound(2, pos.Y-inner[2]); i != len(c2); i++ {
 			c := expand(c2[i])
 			if c.V[0] > newPos.Y {
 				break
@@ -582,7 +582,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 		}
 	}
 	if newPos.X < pos.X {
-		for i := contourUpperBound(c3, pos.X-inner[3]); i != 0; {
+		for i := f.gameSt.Regions.contourUpperBound(3, pos.X-inner[3]); i != 0; {
 			i--
 			c := expand(c3[i])
 			if c.V[0] < newPos.X {
@@ -2163,91 +2163,85 @@ func (f *StateFunctions) movementUMBldgTurret(u *Unit, ems *ExecuteMovementStruc
 	return false
 }
 
-func (f *StateFunctions) movementStateHandler(state int32) func(*Unit, *ExecuteMovementStruct) bool {
-	switch state {
+func (f *StateFunctions) runMovementState(u *Unit, ems *ExecuteMovementStruct) bool {
+	switch u.MovementState {
 	case MovementStatesUMInit:
-		return f.movementUMInit
+		return f.movementUMInit(u, ems)
 	case MovementStatesUMInitSeq:
-		return f.movementUMInitSeq
+		return f.movementUMInitSeq(u, ems)
 	case MovementStatesUMLump:
-		return f.movementUMLump
+		return f.movementUMLump(u, ems)
 	case MovementStatesUMTurret:
-		return f.movementUMTurret
+		return f.movementUMTurret(u, ems)
 	case MovementStatesUMBunker:
-		return f.movementUMBunker
+		return f.movementUMBunker(u, ems)
 	case MovementStatesUMBldgTurret:
-		return f.movementUMBldgTurret
+		return f.movementUMBldgTurret(u, ems)
 	case MovementStatesUMHidden:
-		return f.movementUMHidden
+		return f.movementUMHidden(u, ems)
 	case MovementStatesUMFlyer:
-		return f.movementUMFlyer
+		return f.movementUMFlyer(u, ems)
 	case MovementStatesUMAtRest:
-		return f.movementUMAtRest
+		return f.movementUMAtRest(u, ems)
 	case MovementStatesUMDormant:
-		return f.movementUMDormant
+		return f.movementUMDormant(u, ems)
 	case MovementStatesUMAtMoveTarget:
-		return f.movementUMAtMoveTarget
+		return f.movementUMAtMoveTarget(u, ems)
 	case MovementStatesUMCheckIllegal:
-		return f.movementUMCheckIllegal
+		return f.movementUMCheckIllegal(u, ems)
 	case MovementStatesUMMoveToLegal:
-		return f.movementUMMoveToLegal
+		return f.movementUMMoveToLegal(u, ems)
 	case MovementStatesUMLumpWannabe:
-		return f.movementUMLumpWannabe
+		return f.movementUMLumpWannabe(u, ems)
 	case MovementStatesUMFailedPath:
-		return f.movementUMFailedPath
+		return f.movementUMFailedPath(u, ems)
 	case MovementStatesUMRetryPath:
-		return f.movementUMRetryPath
+		return f.movementUMRetryPath(u, ems)
 	case MovementStatesUMStartPath:
-		return f.movementUMStartPath
+		return f.movementUMStartPath(u, ems)
 	case MovementStatesUMUIOrderDelay:
-		return f.movementUMUIOrderDelay
+		return f.movementUMUIOrderDelay(u, ems)
 	case MovementStatesUMTurnAndStart:
-		return f.movementUMTurnAndStart
+		return f.movementUMTurnAndStart(u, ems)
 	case MovementStatesUMFaceTarget:
-		return f.movementUMFaceTarget
+		return f.movementUMFaceTarget(u, ems)
 	case MovementStatesUMNewMoveTarget:
-		return f.movementUMNewMoveTarget
+		return f.movementUMNewMoveTarget(u, ems)
 	case MovementStatesUMAnotherPath:
-		return f.movementUMAnotherPath
+		return f.movementUMAnotherPath(u, ems)
 	case MovementStatesUMRepath:
-		return f.movementUMRepath
+		return f.movementUMRepath(u, ems)
 	case MovementStatesUMRepathMovers:
-		return f.movementUMRepathMovers
+		return f.movementUMRepathMovers(u, ems)
 	case MovementStatesUMFollowPath:
-		return f.movementUMFollowPath
+		return f.movementUMFollowPath(u, ems)
 	case MovementStatesUMScoutPath:
-		return f.movementUMScoutPath
+		return f.movementUMScoutPath(u, ems)
 	case MovementStatesUMFixCollision:
-		return f.movementUMFixCollision
+		return f.movementUMFixCollision(u, ems)
 	case MovementStatesUMWaitFree:
-		return f.movementUMWaitFree
+		return f.movementUMWaitFree(u, ems)
 	case MovementStatesUMGetFree:
-		return f.movementUMGetFree
+		return f.movementUMGetFree(u, ems)
 	case MovementStatesUMSlidePrep:
-		return f.movementUMSlidePrep
+		return f.movementUMSlidePrep(u, ems)
 	case MovementStatesUMSlideFree:
-		return f.movementUMSlideFree
+		return f.movementUMSlideFree(u, ems)
 	case MovementStatesUMForceMoveFree:
-		return f.movementUMForceMoveFree
+		return f.movementUMForceMoveFree(u, ems)
 	case MovementStatesUMFixTerrain:
-		return f.movementUMFixTerrain
+		return f.movementUMFixTerrain(u, ems)
 	case MovementStatesUMTerrainSlide:
-		return f.movementUMTerrainSlide
+		return f.movementUMTerrainSlide(u, ems)
 	}
-	return nil
+	throwError("fixme: movement state %d\n", u.MovementState)
+	return false
 }
 
 func (f *StateFunctions) executeMovement(u *Unit) bool {
 	var ems ExecuteMovementStruct
 	ems.RefreshVision = f.updateTiles
-	for {
-		handler := f.movementStateHandler(u.MovementState)
-		if handler == nil {
-			throwError("fixme: movement state %d\n", u.MovementState)
-		}
-		if !handler(u, &ems) {
-			break
-		}
+	for f.runMovementState(u, &ems) {
 	}
 	return ems.RefreshVision
 }

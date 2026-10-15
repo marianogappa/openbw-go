@@ -85,25 +85,35 @@ func readGrp(r DataReader) GrpT {
 }
 
 func readGrpLine(lineR *DataReader, f *GrpTFrameT) {
+	data := lineR.data[lineR.ptr:]
+	read := 0
+	take := func(n int) []byte {
+		if len(data)-read < n {
+			throwDataLoadingError("data_reader: attempt to read past end")
+		}
+		read += n
+		return data[read-n : read]
+	}
+	out := f.DataContainer
 	for x := uint(0); x != f.Size.X; {
-		v := lineR.GetU8()
+		v := take(1)[0]
 		remaining := f.Size.X - x
 		switch {
 		case v&0x80 != 0:
 			v = clampGrpRun(v&0x7f, remaining)
-			f.DataContainer = append(f.DataContainer, 0x80|v)
+			out = append(out, 0x80|v)
 		case v&0x40 != 0:
 			v = clampGrpRun(v&0x3f, remaining)
-			f.DataContainer = append(f.DataContainer, 0x40|v, lineR.GetU8())
+			out = append(out, 0x40|v, take(1)[0])
 		default:
 			v = clampGrpRun(v, remaining)
-			f.DataContainer = append(f.DataContainer, v)
-			for i := uint8(0); i != v; i++ {
-				f.DataContainer = append(f.DataContainer, lineR.GetU8())
-			}
+			out = append(out, v)
+			out = append(out, take(int(v))...)
 		}
 		x += uint(v)
 	}
+	f.DataContainer = out
+	lineR.ptr += uint(read)
 }
 
 func clampGrpRun(v uint8, remaining uint) uint8 {

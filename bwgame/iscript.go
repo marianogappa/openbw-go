@@ -108,37 +108,23 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 	programData := f.globalSt.Iscript.ProgramData
 	p := state.ProgramCounter
 
-	next := func() int32 {
-		v := programData[p]
-		p++
-		return v
-	}
-
-	playsndrand := func() {
-		n := next()
-		if !noop {
-			index := f.lcgRand(4) % n
-			f.playSoundAt(programData[p+uint(index)], image.Sprite.Position, nil, false)
-		}
-		p += uint(n)
-	}
-
 	for {
 		pc := p
 		if pc == 0 {
 			throwError("iscript: program counter is null")
 		}
-		opc := next() - iscriptOpcodeBias
+		opc := programData[p] - iscriptOpcodeBias
+		p++
 		var a, b, c int32
 		switch opc {
 		case IscriptOpcodesOpcPlayfram:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
 			playFrame(uint(a))
 		case IscriptOpcodesOpcPlayframtile:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -146,7 +132,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				playFrame(uint(a) + f.gameSt.TilesetIndex)
 			}
 		case IscriptOpcodesOpcSethorpos:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -155,7 +141,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				image.Flags |= ImageFlagRedraw
 			}
 		case IscriptOpcodesOpcSetvertpos:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -166,19 +152,20 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcSetpos:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if noop {
 				break
 			}
 			f.setImageOffset(image, Xy{X: a, Y: b})
 		case IscriptOpcodesOpcWait:
-			state.Wait = next() - 1
+			state.Wait = programData[p] - 1
+			p++
 			state.ProgramCounter = p
 			return true
 		case IscriptOpcodesOpcWaitrand:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -188,9 +175,9 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 		case IscriptOpcodesOpcGoto:
 			p = uint(programData[p])
 		case IscriptOpcodesOpcImgol, IscriptOpcodesOpcImgul:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -200,7 +187,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			}
 			addImage(ImageTypes(a), XyAdd(image.Offset, Xy{X: b, Y: c}), order)
 		case IscriptOpcodesOpcImgolorig, IscriptOpcodesOpcSwitchul:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -215,18 +202,18 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcImgoluselo:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
 			addImage(ImageTypes(a), f.getImageLoOffset(image, uint(b), uint(c), false), imageOrderAbove)
 
 		case IscriptOpcodesOpcSprol:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -237,18 +224,18 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			}
 
 		case IscriptOpcodesOpcLowsprul:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
 			f.createThingyAtImage(image, f.getSpriteType(SpriteTypes(a)), Xy{X: b, Y: c}, 1)
 
 		case IscriptOpcodesOpcSpruluselo:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -262,9 +249,9 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcSprul:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -278,8 +265,8 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcSproluselo:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -300,7 +287,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			f.destroyImage(image)
 			return false
 		case IscriptOpcodesOpcSetflipstate:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -312,16 +299,16 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcPlaysnd:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
 			f.playSoundAt(a, image.Sprite.Position, nil, false)
 		case IscriptOpcodesOpcPlaysndrand:
-			playsndrand()
+			p = f.iscriptPlaySoundRandom(image, programData, p, noop)
 		case IscriptOpcodesOpcPlaysndbtwn:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -337,7 +324,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			if !noop && f.iscriptUnit != nil {
 				f.meleeDealDamage(f.iscriptUnit)
 			}
-			playsndrand()
+			p = f.iscriptPlaySoundRandom(image, programData, p, noop)
 
 		case IscriptOpcodesOpcFollowmaingraphic:
 			if noop {
@@ -352,14 +339,14 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcRandcondjmp:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if (f.lcgRand(7) & 0xff) <= a {
 				p = uint(b)
 			}
 
 		case IscriptOpcodesOpcTurnccwise:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -367,7 +354,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				f.setUnitHeading(f.iscriptUnit, f.iscriptUnit.Heading.Sub(eighthTurn().MulInt(a)))
 			}
 		case IscriptOpcodesOpcTurncwise:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -382,7 +369,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				f.setUnitHeading(f.iscriptUnit, f.iscriptUnit.Heading.Add(eighthTurn()))
 			}
 		case IscriptOpcodesOpcTurnrand:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -397,7 +384,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			}
 
 		case IscriptOpcodesOpcSigorder:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -405,7 +392,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				f.iscriptFlingy.OrderSignal |= a
 			}
 		case IscriptOpcodesOpcAttackwith:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -433,7 +420,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcUseweapon:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -441,7 +428,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				useWeapon(f.iscriptUnit, WeaponTypes(a))
 			}
 		case IscriptOpcodesOpcMove:
-			a = next()
+			a, p = programData[p], p+1
 			if distanceMoved != nil {
 				if f.iscriptUnit != nil {
 					*distanceMoved = f.getModifiedUnitSpeed(f.iscriptUnit, Fp8Integer(a))
@@ -461,14 +448,14 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				f.uUnsetMovementFlag(&f.iscriptUnit.Flingy, 8)
 			}
 		case IscriptOpcodesOpcEngframe:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
 			image.FrameIndexBase = uint(a)
 			f.setImageFrameIndexOffset(image, image.Sprite.MainImage.FrameIndexOffset, f.iFlag(image.Sprite.MainImage, ImageFlagHorizontallyFlipped))
 		case IscriptOpcodesOpcEngset:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -508,7 +495,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			state.ProgramCounter = p - 1
 			return true
 		case IscriptOpcodesOpcAttkshiftproj:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -527,7 +514,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			f.showImage(image)
 
 		case IscriptOpcodesOpcSetfldirect:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -536,7 +523,7 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			}
 
 		case IscriptOpcodesOpcSetflspeed:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -545,14 +532,14 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			}
 
 		case IscriptOpcodesOpcCall:
-			a = next()
+			a, p = programData[p], p+1
 			state.ReturnAddress = p
 			p = uint(a)
 		case IscriptOpcodesOpcReturn:
 			p = state.ReturnAddress
 
 		case IscriptOpcodesOpcCreategasoverlays:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -565,13 +552,13 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				f.createImage(f.getImageType(imageID), image.Sprite, XyAdd(image.Offset, f.getImageLoOffset(image, 2, uint(a), false)), imageOrderAbove, image)
 			}
 		case IscriptOpcodesOpcPwrupcondjmp:
-			a = next()
+			a, p = programData[p], p+1
 			if image.Sprite != nil && image.Sprite.MainImage != image {
 				p = uint(a)
 			}
 		case IscriptOpcodesOpcTrgtrangecondjmp:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if noop {
 				continue
 			}
@@ -582,9 +569,9 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcTrgtarccondjmp:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -595,9 +582,9 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				}
 			}
 		case IscriptOpcodesOpcCurdirectcondjmp:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -605,15 +592,15 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				p = uint(c)
 			}
 		case IscriptOpcodesOpcImgulnextid:
-			a = next()
-			b = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
 			if noop {
 				break
 			}
 			addImage(ImageTypes(int32(image.ImageType.ID)+1), XyAdd(image.Offset, Xy{X: a, Y: b}), imageOrderBelow)
 
 		case IscriptOpcodesOpcLiftoffcondjmp:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -621,14 +608,14 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				p = uint(a)
 			}
 		case IscriptOpcodesOpcWarpoverlay:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
 			image.ModifierData1 = a & 0xff
 			image.ModifierData2 = (a >> 8) & 0xff
 		case IscriptOpcodesOpcOrderdone:
-			a = next()
+			a, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -636,9 +623,9 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 				f.iscriptFlingy.OrderSignal &^= a
 			}
 		case IscriptOpcodesOpcGrdsprol:
-			a = next()
-			b = next()
-			c = next()
+			a, p = programData[p], p+1
+			b, p = programData[p], p+1
+			c, p = programData[p], p+1
 			if noop {
 				break
 			}
@@ -650,6 +637,16 @@ func (f *StateFunctions) iscriptExecute(image *Image, state *IscriptState, noop 
 			throwError("iscript: unhandled opcode %d", opc)
 		}
 	}
+}
+
+func (f *StateFunctions) iscriptPlaySoundRandom(image *Image, programData []int32, p uint, noop bool) uint {
+	n := programData[p]
+	p++
+	if !noop {
+		index := f.lcgRand(4) % n
+		f.playSoundAt(programData[p+uint(index)], image.Sprite.Position, nil, false)
+	}
+	return p + uint(n)
 }
 
 func eighthTurn() DirectionT {

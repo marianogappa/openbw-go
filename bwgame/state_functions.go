@@ -12,6 +12,9 @@ type StateFunctions struct {
 	iscriptBullet         *Bullet
 	iscriptUnit           *Unit
 	unitFinderSearchIndex uint
+	visionPropagation     [revealSightMaxWidth * revealSightMaxWidth]uint32
+	shortPath             *shortPathScratch
+	longPath              *longPathScratch
 
 	deselectUnit func(u *Unit)
 }

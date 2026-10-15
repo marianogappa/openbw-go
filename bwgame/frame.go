@@ -17,17 +17,20 @@ func (f *StateFunctions) revealSightAt(pos Xy, rangeValue int32, revealTo int32,
 			heightMask = TileFlagVeryHigh | TileFlagHigh | TileFlagMiddle
 		}
 	}
-	var visionPropagation [revealSightMaxWidth * revealSightMaxWidth]uint32
+	visionPropagation := &f.visionPropagation
 	requiredTileMask := uint32(heightMask)<<16 | uint32(uint8(^visibilityMask))<<8 | uint32(uint8(^visibilityMask))
 	sightVals := &f.gameSt.SightValues[rangeValue]
 	tileX := uint(pos.X) / 32
 	tileY := uint(pos.Y) / 32
-	baseTileIndex := int(tileX + tileY*f.gameSt.MapTileWidth)
+	mapTileWidth := f.gameSt.MapTileWidth
+	mapTileHeight := f.gameSt.MapTileHeight
+	tiles := f.st.Tiles
+	baseTileIndex := int(tileX + tileY*mapTileWidth)
 	tileAt := func(relativeTileIndex int32) *Tile {
-		return &f.st.Tiles[baseTileIndex+int(relativeTileIndex)]
+		return &tiles[baseTileIndex+int(relativeTileIndex)]
 	}
 	isOutsideMap := func(cur *SightValuesMaskdatNode) bool {
-		return tileX+uint(cur.X) >= f.gameSt.MapTileWidth || tileY+uint(cur.Y) >= f.gameSt.MapTileHeight
+		return tileX+uint(cur.X) >= mapTileWidth || tileY+uint(cur.Y) >= mapTileHeight
 	}
 	reveal := func(tile *Tile) {
 		tile.Visible &= uint8(visibilityMask)
@@ -186,9 +189,11 @@ func (f *StateFunctions) updateThingyVisibility(t *Thingy, size Xy) bool {
 	}
 
 	visibilityFlags := uint8(0)
+	tiles := f.st.Tiles
+	mapTileWidth := f.gameSt.MapTileWidth
 	for y := uint(tileFromY); y != tileToY; y++ {
-		for x := uint(tileFromX); x != tileToX; x++ {
-			visibilityFlags |= ^f.st.Tiles[y*f.gameSt.MapTileWidth+x].Visible
+		for _, tile := range tiles[y*mapTileWidth+uint(tileFromX) : y*mapTileWidth+tileToX] {
+			visibilityFlags |= ^tile.Visible
 		}
 	}
 	if t.Sprite.VisibilityFlags != int32(visibilityFlags) {

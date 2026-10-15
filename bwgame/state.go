@@ -172,6 +172,8 @@ type StateBaseNonCopyable struct {
 	UnitFinderX []UnitFinderEntry
 	UnitFinderY []UnitFinderEntry
 
+	unitFinderSearchGenerations [4]uint32
+
 	ConsiderCollisionWithUnitBug *Unit
 	PrevBulletSourceUnit         *Unit
 }

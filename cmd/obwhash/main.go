@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"runtime/pprof"
 	"sort"
 	"strconv"
 	"strings"
@@ -24,10 +25,11 @@ type options struct {
 	maxFrames      int32
 	noActions      bool
 	scrRules       bool
+	cpuProfilePath string
 }
 
 func exitWithUsage() {
-	fmt.Fprintf(os.Stderr, "usage: obwhash [-data dir] [-every N] [-dump-units F] [-max-frames M] [-no-actions] [-scr-rules] replay.rep\n")
+	fmt.Fprintf(os.Stderr, "usage: obwhash [-data dir] [-every N] [-dump-units F] [-max-frames M] [-no-actions] [-scr-rules] [-cpuprofile file] replay.rep\n")
 	os.Exit(1)
 }
 
@@ -65,6 +67,9 @@ func parseOptions(args []string) options {
 		case arg == "-max-frames" && hasValue:
 			i++
 			opts.maxFrames = parseIntArgument("-max-frames", args[i])
+		case arg == "-cpuprofile" && hasValue:
+			i++
+			opts.cpuProfilePath = args[i]
 		case arg == "-no-actions":
 			opts.noActions = true
 		case arg == "-scr-rules":
@@ -295,11 +300,33 @@ func (r *runner) exitOnPanic() {
 	}
 }
 
+func startCPUProfile(path string) func() {
+	if path == "" {
+		return func() {}
+	}
+	file, err := os.Create(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cpuprofile: %v\n", err)
+		os.Exit(1)
+	}
+	if err := pprof.StartCPUProfile(file); err != nil {
+		fmt.Fprintf(os.Stderr, "cpuprofile: %v\n", err)
+		os.Exit(1)
+	}
+	return func() {
+		pprof.StopCPUProfile()
+		file.Close()
+	}
+}
+
 func main() {
 	opts := parseOptions(os.Args[1:])
 	r := &runner{opts: opts, out: bufio.NewWriter(os.Stdout)}
 	defer r.exitOnPanic()
-	if err := r.run(); err != nil {
+	stopCPUProfile := startCPUProfile(opts.cpuProfilePath)
+	err := r.run()
+	stopCPUProfile()
+	if err != nil {
 		r.exitWithError(err)
 	}
 	r.out.Flush()

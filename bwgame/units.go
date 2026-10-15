@@ -1,6 +1,7 @@
 package bwgame
 
 func isLinked[T any, A LinkAccessor[T]](l *IntrusiveList[T, A], v *T) bool {
+	l.learnLinkOffset(v)
 	return l.first == v || l.link(v).Prev != nil
 }
 

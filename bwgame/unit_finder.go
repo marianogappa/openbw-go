@@ -13,6 +13,24 @@ func unitFinderIndexOf(vec []UnitFinderEntry, value int32, u *Unit) int {
 	return i
 }
 
+func unitFinderIndexOfWithHint(vec []UnitFinderEntry, value int32, u *Unit, hint int) int {
+	for _, offset := range [5]int{0, -1, 1, -2, 2} {
+		i := hint + offset
+		if uint(i) < uint(len(vec)) && vec[i].U == u && vec[i].Value == value {
+			return i
+		}
+	}
+	return unitFinderIndexOf(vec, value, u)
+}
+
+func unitFinderIndexOfDistinctValue(vec []UnitFinderEntry, value int32, otherValue int32, u *Unit, hint *int) int {
+	if value == otherValue {
+		return unitFinderIndexOf(vec, value, u)
+	}
+	*hint = unitFinderIndexOfWithHint(vec, value, u, *hint)
+	return *hint
+}
+
 func (f *StateFunctions) errorIfUnitFinderSearchActive() {
 	if f.unitFinderSearchIndex != 0 {
 		throwError("attempt to modify unit finder while search is active")
@@ -66,11 +84,15 @@ func (f *StateFunctions) unitFinderInsertBB(u *Unit, bb Rect) {
 	u.UnitFinderBoundingBox = bb
 }
 
-func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, newValue int32) {
+func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, newValue int32, indexHint *int) {
 	if oldValue == newValue {
 		return
 	}
-	i := unitFinderIndexOf(vec, oldValue, u)
+	i := unitFinderIndexOfWithHint(vec, oldValue, u, *indexHint)
+	*indexHint = unitFinderMoveEntry(vec, i, u, oldValue, newValue)
+}
+
+func unitFinderMoveEntry(vec []UnitFinderEntry, i int, u *Unit, oldValue int32, newValue int32) int {
 	if newValue > oldValue {
 		ni := i + 1
 		for ni != len(vec) && vec[ni].Value < newValue {
@@ -79,7 +101,7 @@ func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, new
 			ni++
 		}
 		vec[i] = UnitFinderEntry{U: u, Value: newValue}
-		return
+		return i
 	}
 	for i != 0 {
 		ni := i
@@ -91,25 +113,27 @@ func unitFinderReinsertValue(vec []UnitFinderEntry, u *Unit, oldValue int32, new
 		vec[ni] = vec[i]
 	}
 	vec[i] = UnitFinderEntry{U: u, Value: newValue}
+	return i
 }
 
 func (f *StateFunctions) unitFinderReinsertBB(u *Unit, bb Rect) {
 	f.errorIfUnitFinderSearchActive()
 	st := f.st
 	old := u.UnitFinderBoundingBox
+	hints := &u.unitFinderIndexHints
 	if bb.From.X <= old.From.X {
-		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X)
-		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X)
+		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X, &hints[0])
+		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X, &hints[1])
 	} else {
-		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X)
-		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X)
+		unitFinderReinsertValue(st.UnitFinderX, u, old.To.X, bb.To.X, &hints[1])
+		unitFinderReinsertValue(st.UnitFinderX, u, old.From.X, bb.From.X, &hints[0])
 	}
 	if bb.From.Y <= old.From.Y {
-		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y)
-		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y)
+		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y, &hints[2])
+		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y, &hints[3])
 	} else {
-		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y)
-		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y)
+		unitFinderReinsertValue(st.UnitFinderY, u, old.To.Y, bb.To.Y, &hints[3])
+		unitFinderReinsertValue(st.UnitFinderY, u, old.From.Y, bb.From.Y, &hints[2])
 	}
 	u.UnitFinderBoundingBox = bb
 }
@@ -120,6 +144,7 @@ type unitFinderSearch struct {
 	iEnd        int
 	area        Rect
 	searchIndex uint
+	generation  uint32
 }
 
 func (s *unitFinderSearch) inBounds(i int) bool {
@@ -137,25 +162,31 @@ func (s *unitFinderSearch) inBounds(i int) bool {
 }
 
 func (s *unitFinderSearch) visited(i int) bool {
-	return s.vec[i].U.UnitFinderVisited[s.searchIndex]
+	return s.vec[i].U.UnitFinderVisited[s.searchIndex] == s.generation
 }
 
 func (s *unitFinderSearch) markVisited(i int) {
-	s.vec[i].U.UnitFinderVisited[s.searchIndex] = true
+	s.vec[i].U.UnitFinderVisited[s.searchIndex] = s.generation
 }
 
 func (s *unitFinderSearch) next(i int) int {
-	for {
-		i++
-		if i == s.iEnd {
-			return i
+	candidates := s.vec[:s.iEnd]
+	area := s.area
+	visitedSlot := s.searchIndex
+	generation := s.generation
+	for i++; i < len(candidates); i++ {
+		u := candidates[i].U
+		bb := &u.UnitFinderBoundingBox
+		if bb.From.X >= area.To.X || bb.From.Y >= area.To.Y || bb.To.Y < area.From.Y {
+			continue
 		}
-		if s.inBounds(i) && !s.visited(i) {
-			break
+		if u.UnitFinderVisited[visitedSlot] == generation {
+			continue
 		}
+		u.UnitFinderVisited[visitedSlot] = generation
+		return i
 	}
-	s.markVisited(i)
-	return i
+	return s.iEnd
 }
 
 func (s *unitFinderSearch) begin() int {
@@ -170,17 +201,17 @@ func (s *unitFinderSearch) begin() int {
 	return i
 }
 
-func (s *unitFinderSearch) clearVisited() {
-	for i := s.iBegin; i != s.iEnd; i++ {
-		s.vec[i].U.UnitFinderVisited[s.searchIndex] = false
-	}
-}
-
-func (f *StateFunctions) newUnitFinderSearch(area Rect, expand bool) *unitFinderSearch {
+func (f *StateFunctions) newUnitFinderSearch(area Rect, expand bool) unitFinderSearch {
 	if f.unitFinderSearchIndex == 4 {
 		throwError("unit_finder_search maximum recursive depth reached")
 	}
-	s := &unitFinderSearch{vec: f.st.UnitFinderX, area: area, searchIndex: f.unitFinderSearchIndex}
+	f.st.unitFinderSearchGenerations[f.unitFinderSearchIndex]++
+	s := unitFinderSearch{
+		vec:         f.st.UnitFinderX,
+		area:        area,
+		searchIndex: f.unitFinderSearchIndex,
+		generation:  f.st.unitFinderSearchGenerations[f.unitFinderSearchIndex],
+	}
 	f.unitFinderSearchIndex++
 
 	beginX := area.From.X
@@ -204,7 +235,6 @@ func (f *StateFunctions) unitFinderSearchUnits(area Rect, expand bool) iter.Seq[
 		s := f.newUnitFinderSearch(area, expand)
 		defer func() {
 			f.unitFinderSearchIndex--
-			s.clearVisited()
 		}()
 		for i := s.begin(); i != s.iEnd; i = s.next(i) {
 			if !yield(s.vec[i].U) {
@@ -240,46 +270,28 @@ func (f *StateFunctions) findUnitNoexpand(area Rect, predicate func(*Unit) bool)
 	return nil
 }
 
-type nearestUnitSearch struct {
-	f            *StateFunctions
-	pos          Xy
-	searchArea   Rect
-	predicate    func(*Unit) bool
-	bestDistance int32
-	bestUnit     *Unit
+func (f *StateFunctions) considerNearestUnit(pos Xy, u *Unit, bestDistance int32, bestUnit *Unit, predicate func(*Unit) bool) (int32, *Unit) {
+	d := f.xyLength(XySub(pos, u.Sprite.Position))
+	if d < bestDistance && predicate(u) {
+		return d, u
+	}
+	return bestDistance, bestUnit
 }
 
-func (n *nearestUnitSearch) consider(u *Unit) {
-	d := n.f.xyLength(XySub(n.pos, u.Sprite.Position))
-	if d < n.bestDistance && n.predicate(u) {
-		n.bestDistance = d
-		n.bestUnit = u
+func shrinkNearestUnitSearchArea(area Rect, pos Xy, d int32) Rect {
+	if area.From.X < pos.X-d {
+		area.From.X = pos.X - d
 	}
-}
-
-func (n *nearestUnitSearch) yInArea(u *Unit) bool {
-	return u.Sprite.Position.Y >= n.searchArea.From.Y && u.Sprite.Position.Y < n.searchArea.To.Y
-}
-
-func (n *nearestUnitSearch) xInArea(u *Unit) bool {
-	return u.Sprite.Position.X >= n.searchArea.From.X && u.Sprite.Position.X < n.searchArea.To.X
-}
-
-func (n *nearestUnitSearch) shrinkArea() {
-	pos := n.pos
-	d := n.bestDistance
-	if n.searchArea.From.X < pos.X-d {
-		n.searchArea.From.X = pos.X - d
+	if area.From.Y < pos.Y-d {
+		area.From.Y = pos.Y - d
 	}
-	if n.searchArea.From.Y < pos.Y-d {
-		n.searchArea.From.Y = pos.Y - d
+	if area.To.X > pos.X+d {
+		area.To.X = pos.X + d
 	}
-	if n.searchArea.To.X > pos.X+d {
-		n.searchArea.To.X = pos.X + d
+	if area.To.Y > pos.Y+d {
+		area.To.Y = pos.Y + d
 	}
-	if n.searchArea.To.Y > pos.Y+d {
-		n.searchArea.To.Y = pos.Y + d
-	}
+	return area
 }
 
 func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, leftI uint, upI uint, rightI uint, downI uint, predicate func(*Unit) bool) *Unit {
@@ -288,22 +300,22 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 	xEnd := uint(len(xVec))
 	yEnd := uint(len(yVec))
 
-	n := &nearestUnitSearch{f: f, pos: pos, searchArea: searchArea, predicate: predicate}
-	n.bestDistance = f.xyLength(Xy{
+	var bestUnit *Unit
+	bestDistance := f.xyLength(Xy{
 		X: max(pos.X-searchArea.From.X, searchArea.To.X-pos.X),
 		Y: max(pos.Y-searchArea.From.Y, searchArea.To.Y-pos.Y),
 	})
 
 	for {
 		done := true
-		prevBestDistance := n.bestDistance
+		prevBestDistance := bestDistance
 		if leftI != 0 {
 			leftI--
 			done = false
 			u := xVec[leftI].U
-			if u.Sprite.Position.X >= n.searchArea.From.X {
-				if n.yInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.X >= searchArea.From.X {
+				if u.Sprite.Position.Y >= searchArea.From.Y && u.Sprite.Position.Y < searchArea.To.Y {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 			} else {
 				leftI = 0
@@ -312,9 +324,9 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 		if rightI != xEnd {
 			done = false
 			u := xVec[rightI].U
-			if u.Sprite.Position.X < n.searchArea.To.X {
-				if n.yInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.X < searchArea.To.X {
+				if u.Sprite.Position.Y >= searchArea.From.Y && u.Sprite.Position.Y < searchArea.To.Y {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 				rightI++
 			} else {
@@ -325,9 +337,9 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 			done = false
 			upI--
 			u := yVec[upI].U
-			if u.Sprite.Position.Y >= n.searchArea.From.Y {
-				if n.xInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.Y >= searchArea.From.Y {
+				if u.Sprite.Position.X >= searchArea.From.X && u.Sprite.Position.X < searchArea.To.X {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 			} else {
 				upI = 0
@@ -336,23 +348,23 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 		if downI != yEnd {
 			done = false
 			u := yVec[downI].U
-			if u.Sprite.Position.Y < n.searchArea.To.Y {
-				if n.xInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.Y < searchArea.To.Y {
+				if u.Sprite.Position.X >= searchArea.From.X && u.Sprite.Position.X < searchArea.To.X {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 				downI++
 			} else {
 				downI = yEnd
 			}
 		}
-		if n.bestDistance != prevBestDistance {
-			n.shrinkArea()
+		if bestDistance != prevBestDistance {
+			searchArea = shrinkNearestUnitSearchArea(searchArea, pos, bestDistance)
 		}
 		if done {
 			break
 		}
 	}
-	return n.bestUnit
+	return bestUnit
 }
 
 func (f *StateFunctions) findNearestUnit(pos Xy, searchArea Rect, predicate func(*Unit) bool) *Unit {
@@ -366,10 +378,11 @@ func (f *StateFunctions) findNearestUnitToUnit(u *Unit, searchArea Rect, predica
 		return f.findNearestUnit(u.Sprite.Position, searchArea, predicate)
 	}
 	bb := u.UnitFinderBoundingBox
-	leftI := uint(unitFinderIndexOf(f.st.UnitFinderX, bb.To.X, u))
-	upI := uint(unitFinderIndexOf(f.st.UnitFinderY, bb.To.Y, u))
-	rightI := uint(unitFinderIndexOf(f.st.UnitFinderX, bb.From.X, u)) + 1
-	downI := uint(unitFinderIndexOf(f.st.UnitFinderY, bb.From.Y, u)) + 1
+	hints := &u.unitFinderIndexHints
+	leftI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderX, bb.To.X, bb.From.X, u, &hints[1]))
+	upI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderY, bb.To.Y, bb.From.Y, u, &hints[3]))
+	rightI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderX, bb.From.X, bb.To.X, u, &hints[0])) + 1
+	downI := uint(unitFinderIndexOfDistinctValue(f.st.UnitFinderY, bb.From.Y, bb.To.Y, u, &hints[2])) + 1
 	return f.findNearestUnitFromIndices(u.Sprite.Position, searchArea, leftI, upI, rightI, downI, predicate)
 }
 

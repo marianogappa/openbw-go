@@ -1,6 +1,9 @@
 package bwgame
 
-import "iter"
+import (
+	"iter"
+	"unsafe"
+)
 
 type unitIDRaw interface {
 	~uint16 | ~uint32
@@ -39,13 +42,24 @@ type LinkAccessor[T any] interface {
 }
 
 type IntrusiveList[T any, A LinkAccessor[T]] struct {
-	first *T
-	last  *T
+	first             *T
+	last              *T
+	linkOffsetPlusOne uintptr
 }
 
 func (l *IntrusiveList[T, A]) link(v *T) *Link[T] {
+	return (*Link[T])(unsafe.Add(unsafe.Pointer(v), l.linkOffsetPlusOne-1))
+}
+
+func (l *IntrusiveList[T, A]) learnLinkOffset(v *T) {
+	if l.linkOffsetPlusOne == 0 {
+		l.linkOffsetPlusOne = linkOffset[T, A](v) + 1
+	}
+}
+
+func linkOffset[T any, A LinkAccessor[T]](v *T) uintptr {
 	var accessor A
-	return accessor.Link(v)
+	return uintptr(unsafe.Pointer(accessor.Link(v))) - uintptr(unsafe.Pointer(v))
 }
 
 func (l *IntrusiveList[T, A]) Empty() bool {
@@ -104,6 +118,7 @@ func (l *IntrusiveList[T, A]) setPrevOf(v *T, prev *T) {
 }
 
 func (l *IntrusiveList[T, A]) Insert(pos *T, v *T) *T {
+	l.learnLinkOffset(v)
 	before := pos
 	after := l.Prev(before)
 	l.setPrevOf(before, v)
@@ -146,6 +161,8 @@ func (l *IntrusiveList[T, A]) PopFront() {
 func (l *IntrusiveList[T, A]) Swap(n *IntrusiveList[T, A]) {
 	l.first, n.first = n.first, l.first
 	l.last, n.last = n.last, l.last
+	linkOffsetPlusOne := max(l.linkOffsetPlusOne, n.linkOffsetPlusOne)
+	l.linkOffsetPlusOne, n.linkOffsetPlusOne = linkOffsetPlusOne, linkOffsetPlusOne
 }
 
 func (l *IntrusiveList[T, A]) All() iter.Seq[*T] {
@@ -505,6 +522,8 @@ type Regions struct {
 	SplitRegions []SplitRegion
 
 	Contours [4][]Contour
+
+	contourIndexes [4]contourIndex
 }
 
 func NewRegions() Regions {
@@ -996,7 +1015,8 @@ type Unit struct {
 	RepulseIndex                   uint
 
 	UnitFinderBoundingBox Rect
-	UnitFinderVisited     [4]bool
+	UnitFinderVisited     [4]uint32
+	unitFinderIndexHints  [4]int
 	UnitFinderIndexFrom   uint
 	UnitFinderIndexTo     uint
 }
