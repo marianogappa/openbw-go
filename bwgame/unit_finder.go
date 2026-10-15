@@ -256,46 +256,28 @@ func (f *StateFunctions) findUnitNoexpand(area Rect, predicate func(*Unit) bool)
 	return nil
 }
 
-type nearestUnitSearch struct {
-	f            *StateFunctions
-	pos          Xy
-	searchArea   Rect
-	predicate    func(*Unit) bool
-	bestDistance int32
-	bestUnit     *Unit
+func (f *StateFunctions) considerNearestUnit(pos Xy, u *Unit, bestDistance int32, bestUnit *Unit, predicate func(*Unit) bool) (int32, *Unit) {
+	d := f.xyLength(XySub(pos, u.Sprite.Position))
+	if d < bestDistance && predicate(u) {
+		return d, u
+	}
+	return bestDistance, bestUnit
 }
 
-func (n *nearestUnitSearch) consider(u *Unit) {
-	d := n.f.xyLength(XySub(n.pos, u.Sprite.Position))
-	if d < n.bestDistance && n.predicate(u) {
-		n.bestDistance = d
-		n.bestUnit = u
+func shrinkNearestUnitSearchArea(area Rect, pos Xy, d int32) Rect {
+	if area.From.X < pos.X-d {
+		area.From.X = pos.X - d
 	}
-}
-
-func (n *nearestUnitSearch) yInArea(u *Unit) bool {
-	return u.Sprite.Position.Y >= n.searchArea.From.Y && u.Sprite.Position.Y < n.searchArea.To.Y
-}
-
-func (n *nearestUnitSearch) xInArea(u *Unit) bool {
-	return u.Sprite.Position.X >= n.searchArea.From.X && u.Sprite.Position.X < n.searchArea.To.X
-}
-
-func (n *nearestUnitSearch) shrinkArea() {
-	pos := n.pos
-	d := n.bestDistance
-	if n.searchArea.From.X < pos.X-d {
-		n.searchArea.From.X = pos.X - d
+	if area.From.Y < pos.Y-d {
+		area.From.Y = pos.Y - d
 	}
-	if n.searchArea.From.Y < pos.Y-d {
-		n.searchArea.From.Y = pos.Y - d
+	if area.To.X > pos.X+d {
+		area.To.X = pos.X + d
 	}
-	if n.searchArea.To.X > pos.X+d {
-		n.searchArea.To.X = pos.X + d
+	if area.To.Y > pos.Y+d {
+		area.To.Y = pos.Y + d
 	}
-	if n.searchArea.To.Y > pos.Y+d {
-		n.searchArea.To.Y = pos.Y + d
-	}
+	return area
 }
 
 func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, leftI uint, upI uint, rightI uint, downI uint, predicate func(*Unit) bool) *Unit {
@@ -304,22 +286,22 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 	xEnd := uint(len(xVec))
 	yEnd := uint(len(yVec))
 
-	n := &nearestUnitSearch{f: f, pos: pos, searchArea: searchArea, predicate: predicate}
-	n.bestDistance = f.xyLength(Xy{
+	var bestUnit *Unit
+	bestDistance := f.xyLength(Xy{
 		X: max(pos.X-searchArea.From.X, searchArea.To.X-pos.X),
 		Y: max(pos.Y-searchArea.From.Y, searchArea.To.Y-pos.Y),
 	})
 
 	for {
 		done := true
-		prevBestDistance := n.bestDistance
+		prevBestDistance := bestDistance
 		if leftI != 0 {
 			leftI--
 			done = false
 			u := xVec[leftI].U
-			if u.Sprite.Position.X >= n.searchArea.From.X {
-				if n.yInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.X >= searchArea.From.X {
+				if u.Sprite.Position.Y >= searchArea.From.Y && u.Sprite.Position.Y < searchArea.To.Y {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 			} else {
 				leftI = 0
@@ -328,9 +310,9 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 		if rightI != xEnd {
 			done = false
 			u := xVec[rightI].U
-			if u.Sprite.Position.X < n.searchArea.To.X {
-				if n.yInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.X < searchArea.To.X {
+				if u.Sprite.Position.Y >= searchArea.From.Y && u.Sprite.Position.Y < searchArea.To.Y {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 				rightI++
 			} else {
@@ -341,9 +323,9 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 			done = false
 			upI--
 			u := yVec[upI].U
-			if u.Sprite.Position.Y >= n.searchArea.From.Y {
-				if n.xInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.Y >= searchArea.From.Y {
+				if u.Sprite.Position.X >= searchArea.From.X && u.Sprite.Position.X < searchArea.To.X {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 			} else {
 				upI = 0
@@ -352,23 +334,23 @@ func (f *StateFunctions) findNearestUnitFromIndices(pos Xy, searchArea Rect, lef
 		if downI != yEnd {
 			done = false
 			u := yVec[downI].U
-			if u.Sprite.Position.Y < n.searchArea.To.Y {
-				if n.xInArea(u) {
-					n.consider(u)
+			if u.Sprite.Position.Y < searchArea.To.Y {
+				if u.Sprite.Position.X >= searchArea.From.X && u.Sprite.Position.X < searchArea.To.X {
+					bestDistance, bestUnit = f.considerNearestUnit(pos, u, bestDistance, bestUnit, predicate)
 				}
 				downI++
 			} else {
 				downI = yEnd
 			}
 		}
-		if n.bestDistance != prevBestDistance {
-			n.shrinkArea()
+		if bestDistance != prevBestDistance {
+			searchArea = shrinkNearestUnitSearchArea(searchArea, pos, bestDistance)
 		}
 		if done {
 			break
 		}
 	}
-	return n.bestUnit
+	return bestUnit
 }
 
 func (f *StateFunctions) findNearestUnit(pos Xy, searchArea Rect, predicate func(*Unit) bool) *Unit {
