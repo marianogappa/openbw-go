@@ -306,7 +306,7 @@ New fields in `bwgame.Hooks`. `ReplayFunctions` copies its `Hooks` into the `Gam
 OnUnitCreated       func(u *Unit, source CreateSource, parent *Unit)
 OnUnitCompleted     func(u *Unit)
 OnUnitMorphed       func(u *Unit, from *UnitTypeT)
-OnMorphStarted      func(u, morpher *Unit, into *UnitTypeT)
+OnMorphStarted      func(u, morpher *Unit, from, into *UnitTypeT)
 OnKillUnit          func(u *Unit, kill KillContext) // replaces OnKillUnit(u)
 OnOwnerChanged      func(u *Unit, from int32, reason OwnerReason)
 OnProductionCancel  func(c ProductionCancel)
@@ -319,6 +319,8 @@ OnBuildQueue        func(u *Unit, op BuildQueueOp, index int)
 OnAddonBuildType    func(u *Unit, set bool)
 OnUnitDamaged       func(u, source *Unit, sourceOwner int32, damage Fp8) // raw only; no event kind
 ```
+
+Implemented in `bwgame/hooks.go`. `OnMorphStarted` also passes `from`, because the unit's type has already changed to the egg or building when it fires. `CancelReason` has a zero value `CancelOther` for cancels the engine makes on its own (a lifted building with an addon in construction, a failed training unit placement). Hook context (kill reason, owner reason, cancel reason) is stored only when its hook is set.
 
 `ReplayFunctions` gets `AfterAction func(owner, actionID int32, ok bool)` next to the existing `BeforeAction`. `nextFrame` must take the reporting path (`executeActionsReportingFails`) when `AfterAction` is set, as it does for `BeforeAction`.
 

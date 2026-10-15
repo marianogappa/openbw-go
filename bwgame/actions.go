@@ -407,15 +407,19 @@ func (f *ActionFunctions) actionDeselectUnit(owner int32, u *Unit) bool {
 func (f *ActionFunctions) actionTrain(owner int32, unitType *UnitTypeT) bool {
 	u := f.getSingleSelectedUnit(owner)
 	if u == nil {
+		f.onActionRejected(nil, RejectNoUnit)
 		return false
 	}
 	if u.Owner != owner {
+		f.onActionRejected(u, RejectNotOwner)
 		return false
 	}
 	if !f.unitCanBuild(u, unitType) {
+		f.onActionRejected(u, RejectRequirements)
 		return false
 	}
 	if unitType.ID > UnitTypesSpellDisruptionWeb {
+		f.onActionRejected(u, RejectInvalid)
 		return false
 	}
 	if !f.buildQueuePush(u, unitType) {
@@ -432,12 +436,15 @@ func buildingPosAtTile(tilePos XyT[uint], placementSize Xy) Xy {
 func (f *ActionFunctions) actionBuild(owner int32, orderType *OrderTypeT, unitType *UnitTypeT, tilePos XyT[uint]) bool {
 	u := f.getSingleSelectedUnit(owner)
 	if u == nil {
+		f.onActionRejected(nil, RejectNoUnit)
 		return false
 	}
 	if u.Owner != owner {
+		f.onActionRejected(u, RejectNotOwner)
 		return false
 	}
 	if !f.unitBuildOrderValid(u, orderType, unitType, owner) {
+		f.onActionRejected(u, RejectRequirements)
 		return false
 	}
 	pos := buildingPosAtTile(tilePos, unitType.PlacementSize)
@@ -448,11 +455,17 @@ func (f *ActionFunctions) actionBuild(owner int32, orderType *OrderTypeT, unitTy
 			builderPos.Y -= unitType.AddonPosition.Y / 32 * 32
 			if f.canPlaceBuilding(u, owner, u.UnitType, builderPos, false, false) {
 				f.placeBuilding(u, orderType, unitType, builderPos)
+			} else {
+				f.onActionRejected(u, RejectPlacement)
 			}
+		} else {
+			f.onActionRejected(u, RejectPlacement)
 		}
 	} else {
 		if f.canPlaceBuilding(u, owner, unitType, pos, false, false) {
 			f.placeBuilding(u, orderType, unitType, pos)
+		} else {
+			f.onActionRejected(u, RejectPlacement)
 		}
 	}
 	return true
@@ -918,12 +931,15 @@ func (f *ActionFunctions) actionLiftoff(owner int32, pos Xy) bool {
 func (f *ActionFunctions) actionResearch(owner int32, tech *TechTypeT) bool {
 	u := f.getSingleSelectedUnit(owner)
 	if u == nil {
+		f.onActionRejected(nil, RejectNoUnit)
 		return false
 	}
 	if !f.unitCanResearchOwner(u, tech, owner) {
+		f.onActionRejected(u, RejectRequirements)
 		return false
 	}
 	if !f.hasAvailableResourcesForTech(u.Owner, tech, true) {
+		f.onActionRejectedForCost(u, u.Owner, tech.MineralCost)
 		return false
 	}
 	f.st.CurrentMinerals[u.Owner] -= tech.MineralCost
@@ -933,6 +949,7 @@ func (f *ActionFunctions) actionResearch(owner int32, tech *TechTypeT) bool {
 	f.st.TechResearching[u.Owner][tech.ID] = true
 	f.spriteRunAnim(u.Sprite, IscriptAnimsIsWorking)
 	f.setUnitOrder(u, f.getOrderType(OrdersResearchTech))
+	f.onResearch(u, Research{ID: uint8(tech.ID)}, 1, false)
 	return true
 }
 
@@ -957,12 +974,15 @@ func (f *ActionFunctions) actionCancelResearch(owner int32) bool {
 func (f *ActionFunctions) actionUpgrade(owner int32, upgrade *UpgradeTypeT) bool {
 	u := f.getSingleSelectedUnit(owner)
 	if u == nil {
+		f.onActionRejected(nil, RejectNoUnit)
 		return false
 	}
 	if !f.unitCanUpgradeOwner(u, upgrade, owner) {
+		f.onActionRejected(u, RejectRequirements)
 		return false
 	}
 	if !f.hasAvailableResourcesForUpgrade(u.Owner, upgrade, true) {
+		f.onActionRejectedForCost(u, u.Owner, f.upgradeMineralCost(u.Owner, upgrade))
 		return false
 	}
 	f.st.CurrentMinerals[u.Owner] -= f.upgradeMineralCost(owner, upgrade)
@@ -973,6 +993,7 @@ func (f *ActionFunctions) actionUpgrade(owner int32, upgrade *UpgradeTypeT) bool
 	f.st.UpgradeUpgrading[u.Owner][upgrade.ID] = true
 	f.spriteRunAnim(u.Sprite, IscriptAnimsIsWorking)
 	f.setUnitOrder(u, f.getOrderType(OrdersUpgrade))
+	f.onResearch(u, Research{Upgrade: true, ID: uint8(upgrade.ID)}, u.Building.UpgradingLevel, false)
 	return true
 }
 
@@ -1238,12 +1259,15 @@ func (f *ActionFunctions) actionMorph(owner int32, unitType *UnitTypeT) bool {
 	retval := false
 	for u := range f.selectedUnits(owner) {
 		if u.Owner != owner {
+			f.onActionRejected(u, RejectNotOwner)
 			continue
 		}
 		if !f.unitCanMorphInto(u, unitType) {
+			f.onActionRejected(u, RejectRequirements)
 			continue
 		}
 		if u.OrderType.ID == OrdersZergUnitMorph {
+			f.onActionRejected(u, RejectBusy)
 			continue
 		}
 		if !f.buildQueuePush(u, unitType) {
@@ -1257,17 +1281,21 @@ func (f *ActionFunctions) actionMorph(owner int32, unitType *UnitTypeT) bool {
 
 func (f *ActionFunctions) actionMorphBuilding(owner int32, unitType *UnitTypeT) bool {
 	if !f.unitIsZergBuilding(unitType) {
+		f.onActionRejected(nil, RejectInvalid)
 		return false
 	}
 	retval := false
 	for u := range f.selectedUnits(owner) {
 		if u.Owner != owner {
+			f.onActionRejected(u, RejectNotOwner)
 			continue
 		}
 		if !f.unitIsZergBuilding(u.UnitType) {
+			f.onActionRejected(u, RejectInvalid)
 			continue
 		}
 		if !f.unitCanBuild(u, unitType) {
+			f.onActionRejected(u, RejectRequirements)
 			continue
 		}
 		if !f.buildQueuePush(u, unitType) {
@@ -1356,13 +1384,16 @@ func (f *ActionFunctions) actionTrainFighter(owner int32) bool {
 	retval := false
 	for u := range f.selectedUnits(owner) {
 		if u.Owner != owner {
+			f.onActionRejected(u, RejectNotOwner)
 			continue
 		}
 		buildType := f.fighterBuildType(u)
 		if buildType == nil {
+			f.onActionRejected(u, RejectInvalid)
 			continue
 		}
 		if !f.unitCanBuild(u, buildType) {
+			f.onActionRejected(u, RejectRequirements)
 			continue
 		}
 		if !f.buildQueuePush(u, buildType) {
@@ -1739,6 +1770,17 @@ func (f *ActionFunctions) readAction(r *DataReader) bool {
 func (f *ActionFunctions) readActionOwner(owner int32, r *DataReader) bool {
 	actionID := int32(r.GetU8())
 	f.onAction(owner, actionID)
+	if f.Hooks.OnProductionCancel == nil {
+		return f.readActionOfID(owner, actionID, r)
+	}
+	prevCancelReason := f.cancelReason
+	f.cancelReason = CancelCommand
+	ok := f.readActionOfID(owner, actionID, r)
+	f.cancelReason = prevCancelReason
+	return ok
+}
+
+func (f *ActionFunctions) readActionOfID(owner int32, actionID int32, r *DataReader) bool {
 	switch actionID {
 	case 9:
 		return f.readActionSelect(owner, r)

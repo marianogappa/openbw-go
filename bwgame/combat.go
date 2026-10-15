@@ -250,6 +250,7 @@ func (f *StateFunctions) unitDealDamage(u *Unit, damage Fp8, sourceUnit *Unit, s
 	if u.Hp.RawValue == 0 {
 		return
 	}
+	f.onUnitDamaged(u, sourceUnit, sourceOwner, damage)
 	f.onUnitDamage(u, sourceUnit, revealSource)
 	if damage.Less(u.Hp) {
 		u.Hp = u.Hp.Sub(damage)
@@ -262,11 +263,11 @@ func (f *StateFunctions) unitDealDamage(u *Unit, damage Fp8, sourceUnit *Unit, s
 	}
 	if f.unitProvidesSpace(u) && !f.utBuilding(u.UnitType) {
 		for n := range f.loadedUnits(u) {
-			f.killUnit(n)
+			f.killUnitWith(n, KillContext{Reason: ReasonContainer, Killer: sourceUnit, KillerOwner: sourceOwner, Container: u})
 		}
 	}
 	u.Hp = Fp8FromRaw(0)
-	f.killUnit(u)
+	f.killUnitWith(u, KillContext{Reason: ReasonDamage, Killer: sourceUnit, KillerOwner: sourceOwner})
 }
 
 func (f *StateFunctions) createShieldDamageEffect(target *Unit, heading DirectionT) {
@@ -579,7 +580,7 @@ func (f *StateFunctions) lockdownUnit(u *Unit) {
 
 func (f *StateFunctions) blindUnit(u *Unit, sourceOwner int32) {
 	if f.uHallucination(u) {
-		f.killUnit(u)
+		f.killUnitWith(u, KillContext{Reason: ReasonSpell, KillerOwner: sourceOwner})
 		return
 	}
 	u.BlindedBy |= 1 << sourceOwner
@@ -590,7 +591,7 @@ func (f *StateFunctions) blindUnit(u *Unit, sourceOwner int32) {
 
 func (f *StateFunctions) restoreUnit(u *Unit) {
 	if f.uHallucination(u) {
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonSpell))
 		return
 	}
 	f.createSizedImage(u, ImageTypesIMAGEIDRestorationHitSmall, true, imageOrderTop)
@@ -626,7 +627,7 @@ func (f *StateFunctions) empShockwave(position Xy, sourceUnit *Unit) {
 			continue
 		}
 		if f.uHallucination(target) {
-			f.killUnit(target)
+			f.killUnitWith(target, killedBy(ReasonSpell, sourceUnit))
 			continue
 		}
 		if target.StasisTimer != 0 {
@@ -650,6 +651,7 @@ func (f *StateFunctions) spawnBroodlings(target *Unit, sourceUnit *Unit) {
 			pos = f.restrictMoveTargetToValidBounds(broodlingType, pos)
 			broodling := f.createUnit(broodlingType, pos, sourceUnit.Owner)
 			if broodling != nil {
+				f.onUnitCreated(broodling, SourceBroodling, sourceUnit)
 				f.finishBuildingUnit(broodling)
 				f.completeUnit(broodling)
 				f.setDefaultRemoveTimer(broodling)
@@ -660,7 +662,7 @@ func (f *StateFunctions) spawnBroodlings(target *Unit, sourceUnit *Unit) {
 		spawn(XySub(target.Sprite.Position, Xy{X: 2, Y: 2}))
 		spawn(XyAdd(target.Sprite.Position, Xy{X: 2, Y: 2}))
 	}
-	f.killUnit(target)
+	f.killUnitWith(target, killedBy(ReasonSpell, sourceUnit))
 }
 
 func (f *StateFunctions) ensnareUnit(u *Unit) {
@@ -701,7 +703,7 @@ func (f *StateFunctions) consumeUnit(target *Unit, sourceUnit *Unit) {
 	if !f.unitTechTargetValid(sourceUnit, f.getTechType(TechTypesConsume), target) {
 		return
 	}
-	f.killUnit(target)
+	f.killUnitWith(target, killedBy(ReasonSpell, sourceUnit))
 	if !f.uHallucination(target) {
 		energy := sourceUnit.Energy.Add(Fp8Integer(50))
 		maxEnergy := f.unitMaxEnergy(sourceUnit)
@@ -720,6 +722,7 @@ func (f *StateFunctions) createSpellUnit(unitTypeID UnitTypes, pos Xy, owner int
 		f.displayLastErrorForPlayer(owner)
 		return
 	}
+	f.onUnitCreated(u, SourceSpell, nil)
 	f.uSetStatusFlag(u, UnitStatusFlagNoCollide)
 	u.Sprite.ElevationLevel = 11
 	f.finishBuildingUnit(u)
@@ -815,7 +818,7 @@ func (f *StateFunctions) maelstrom(pos Xy, sourceUnit *Unit) {
 	f.playSoundUnit(1064, sourceUnit, false)
 	for target := range f.findUnitsNoexpand(f.squareAt(pos, 48)) {
 		if f.uHallucination(target) {
-			f.killUnit(target)
+			f.killUnitWith(target, killedBy(ReasonSpell, sourceUnit))
 			continue
 		}
 		if target == sourceUnit {

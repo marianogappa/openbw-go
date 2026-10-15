@@ -308,6 +308,7 @@ type ReplayFunctions struct {
 
 	OnActionFail func(frame int32, owner int32, actionID int32)
 	BeforeAction func(owner int32, actionID int32, payload []byte)
+	AfterAction  func(owner int32, actionID int32, ok bool)
 	SkipActions  bool
 }
 
@@ -514,6 +515,7 @@ func (f *ReplayFunctions) loadReplay(r *replayFileReader, initialProcessing bool
 	}
 
 	gameLoadFuncs := NewGameLoadFunctions(f.st)
+	gameLoadFuncs.Hooks = f.Hooks
 	gameLoadFuncs.loadMapData(mapBuffer, func() {
 		f.applyReplaySetup(gameLoadFuncs, &gi)
 	}, initialProcessing)
@@ -555,16 +557,24 @@ func koreanLocaleToUtf8(src string, dst *string) bool {
 }
 
 func (f *ReplayFunctions) nextFrame() {
+	f.ExecuteFrameActions()
+	f.ProcessFrame()
+}
+
+func (f *ReplayFunctions) ExecuteFrameActions() {
 	if f.st.CurrentFrame == f.replaySt.EndFrame {
 		throwError("replay: attempt to play past end")
 	}
 	switch {
 	case f.SkipActions:
-	case f.OnActionFail != nil || f.BeforeAction != nil:
+	case f.OnActionFail != nil || f.BeforeAction != nil || f.AfterAction != nil:
 		f.executeActionsReportingFails(f.replaySt.ActionsDataBuffer)
 	default:
 		f.executeActions(f.replaySt.ActionsDataBuffer)
 	}
+}
+
+func (f *ReplayFunctions) ProcessFrame() {
 	f.StateFunctions.nextFrame()
 }
 
@@ -591,8 +601,12 @@ func (f *ReplayFunctions) executeActionGroup(r *DataReader) {
 		if f.BeforeAction != nil && owner >= 0 && actionID >= 0 {
 			f.BeforeAction(owner, actionID, r.data[r.ptr+2:])
 		}
-		if !f.readAction(r) && f.OnActionFail != nil {
+		ok := f.readAction(r)
+		if !ok && f.OnActionFail != nil {
 			f.OnActionFail(f.st.CurrentFrame, owner, actionID)
+		}
+		if f.AfterAction != nil {
+			f.AfterAction(owner, actionID, ok)
 		}
 	}
 }

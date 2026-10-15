@@ -433,6 +433,8 @@ func (f *StateFunctions) secondaryOrderTrain(u *Unit) {
 					buildUnit = f.createUnit(buildUnitType, u.Sprite.Position, u.Owner)
 					if buildUnit == nil {
 						f.displayLastErrorForPlayer(u.Owner)
+					} else {
+						f.onUnitCreated(buildUnit, SourceTrained, u)
 					}
 				}
 			}
@@ -456,6 +458,7 @@ func (f *StateFunctions) secondaryOrderTrain(u *Unit) {
 					}
 					if !u.BuildQueue.Empty() {
 						u.BuildQueue.Erase(0)
+						f.onBuildQueue(u, BuildQueueErase, 0)
 					}
 					u.CurrentBuildUnit = nil
 					u.SecondaryOrderState = 0
@@ -463,11 +466,12 @@ func (f *StateFunctions) secondaryOrderTrain(u *Unit) {
 			} else {
 				if !u.BuildQueue.Empty() {
 					if u.CurrentBuildUnit != nil {
-						f.cancelBuildingUnit(u.CurrentBuildUnit)
+						f.cancelBuildingUnitOf(u, u.CurrentBuildUnit)
 					} else if !f.utBuilding(u.BuildQueue.Front()) {
 						f.refundUnitCosts(u.Owner, u.BuildQueue.Front())
 					}
 					u.BuildQueue.Erase(0)
+					f.onBuildQueue(u, BuildQueueErase, 0)
 				}
 				u.CurrentBuildUnit = nil
 				u.SecondaryOrderState = 0
@@ -485,12 +489,14 @@ func (f *StateFunctions) secondaryOrderBuildAddon(u *Unit) {
 	addon := u.CurrentBuildUnit
 	if addon == nil {
 		u.Building.AddonBuildType = nil
+		f.onAddonBuildType(u, false)
 		f.setSecondaryOrder(u, f.getOrderType(OrdersNothing))
 		return
 	}
 	if !f.uGroundedBuilding(u) && !f.uCompleted(addon) {
 		f.cancelBuildingUnit(addon)
 		u.Building.AddonBuildType = nil
+		f.onAddonBuildType(u, false)
 		f.setSecondaryOrder(u, f.getOrderType(OrdersNothing))
 		return
 	}
@@ -498,6 +504,7 @@ func (f *StateFunctions) secondaryOrderBuildAddon(u *Unit) {
 	if f.uCompleted(addon) {
 		f.connectAddon(u, addon)
 		u.Building.AddonBuildType = nil
+		f.onAddonBuildType(u, false)
 		f.setSecondaryOrder(u, f.getOrderType(OrdersNothing))
 	}
 }
@@ -628,6 +635,8 @@ func (f *StateFunctions) secondaryOrderTrainFighter(u *Unit) {
 					buildUnit = f.createUnit(buildUnitType, u.Sprite.Position, u.Owner)
 					if buildUnit == nil {
 						f.displayLastErrorForPlayer(u.Owner)
+					} else {
+						f.onUnitCreated(buildUnit, SourceTrained, u)
 					}
 				}
 			}
@@ -660,6 +669,7 @@ func (f *StateFunctions) secondaryOrderTrainFighter(u *Unit) {
 					buildUnit.Fighter.IsOutside = false
 				}
 				u.BuildQueue.Erase(0)
+				f.onBuildQueue(u, BuildQueueErase, 0)
 				u.CurrentBuildUnit = nil
 				u.SecondaryOrderState = 0
 			}
@@ -708,7 +718,7 @@ func (f *StateFunctions) secondaryOrderShieldBattery(u *Unit) {
 func (f *StateFunctions) executeSecondaryOrder(u *Unit) {
 	if u.SecondaryOrderType.ID == OrdersHallucination2 {
 		if u.DefensiveMatrixHp.RawValue != 0 || u.StimTimer != 0 || u.EnsnareTimer != 0 || u.LockdownTimer != 0 || u.IrradiateTimer != 0 || u.StasisTimer != 0 || u.ParasiteFlags != 0 || u.StormTimer != 0 || u.PlagueTimer != 0 || u.BlindedBy != 0 || u.MaelstromTimer != 0 {
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonSpell))
 		}
 		return
 	}

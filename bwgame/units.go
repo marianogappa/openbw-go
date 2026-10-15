@@ -232,6 +232,7 @@ func (f *StateFunctions) initializeUnitType(u *Unit, unitType *UnitTypeT, pos Xy
 	}
 	u.Building.Addon = nil
 	u.Building.AddonBuildType = nil
+	f.onAddonBuildType(u, false)
 	u.Building.UpgradeResearchTime = 0
 	u.Building.ResearchingType = nil
 	u.Building.UpgradingType = nil
@@ -369,7 +370,7 @@ func (f *StateFunctions) killInterceptors(u *Unit) {
 	inside := &u.Carrier.InsideUnits
 	for n := inside.Begin(); n != nil; {
 		next := inside.Next(n)
-		f.killUnit(n)
+		f.killUnitWith(n, noKiller(ReasonLinked))
 		n = next
 	}
 	outside := &u.Carrier.OutsideUnits
@@ -388,7 +389,7 @@ func (f *StateFunctions) destroyReaverFighters(u *Unit) {
 	reaver := u.Reaver()
 	for n := reaver.InsideUnits.Begin(); n != nil; {
 		next := reaver.InsideUnits.Next(n)
-		f.killUnit(n)
+		f.killUnitWith(n, noKiller(ReasonLinked))
 		n = next
 	}
 	for n := reaver.OutsideUnits.Begin(); n != nil; {
@@ -435,7 +436,7 @@ func (f *StateFunctions) destroyUnitTypeSpecifics(u *Unit) {
 		f.detachFighterFromParent(u)
 	case UnitTypesTerranNuclearSilo:
 		if u.Building.Silo.Nuke != nil {
-			f.killUnit(u.Building.Silo.Nuke)
+			f.killUnitWith(u.Building.Silo.Nuke, noKiller(ReasonLinked))
 			u.Building.Silo.Nuke = nil
 		}
 	case UnitTypesTerranNuclearMissile:
@@ -458,7 +459,7 @@ func (f *StateFunctions) destroyUnitTypeSpecifics(u *Unit) {
 			exit := u.Building.Nydus.Exit
 			u.Building.Nydus.Exit = nil
 			exit.Building.Nydus.Exit = nil
-			f.killUnit(exit)
+			f.killUnitWith(exit, noKiller(ReasonLinked))
 		}
 	}
 }
@@ -493,10 +494,10 @@ func (f *StateFunctions) destroyLoadedUnits(u *Unit) {
 	for n := range f.loadedUnits(u) {
 		if f.unitIs(u.UnitType, UnitTypesTerranBunker) {
 			if !f.unitUnload(n) {
-				f.killUnit(n)
+				f.killUnitWith(n, killedInContainer(u))
 			}
 		} else {
-			f.killUnit(n)
+			f.killUnitWith(n, killedInContainer(u))
 		}
 	}
 	u.LoadedUnits = [8]UnitID{}
@@ -560,7 +561,7 @@ func (f *StateFunctions) revertRefineryToGeyser(u *Unit) {
 	u.OrderState = 0
 	u.OrderUnitType = nil
 	u.Hp = u.UnitType.Hitpoints
-	f.setUnitOwner(u, 11, false)
+	f.setUnitOwnerWith(u, 11, false, OwnerRefinery)
 	f.setSpriteOwner(u, 11)
 	f.uSetStatusFlag(u, UnitStatusFlagCompleted)
 	f.addCompletedUnit(u, 1, true)
@@ -586,6 +587,12 @@ func (f *StateFunctions) destroyGroundedBuilding(u *Unit) {
 	if !f.uGroundedBuilding(u) {
 		return
 	}
+	prevCancelReason := f.swapCancelReason(CancelProducerDestroyed)
+	f.cancelGroundedBuildingWork(u)
+	f.cancelReason = prevCancelReason
+}
+
+func (f *StateFunctions) cancelGroundedBuildingWork(u *Unit) {
 	if u.SecondaryOrderType.ID == OrdersBuildAddon {
 		if u.CurrentBuildUnit != nil && !f.uCompleted(u.CurrentBuildUnit) {
 			f.cancelBuildingUnit(u.CurrentBuildUnit)
@@ -635,7 +642,7 @@ func (f *StateFunctions) destroyRegularUnit(u *Unit) {
 	}
 	if u.CurrentBuildUnit != nil {
 		if u.SecondaryOrderType.ID == OrdersTrain || u.SecondaryOrderType.ID == OrdersTrainFighter {
-			f.killUnit(u.CurrentBuildUnit)
+			f.killUnitWith(u.CurrentBuildUnit, noKiller(ReasonLinked))
 		}
 	}
 	f.setSecondaryOrder(u, f.getOrderType(OrdersNothing))
@@ -721,6 +728,7 @@ func (f *StateFunctions) initializeUnit(u *Unit, unitType *UnitTypeT, pos Xy, ow
 
 	u.BuildQueue = StaticVector[*UnitTypeT, [5]*UnitTypeT]{}
 	u.BuildQueueLimbo = StaticVector[*UnitTypeT, [5]*UnitTypeT]{}
+	f.onBuildQueue(u, BuildQueueReset, 0)
 	u.UnitIDGeneration++
 	u.WireframeRandomizer = f.lcgRand(15) & 0xff
 	if f.utTurret(u.UnitType) {
@@ -1329,6 +1337,7 @@ func (f *StateFunctions) completeUnit(u *Unit) {
 	}
 	u.AirStrength = f.getUnitStrength(u, false)
 	u.GroundStrength = f.getUnitStrength(u, true)
+	f.onUnitCompleted(u)
 }
 
 func (f *StateFunctions) createInitialUnit(unitType *UnitTypeT, pos Xy, owner int32) *Unit {
@@ -1337,6 +1346,7 @@ func (f *StateFunctions) createInitialUnit(unitType *UnitTypeT, pos Xy, owner in
 		f.displayLastErrorForPlayer(owner)
 		return nil
 	}
+	f.onUnitCreated(u, SourceMap, nil)
 	if f.unitTypeSpreadsCreep(unitType, true) || f.utRequiresCreep(unitType) {
 		f.spreadCreepCompletely(u.UnitType, u.Sprite.Position)
 	}

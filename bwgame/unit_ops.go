@@ -253,7 +253,7 @@ func (f *StateFunctions) unitGatherResourcesFrom(u *Unit, resource *Unit) {
 		imageType = f.getImageType(imageType.ID + 1)
 		if isMinerals {
 			gathered = resource.Building.Resource.ResourceCount
-			f.killUnit(resource)
+			f.killUnitWith(resource, noKiller(ReasonDepleted))
 		} else {
 			resource.Building.Resource.ResourceCount = 0
 			gathered = 2
@@ -263,7 +263,7 @@ func (f *StateFunctions) unitGatherResourcesFrom(u *Unit, resource *Unit) {
 		gathered = 8
 		if isMinerals {
 			if resource.Building.Resource.ResourceCount == 0 {
-				f.killUnit(resource)
+				f.killUnitWith(resource, noKiller(ReasonDepleted))
 			}
 		}
 	}
@@ -431,19 +431,24 @@ func (f *StateFunctions) hasAvailableResourcesForUpgrade(owner int32, upgradeTyp
 
 func (f *StateFunctions) buildQueuePush(u *Unit, unitType *UnitTypeT) bool {
 	if u.BuildQueue.Size() >= 5 {
+		f.onActionRejected(u, RejectQueueFull)
 		return false
 	}
 	if u.BuildQueue.Empty() && !f.hasAvailableSupplyFor(u.Owner, unitType, true) {
+		f.onActionRejected(u, RejectSupply)
 		return false
 	}
 	if !f.hasAvailableResourcesFor(u.Owner, unitType, true) {
+		f.onActionRejectedForCost(u, u.Owner, unitType.MineralCost)
 		return false
 	}
+	index := u.BuildQueue.Size()
 	u.BuildQueue.PushBack(unitType)
 	for _, t := range u.BuildQueueLimbo.All() {
 		u.BuildQueue.PushBack(t)
 	}
 	u.BuildQueueLimbo.Clear()
+	f.onBuildQueue(u, BuildQueuePush, index)
 	if !f.utBuilding(unitType) {
 		f.st.CurrentMinerals[u.Owner] -= unitType.MineralCost
 		f.st.CurrentGas[u.Owner] -= unitType.GasCost
@@ -458,6 +463,7 @@ func (f *StateFunctions) buildQueueClearSingle(u *Unit) {
 	u.BuildQueue.Erase(0)
 	u.BuildQueueLimbo = u.BuildQueue
 	u.BuildQueue.Clear()
+	f.onBuildQueue(u, BuildQueueClearSingle, 0)
 }
 
 func (f *StateFunctions) trainUnit(u *Unit, unitType *UnitTypeT) bool {
@@ -516,13 +522,14 @@ func (f *StateFunctions) cancelZergBuildingConstruction(u *Unit) {
 	if f.unitIs(u.UnitType, UnitTypesZergExtractor) {
 		drone := f.createUnitByID(UnitTypesZergDrone, u.Sprite.Position, u.Owner)
 		if drone != nil {
+			f.onUnitCreated(drone, SourceDroneReturned, u)
 			f.finishBuildingUnit(drone)
 			f.completeUnit(drone)
 			f.setUnitHp(drone, prevHp)
 		} else {
 			f.displayLastErrorForPlayer(u.Owner)
 		}
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonCancelled))
 		return
 	}
 	t := f.createThingy(f.getSpriteType(SpriteTypesSPRITEIDZergBuildingSpawnSmall), u.Sprite.Position, 0)
@@ -567,6 +574,7 @@ func (f *StateFunctions) cancelBuildingUnit(u *Unit) bool {
 	if f.unitIsNydus(u.UnitType) && u.Building.Nydus.Exit == nil {
 		return false
 	}
+	f.onBuildingUnitCancelled(u)
 	if f.uGroundedBuilding(u) {
 		if f.unitRace(u.UnitType) == RaceZerg {
 			f.cancelMorphingBuilding(u)
@@ -595,7 +603,7 @@ func (f *StateFunctions) cancelBuildingUnit(u *Unit) bool {
 			}
 			u.ConnectedUnit.OrderState = 0
 		}
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonCancelled))
 	}
 	return true
 }
@@ -621,12 +629,14 @@ func (f *StateFunctions) cancelBuildQueueIndex(u *Unit, index uint) {
 	}
 	unitType := u.BuildQueue.At(int(index))
 	u.BuildQueue.Erase(int(index))
+	f.onBuildQueue(u, BuildQueueErase, int(index))
 	if index != 0 || u.CurrentBuildUnit == nil {
+		f.onQueuedProductionCancelled(u, unitType)
 		if !f.utBuilding(unitType) {
 			f.refundUnitCosts(u.Owner, unitType)
 		}
 	} else {
-		f.cancelBuildingUnit(u.CurrentBuildUnit)
+		f.cancelBuildingUnitOf(u, u.CurrentBuildUnit)
 	}
 }
 
@@ -643,9 +653,11 @@ func (f *StateFunctions) placeBuilding(u *Unit, orderType *OrderTypeT, unitType 
 	}
 	if f.unitIs(u.UnitType, UnitTypesZergDrone) {
 		if u.OrderType.ID == OrdersDroneBuild {
+			f.onActionRejected(u, RejectBusy)
 			return
 		}
 		if u.OrderType.ID == OrdersDroneLand && (f.uOrderNotInterruptible(u) || f.uIscriptNobrk(u)) {
+			f.onActionRejected(u, RejectBusy)
 			return
 		}
 	}
@@ -658,15 +670,18 @@ func (f *StateFunctions) placeBuilding(u *Unit, orderType *OrderTypeT, unitType 
 		return
 	}
 	if !f.hasAvailableSupplyFor(u.Owner, unitType, true) {
+		f.onActionRejected(u, RejectSupply)
 		return
 	}
 	if !f.hasAvailableResourcesFor(u.Owner, unitType, true) {
+		f.onActionRejectedForCost(u, u.Owner, unitType.MineralCost)
 		return
 	}
 	f.setUnitOrderPos(u, orderType, position)
 	f.cancelBuildQueue(u)
 	if f.utBuilding(u.UnitType) && f.utBuilding(unitType) {
 		u.Building.AddonBuildType = unitType
+		f.onAddonBuildType(u, true)
 	} else {
 		f.buildQueuePush(u, unitType)
 	}
@@ -959,12 +974,15 @@ func (f *StateFunctions) buildingAreaHasBlockingUnit(u *Unit, unitType *UnitType
 }
 
 func (f *StateFunctions) killUnit(u *Unit) {
+	wasDying := f.Hooks.OnKillUnit != nil && u.OrderType != nil && u.OrderType.ID == OrdersDie
 	f.dropCarriedItems(u)
 	for !u.OrderQueue.Empty() {
 		f.removeQueuedOrder(u, u.OrderQueue.Front())
 	}
 	f.setUnitOrderPos(u, f.getOrderType(OrdersDie), u.OrderTarget.Pos)
-	f.onKillUnit(u)
+	if f.Hooks.OnKillUnit != nil && !wasDying {
+		f.Hooks.OnKillUnit(u, f.killContext)
+	}
 }
 
 func (f *StateFunctions) unitCanEnterNydus(u *Unit, target *Unit) bool {
@@ -1316,6 +1334,7 @@ func (f *StateFunctions) setUnitOwner(u *Unit, owner int32, incrementScore bool)
 	if u.Owner == owner {
 		return
 	}
+	from := u.Owner
 	isMorphing := f.unitIsMorphingBuilding(u)
 	if isMorphing {
 		f.uSetStatusFlag(u, UnitStatusFlagCompleted)
@@ -1357,6 +1376,7 @@ func (f *StateFunctions) setUnitOwner(u *Unit, owner int32, incrementScore bool)
 			f.dropCarriedItems(u)
 		}
 	}
+	f.onOwnerChanged(u, from)
 }
 
 func (f *StateFunctions) setSpriteOwner(u *Unit, owner int32) {
@@ -1441,6 +1461,7 @@ func (f *StateFunctions) reinitializeUnitType(u *Unit, unitType *UnitTypeT) {
 }
 
 func (f *StateFunctions) morphUnit(u *Unit, unitType *UnitTypeT) {
+	from := u.UnitType
 	visibility := u.Sprite.VisibilityFlags
 	if !f.usHidden(&u.Thingy) {
 		f.unitFinderRemove(u)
@@ -1494,6 +1515,7 @@ func (f *StateFunctions) morphUnit(u *Unit, unitType *UnitTypeT) {
 		f.morphTurret(u, unitType)
 	}
 	f.applyUnitEffects(u)
+	f.onUnitMorphed(u, from)
 }
 
 func (f *StateFunctions) morphTurret(u *Unit, unitType *UnitTypeT) {
@@ -1536,7 +1558,7 @@ func (f *StateFunctions) buildRefinery(u *Unit, unitType *UnitTypeT) *Unit {
 	}
 	f.addCompletedUnit(target, -1, true)
 	f.uUnsetStatusFlag(target, UnitStatusFlagCompleted)
-	f.setUnitOwner(target, u.Owner, false)
+	f.setUnitOwnerWith(target, u.Owner, false, OwnerRefinery)
 	f.setSpriteOwner(target, u.Owner)
 	f.morphUnit(target, unitType)
 	f.createImage(f.getImageType(ImageTypesIMAGEIDVespeneGeyser2), target.Sprite, Xy{}, imageOrderBelow, nil)
@@ -1844,6 +1866,7 @@ func (f *StateFunctions) grantUnitTypeUpgradesAndTechs(u *Unit, newOwner int32) 
 func (f *StateFunctions) giveUnitTo(u *Unit, newOwner int32) {
 	anyUpgradesGranted := f.grantUnitTypeUpgradesAndTechs(u, newOwner)
 	f.onUnitDeselect(u)
+	prevCancelReason := f.swapCancelReason(CancelOwnerChanged)
 	if f.uGroundedBuilding(u) {
 		if !u.BuildQueue.Empty() && u.BuildQueue.Front().ID <= UnitTypesSpellDisruptionWeb {
 			f.cancelBuildQueue(u)
@@ -1861,6 +1884,7 @@ func (f *StateFunctions) giveUnitTo(u *Unit, newOwner int32) {
 		u.CurrentBuildUnit = nil
 		u.SecondaryOrderState = 0
 	}
+	f.cancelReason = prevCancelReason
 	f.setUnitOwner(u, newOwner, true)
 	if newOwner < 8 {
 		f.setSpriteOwner(u, newOwner)
@@ -1905,7 +1929,9 @@ func (f *StateFunctions) setIdleOrderForController(u *Unit, owner int32) {
 func (f *StateFunctions) makeUnitNeutral(u *Unit) {
 	if u.SecondaryOrderType.ID == OrdersBuildAddon && f.uGroundedBuilding(u) && u.CurrentBuildUnit != nil {
 		if !f.uCompleted(u.CurrentBuildUnit) {
+			prevCancelReason := f.swapCancelReason(CancelOwnerChanged)
 			f.cancelBuildingUnit(u.CurrentBuildUnit)
+			f.cancelReason = prevCancelReason
 		}
 	}
 	f.giveUnitTo(u, 11)
@@ -1919,7 +1945,9 @@ func (f *StateFunctions) buildingAbandonAddon(u *Unit) {
 	if addon == nil {
 		return
 	}
+	prevOwnerReason := f.swapOwnerReason(OwnerAddon)
 	f.makeUnitNeutral(addon)
+	f.ownerReason = prevOwnerReason
 	u.Building.Addon = nil
 	prevIscriptUnit := f.iscriptUnit
 	f.iscriptUnit = addon
@@ -2005,7 +2033,7 @@ func (f *StateFunctions) findConnectingAddon(u *Unit) *Unit {
 
 func (f *StateFunctions) connectAddon(u *Unit, addon *Unit) {
 	u.Building.Addon = addon
-	f.setUnitOwner(addon, u.Owner, false)
+	f.setUnitOwnerWith(addon, u.Owner, false, OwnerAddon)
 	f.setSpriteOwner(addon, u.Owner)
 	prevIscriptUnit := f.iscriptUnit
 	f.iscriptUnit = addon
@@ -2013,7 +2041,7 @@ func (f *StateFunctions) connectAddon(u *Unit, addon *Unit) {
 	f.spriteRunAnim(addon.Sprite, IscriptAnimsLanding)
 	if f.unitIs(addon.UnitType, UnitTypesTerranNuclearSilo) {
 		if addon.Building.Silo.Nuke != nil {
-			f.setUnitOwner(addon.Building.Silo.Nuke, u.Owner, false)
+			f.setUnitOwnerWith(addon.Building.Silo.Nuke, u.Owner, false, OwnerAddon)
 		}
 	}
 }
@@ -2041,6 +2069,7 @@ func (f *StateFunctions) cancelResearch(u *Unit, unitDestroyed bool) {
 		return
 	}
 	techType := u.Building.ResearchingType
+	f.onResearchCancelled(u, Research{ID: uint8(techType.ID)}, unitDestroyed)
 	u.Building.ResearchingType = nil
 	u.Building.UpgradeResearchTime = 0
 	f.st.TechResearching[u.Owner][techType.ID] = false
@@ -2052,6 +2081,7 @@ func (f *StateFunctions) cancelUpgrade(u *Unit, unitDestroyed bool) {
 		return
 	}
 	upgradeType := u.Building.UpgradingType
+	f.onResearchCancelled(u, Research{Upgrade: true, ID: uint8(upgradeType.ID)}, unitDestroyed)
 	u.Building.UpgradingType = nil
 	u.Building.UpgradeResearchTime = 0
 	u.Building.UpgradingLevel = 0

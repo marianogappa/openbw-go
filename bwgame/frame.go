@@ -890,6 +890,7 @@ func (f *StateFunctions) playerLeft(owner int32) {
 	}
 	p.VictoryState = 2
 	f.onVictoryState(owner, 2)
+	f.onPlayerLeft(owner, false)
 	f.removePlayer(owner)
 }
 
@@ -901,6 +902,7 @@ func (f *StateFunctions) playerDropped(owner int32) {
 	}
 	p.VictoryState = 1
 	f.onVictoryState(owner, 1)
+	f.onPlayerLeft(owner, true)
 	f.removePlayer(owner)
 }
 
@@ -912,11 +914,13 @@ func (f *StateFunctions) removePlayer(owner int32) {
 	} else if p.Controller == PlayerControllerComputer {
 		p.Controller = PlayerControllerComputerDefeated
 	}
+	prevOwnerReason := f.swapOwnerReason(OwnerPlayerLeft)
 	for i := st.PlayerUnits[owner].Begin(); i != st.PlayerUnits[owner].End(); {
 		u := i
 		i = st.PlayerUnits[owner].Next(i)
 		f.makeUnitNeutral(u)
 	}
+	f.ownerReason = prevOwnerReason
 }
 
 func (f *StateFunctions) processFrame() {

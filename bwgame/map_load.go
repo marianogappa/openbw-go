@@ -627,6 +627,7 @@ func (f *GameLoadFunctions) createStartingUnit(unitType *UnitTypeT, pos Xy, owne
 	if u == nil {
 		return nil
 	}
+	f.onUnitCreated(u, SourceStart, nil)
 	f.finishBuildingUnit(u)
 	if f.placeCompletedUnit(u) {
 		f.completeUnit(u)
@@ -659,7 +660,7 @@ func (f *GameLoadFunctions) createStartingUnits(owner int32, position Xy, race R
 	placementRect.To = XySub(XyAdd(placementRect.From, resourceDepotType.PlacementSize), Xy{X: 1, Y: 1})
 	for u := range f.findUnits(placementRect) {
 		u.UserActionFlags |= 4
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonRemoved))
 	}
 	resourceDepot := f.createStartingUnit(resourceDepotType, resourceDepotPos, owner)
 	if resourceDepot != nil {

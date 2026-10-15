@@ -284,6 +284,7 @@ func (f *StateFunctions) triggerCreateUnit(unitType *UnitTypeT, pos Xy, owner in
 		f.displayLastErrorForPlayer(owner)
 		return nil
 	}
+	f.onUnitCreated(u, SourceTrigger, nil)
 	spreadsCreep := f.unitTypeSpreadsCreep(u.UnitType, true)
 	if spreadsCreep {
 		f.setCreepBuildingTiles(u.UnitType, u.Sprite.Position)
@@ -295,7 +296,7 @@ func (f *StateFunctions) triggerCreateUnit(unitType *UnitTypeT, pos Xy, owner in
 
 	f.finishBuildingUnit(u)
 	if !f.placeCompletedUnit(u) {
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonTrigger))
 		return nil
 	}
 	f.completeUnit(u)
@@ -304,7 +305,7 @@ func (f *StateFunctions) triggerCreateUnit(unitType *UnitTypeT, pos Xy, owner in
 		f.addCreepProvider(u)
 	}
 	if f.utAddon(u.UnitType) {
-		f.setUnitOwner(u, 11, false)
+		f.setUnitOwnerWith(u, 11, false, OwnerTrigger)
 	}
 	if f.uGroundedBuilding(u) && f.unitRace(u.UnitType) == RaceTerran {
 		f.findAndConnectAddon(u)
@@ -572,7 +573,7 @@ func (f *StateFunctions) triggerActionKillUnit(owner int32, a *TriggerAction) {
 				continue
 			}
 			if f.triggerUnitTypeMatches(u, uid) {
-				f.killUnit(u)
+				f.killUnitWith(u, noKiller(ReasonTrigger))
 			}
 		}
 	}
@@ -601,7 +602,7 @@ func (f *StateFunctions) triggerActionRemoveUnit(owner int32, a *TriggerAction) 
 				continue
 			}
 			f.hideUnit(u, true)
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonRemoved))
 		}
 	}
 }
@@ -639,7 +640,7 @@ func (f *StateFunctions) triggerActionRemoveUnitAtLocation(owner int32, a *Trigg
 			return
 		}
 		f.hideUnit(u, true)
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonRemoved))
 	}
 	for u := range f.findUnits(f.st.Locations[a.Location-1].Area) {
 		proc(u)

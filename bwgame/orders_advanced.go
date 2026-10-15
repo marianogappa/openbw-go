@@ -161,6 +161,7 @@ func (f *StateFunctions) orderCastScannerSweep(u *Unit) {
 	pos := f.restrictMoveTargetToValidBounds(scanType, u.OrderTarget.Pos)
 	scan := f.createUnit(scanType, pos, u.Owner)
 	if scan != nil {
+		f.onUnitCreated(scan, SourceScanner, u)
 		f.finishBuildingUnit(scan)
 		f.completeUnit(scan)
 		f.orderDone(u, OrderTarget{})
@@ -175,7 +176,7 @@ func (f *StateFunctions) orderCastScannerSweep(u *Unit) {
 func (f *StateFunctions) orderScanner(u *Unit) {
 	if u.OrderSignal&4 != 0 {
 		u.OrderSignal &^= 4
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonExpired))
 	}
 }
 
@@ -528,7 +529,7 @@ func (f *StateFunctions) findReadyNuclearSilo(owner int32) *Unit {
 
 func (f *StateFunctions) orderNukeLaunch(u *Unit) {
 	if u.ConnectedUnit == nil && u.OrderState < 5 {
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonLinked))
 		return
 	}
 	switch u.OrderState {
@@ -579,7 +580,7 @@ func (f *StateFunctions) orderNukeLaunch(u *Unit) {
 		if u.OrderSignal&1 != 0 {
 			u.OrderSignal &^= 1
 			u.UserActionFlags |= 4
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonDetonated))
 		}
 	}
 }
@@ -708,13 +709,17 @@ func (f *StateFunctions) orderZergUnitMorph(u *Unit) {
 			throwError("order_ZergUnitMorph: no egg type")
 		}
 		if !f.hasAvailableSupplyFor(u.Owner, unitType, true) {
+			prevCancelReason := f.swapCancelReason(CancelNoSupply)
 			f.cancelBuildQueue(u)
+			f.cancelReason = prevCancelReason
 			f.setUnitOrder(u, u.UnitType.ReturnToIdle.Get())
 			return
 		}
+		from := u.UnitType
 		f.addCompletedUnit(u, -1, false)
 		f.uUnsetStatusFlag(u, UnitStatusFlagCompleted)
 		f.morphUnit(u, eggType)
+		f.onMorphStarted(u, u, from, unitType)
 		u.RemainingBuildTime = unitType.BuildTime
 		u.OrderState = 1
 	case 1:
@@ -791,6 +796,7 @@ func (f *StateFunctions) spawnSecondEggUnit(u *Unit) *Unit {
 		f.displayLastErrorForPlayer(u.Owner)
 		return nil
 	}
+	f.onUnitCreated(u2, SourceSecondEggUnit, u)
 	if f.unitIs(u2.UnitType, UnitTypesZergZergling) {
 		f.setUnitHeading(u2, directionLiteral(144))
 	} else if f.unitIs(u2.UnitType, UnitTypesZergScourge) {
@@ -933,17 +939,20 @@ func (f *StateFunctions) orderDroneBuild(u *Unit) {
 	if f.unitIs(buildType, UnitTypesZergExtractor) {
 		buildUnit := f.buildRefinery(u, buildType)
 		if buildUnit != nil {
+			f.onMorphStarted(buildUnit, u, f.getUnitType(UnitTypesResourceVespeneGeyser), buildType)
 			u.UserActionFlags |= 4
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonRemoved))
 			f.zergBuildingStartConstruction(buildUnit)
 			f.createImage(f.getImageType(ImageTypesIMAGEIDVespeneGeyser2), buildUnit.Sprite, Xy{}, imageOrderBelow, nil)
 		} else {
 			done()
 		}
 	} else {
+		from := u.UnitType
 		f.addCompletedUnit(u, -1, false)
 		f.uUnsetStatusFlag(u, UnitStatusFlagCompleted)
 		f.morphUnit(u, buildType)
+		f.onMorphStarted(u, u, from, buildType)
 		f.zergBuildingStartConstruction(u)
 	}
 	if powerup != nil && f.utPowerup(powerup.UnitType) {
@@ -1039,6 +1048,7 @@ func (f *StateFunctions) orderZergBuildingMorph(u *Unit) {
 	}
 	f.st.CurrentMinerals[u.Owner] -= buildType.MineralCost
 	f.st.CurrentGas[u.Owner] -= buildType.GasCost
+	f.onMorphStarted(u, u, u.UnitType, buildType)
 	f.uUnsetStatusFlag(u, UnitStatusFlagCompleted)
 	f.setConstructionGraphic(u, true)
 	u.RemainingBuildTime = buildType.BuildTime
@@ -1210,6 +1220,7 @@ func (f *StateFunctions) orderBuildNydusExit(u *Unit) {
 		f.orderDone(u, OrderTarget{})
 		return
 	}
+	f.onUnitCreated(exit, SourceBuilt, u)
 	f.setConstructionGraphic(exit, true)
 	exit.Hp = exit.UnitType.Hitpoints.DivInt(10)
 	f.setUnitOrder(exit, f.getOrderType(OrdersIncompleteMorphing))
@@ -1360,16 +1371,20 @@ func (f *StateFunctions) orderInfestedCommandCenter(u *Unit) {
 	if f.uCompleted(u) {
 		f.addCompletedUnit(u, -1, false)
 	}
+	oldType := u.UnitType
 	u.UnitType = newType
 	f.incrementUnitCounts(u, 1)
 	if f.uCompleted(u) {
 		f.addCompletedUnit(u, 1, false)
 	}
-	f.setUnitOwner(u, queen.Owner, true)
+	f.onUnitMorphed(u, oldType)
+	f.setUnitOwnerWith(u, queen.Owner, true, OwnerInfest)
 	f.setSpriteOwner(u, queen.Owner)
 	u.SecondaryOrderType = nil
 	f.setSecondaryOrder(u, f.getOrderType(OrdersNothing))
+	prevCancelReason := f.swapCancelReason(CancelOwnerChanged)
 	f.cancelBuildQueue(u)
+	f.cancelReason = prevCancelReason
 	for !u.OrderQueue.Empty() {
 		f.removeQueuedOrder(u, u.OrderQueue.Front())
 	}
@@ -1394,7 +1409,7 @@ func (f *StateFunctions) startSuicide(u *Unit) {
 func (f *StateFunctions) explodeOnSignal(u *Unit) {
 	if u.OrderSignal&1 != 0 {
 		f.uSetStatusFlag(u, UnitStatusFlagLifetimeExpired)
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonDetonated))
 	}
 }
 
@@ -1533,6 +1548,9 @@ func (f *StateFunctions) warpInProtossBuilding(u *Unit, buildType *UnitTypeT) {
 		buildUnit = f.buildRefinery(u, buildType)
 	} else {
 		buildUnit = f.createUnit(buildType, u.OrderTarget.Pos, u.Owner)
+		if buildUnit != nil {
+			f.onUnitCreated(buildUnit, SourceBuilt, u)
+		}
 	}
 	f.buildQueueClearSingle(u)
 	if buildUnit == nil {
@@ -1715,7 +1733,7 @@ func (f *StateFunctions) mergeArchon(u *Unit, target *Unit, isDarkArchon bool) {
 		u.Energy = Fp8Integer(50)
 	}
 	target.UserActionFlags |= 4
-	f.killUnit(target)
+	f.killUnitWith(target, noKiller(ReasonRemoved))
 	f.uUnsetStatusFlag(u, UnitStatusFlagCanMove)
 	f.resetMovementState(u)
 	f.setUnitOrder(u, f.getOrderType(OrdersCompletingArchonSummon))
@@ -1937,7 +1955,7 @@ func (f *StateFunctions) orderInterceptorAttack(u *Unit) {
 
 	if u.OrderState == 0 {
 		if parent == nil {
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonLinked))
 			return
 		}
 		f.playSoundUnit(616, u, false)
@@ -1982,7 +2000,7 @@ func (f *StateFunctions) orderInterceptorReturn(u *Unit) {
 	}
 	parent := u.Fighter.Parent
 	if parent == nil {
-		f.killUnit(u)
+		f.killUnitWith(u, noKiller(ReasonLinked))
 		return
 	}
 	if u.OrderState == 0 {
@@ -2033,10 +2051,12 @@ func (f *StateFunctions) orderCastMindControl(u *Unit) {
 		return
 	}
 	if f.uHallucination(target) {
-		f.killUnit(target)
+		f.killUnitWith(target, killedBy(ReasonSpell, u))
 	} else {
 		f.createSizedImage(target, ImageTypesIMAGEIDMindControlHitSmall, true, imageOrderTop)
+		prevOwnerReason := f.swapOwnerReason(OwnerMindControl)
 		f.triggerGiveUnitTo(target, u.Owner)
+		f.ownerReason = prevOwnerReason
 		if f.unitIs(target.UnitType, UnitTypesProtossDarkArchon) {
 			target.Energy = Fp8Zero()
 		}
@@ -2269,12 +2289,13 @@ func (f *StateFunctions) orderCastHallucination(u *Unit) {
 }
 
 func (f *StateFunctions) placeHallucination(target *Unit, owner int32) bool {
-	n := f.createHallucination(target, owner)
+	n := f.createHallucination(target, owner, target)
 	if n == nil {
 		return false
 	}
 	placed, placement := f.findUnitPlacement(n, n.Sprite.Position, false)
 	if !placed {
+		f.onUnitRemovedWithoutKill(n)
 		f.destroyUnit(n)
 		return false
 	}

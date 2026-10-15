@@ -429,7 +429,7 @@ func (f *StateFunctions) initializeBullet(b *Bullet, weaponType *WeaponTypeT, so
 		if b.BulletOwnerUnit != nil {
 			f.uSetStatusFlag(b.BulletOwnerUnit, UnitStatusFlagLifetimeExpired)
 			b.BulletOwnerUnit.UserActionFlags |= 4
-			f.killUnit(b.BulletOwnerUnit)
+			f.killUnitWith(b.BulletOwnerUnit, noKiller(ReasonDetonated))
 		}
 	case WeaponTypeTBulletTypeAttackTargetPos:
 		b.HitNearTargetPositionIndex = uint(sourceUnit.NextHitNearTargetPositionIndex)

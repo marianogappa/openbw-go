@@ -584,6 +584,7 @@ func (f *StateFunctions) spawnLarva(u *Unit) *Unit {
 	}
 	larva := f.createUnit(f.getUnitType(UnitTypesZergLarva), pos, u.Owner)
 	if larva != nil {
+		f.onUnitCreated(larva, SourceLarva, u)
 		f.finishBuildingUnit(larva)
 		f.completeUnit(larva)
 		larva.ConnectedUnit = u

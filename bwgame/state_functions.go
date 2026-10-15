@@ -17,10 +17,15 @@ type StateFunctions struct {
 	longPath              *longPathScratch
 
 	deselectUnit func(u *Unit)
+
+	killContext    KillContext
+	ownerReason    OwnerReason
+	cancelReason   CancelReason
+	cancelProducer *Unit
 }
 
 func NewStateFunctions(st *State) *StateFunctions {
-	return &StateFunctions{st: st, globalSt: st.Global, gameSt: st.Game}
+	return &StateFunctions{st: st, globalSt: st.Global, gameSt: st.Game, killContext: noKiller(ReasonOther)}
 }
 
 type GameLoadFunctions struct {

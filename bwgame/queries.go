@@ -1206,7 +1206,7 @@ func (f *StateFunctions) updateUnitValues(u *Unit) {
 			removeTimerExpired = u.RemoveTimer == 0
 		}
 		if removeTimerExpired {
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonExpired))
 		} else {
 			if f.unitRace(u.UnitType) == RaceTerran {
 				if f.uGroundedBuilding(u) || f.utFlyingBuilding(u.UnitType) {

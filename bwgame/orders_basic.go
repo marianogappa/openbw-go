@@ -133,7 +133,7 @@ func (f *StateFunctions) medicTryHeal(u *Unit) int32 {
 }
 
 func (f *StateFunctions) orderSelfDestructing(u *Unit) {
-	f.killUnit(u)
+	f.killUnitWith(u, noKiller(ReasonDetonated))
 }
 
 func (f *StateFunctions) copyStatusEffects(to *Unit, from *Unit) {
@@ -407,12 +407,13 @@ func (f *StateFunctions) releaseFighter(u *Unit) *Unit {
 	return r
 }
 
-func (f *StateFunctions) createHallucination(sourceUnit *Unit, owner int32) *Unit {
+func (f *StateFunctions) createHallucination(sourceUnit *Unit, owner int32, parent *Unit) *Unit {
 	u := f.createUnit(sourceUnit.UnitType, sourceUnit.Sprite.Position, owner)
 	if u == nil {
 		f.displayLastErrorForPlayer(owner)
 		return nil
 	}
+	f.onUnitCreated(u, SourceHallucination, parent)
 	u.Hp = u.UnitType.Hitpoints
 	f.makeUnitHallucination(u)
 	f.setUnitOrder(u, u.UnitType.HumanAiIdle.Get())
@@ -428,7 +429,7 @@ func (f *StateFunctions) createHallucination(sourceUnit *Unit, owner int32) *Uni
 }
 
 func (f *StateFunctions) addHallucinatedFighter(u *Unit, sourceN *Unit, owner int32) {
-	n := f.createHallucination(sourceN, owner)
+	n := f.createHallucination(sourceN, owner, u)
 	if n == nil {
 		return
 	}
@@ -890,6 +891,9 @@ func (f *StateFunctions) startPlacedBuilding(u *Unit, unitType *UnitTypeT) {
 		buildUnit = f.buildRefinery(u, unitType)
 	} else {
 		buildUnit = f.createUnit(unitType, u.OrderTarget.Pos, u.Owner)
+		if buildUnit != nil {
+			f.onUnitCreated(buildUnit, SourceBuilt, u)
+		}
 	}
 	f.buildQueueClearSingle(u)
 	if buildUnit != nil {
@@ -1601,6 +1605,7 @@ func (f *StateFunctions) placeAddonAtTarget(u *Unit, addonType *UnitTypeT) {
 	if addon == nil {
 		return
 	}
+	f.onUnitCreated(addon, SourceBuilt, u)
 	f.st.CurrentMinerals[u.Owner] -= addonType.MineralCost
 	f.st.CurrentGas[u.Owner] -= addonType.GasCost
 	f.setUnitOrder(u, u.UnitType.ReturnToIdle.Get())
@@ -1744,7 +1749,11 @@ func (f *StateFunctions) orderResearchTech(u *Unit) {
 		return
 	}
 	if decrementResearchTime(&u.Building.UpgradeResearchTime) == 0 || f.playerHasResearched(u.Owner, tech.ID) || f.st.CheatOperationCwal {
+		wasResearched := f.st.TechResearched[u.Owner][tech.ID]
 		f.st.TechResearched[u.Owner][tech.ID] = true
+		if !wasResearched {
+			f.onResearch(u, Research{ID: uint8(tech.ID)}, 1, true)
+		}
 		done()
 	}
 }
@@ -1768,6 +1777,7 @@ func (f *StateFunctions) orderUpgrade(u *Unit) {
 	if decrementResearchTime(&u.Building.UpgradeResearchTime) == 0 || alreadyUpgraded || f.st.CheatOperationCwal {
 		if !alreadyUpgraded && f.playerMaxUpgradeLevel(u.Owner, upgrade.ID) >= u.Building.UpgradingLevel {
 			f.st.UpgradeLevels[u.Owner][upgrade.ID] = u.Building.UpgradingLevel
+			f.onResearch(u, Research{Upgrade: true, ID: uint8(upgrade.ID)}, u.Building.UpgradingLevel, true)
 			f.applyUpgradesToPlayerUnits(u.Owner)
 		}
 		done()
@@ -2055,6 +2065,7 @@ func (f *StateFunctions) orderPlaceMine(u *Unit) {
 	pos := f.restrictMoveTargetToValidBounds(f.getUnitType(UnitTypesTerranVultureSpiderMine), u.OrderTarget.Pos)
 	mine := f.createUnitByID(UnitTypesTerranVultureSpiderMine, pos, u.Owner)
 	if mine != nil {
+		f.onUnitCreated(mine, SourceSpiderMine, u)
 		f.finishBuildingUnit(mine)
 		f.completeUnit(mine)
 		f.setUnitHeading(mine, u.Heading)
@@ -2174,7 +2185,7 @@ func (f *StateFunctions) orderSpiderMine(u *Unit) {
 	}
 	if u.OrderState == 6 {
 		if u.OrderSignal&1 != 0 {
-			f.killUnit(u)
+			f.killUnitWith(u, noKiller(ReasonDetonated))
 		}
 	}
 }
