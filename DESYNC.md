@@ -183,8 +183,41 @@ Liquipedia's notes for patches 1.18-1.20 contain no unit-behaviour fix that surv
 ## Implemented
 
 - `downgrade.ReadSCRSettings` and `Report.SCRSettings` read `LMTS`, `BFIX` and `GCFG` from the original SC:R replay. Legacy replays get the 1.16 defaults. `OrderAllocationRule()`, `FlyingSCVFix()` and `OrderSupplyLowThreshold()` give the conditions in "BFIX and GCFG".
-- `obwhash` loads SC:R replays directly (downgrade in memory). `-scr-rules` reads the settings.
-- Not yet implemented: the engine option that applies the limits, the disabled `THG2` units and the order allocation rule. Until then `-scr-rules` stops with an error.
+- `obwhash` loads SC:R replays directly (downgrade in memory).
+- `bwgame.Rules` (in `GameState.Rules`) is the engine option. The zero value and `DefaultRules()` give exact OpenBW behaviour. `scrrules.FromSettings` turns `SCRSettings` into SC:R rules:
+  - Pool sizes from `LMTS`: bullets, sprites, images, orders and lone sprites (`new_thingy`). `issue_order` and the order allocation rule use 90% of the order limit. Only the capacity changes. Index mapping (`max_size - index`) and free-list order stay the same.
+  - The unit pool stays 1700. A `unit_id` has an 11-bit index, and `downgrade` maps 1.21 indexes 1,701-3,400 to 1-1,700 for a 1,700-unit array. With fewer than 1,700 live units the allocation order is the same.
+  - Disabled `THG2` units are created with `status_flag_disabled` and `status_flag_no_collide`.
+  - `set_queued_order` drops the order when `can_allocate_order` is false ("BFIX and GCFG"). The flying SCV fix is a separate flag (`GCFG` build ≥ 9713).
+  - The Halo Rockets check (`active_bullets_size >= 80`) is unchanged. It is not known if SC:R scales it with the bullet limit.
+- `obwhash -scr-rules` runs the game with these rules.
+- `tools/scrharness` builds the C++ harness against OpenBW with the same rules (`openbw-scr.patch`). `difftest -obwhash-args "-scr-rules"` compares the two engines.
+
+### Verification (2026-10-15)
+
+Frame-by-frame state hashes, `difftest`, Go `-scr-rules` against the patched C++ harness:
+
+| Set | Replays | Match |
+|---|---|---|
+| `tools/difftest/replays.txt` | 20 | 20 |
+| Pole Star 1.1 (fail with `disable thingy unit` in default mode) | 20 | 20 |
+| Other maps with injected disabled `THG2` doors (`thg2inject`), 13 maps | 24 | 24 |
+| Fixed by the bullet limit: the 8 listed in "Root cause 1" plus MM-85EF47A6 | 9 | 9 |
+| Terran replays that the tag test shows fixed by `-scr-rules` (includes the 8 above) | 28 | 28 |
+
+No replay on another map fails with `disable thingy unit`: only Pole Star 1.1 does, in the 2,934 cwal.gg replays and the 524 `scmapanalyzer` replays. For that reason the "other maps" set uses replays from the other 13 maps with 5-9 disabled Pit Doors added to `THG2` (map centre and the way to each start location). They all fail with `disable thingy unit` in default mode.
+
+Controls on the 9 bullet-limit replays: Go `-scr-rules` against the unmodified harness differs in 9/9, and Go default against the patched harness differs in 9/9. Default mode against the unmodified harness: 70/70 match (`replays.txt` and 50 other replays from 11 maps).
+
+Tag test (`tools/desync/gotags`) on all 1,462 distinct Terran replays in cwal.gg:
+
+| | Default rules | `-scr-rules` |
+|---|---|---|
+| Fail to load (Pole Star 1.1, `disable thingy unit`) | 242 | 0 |
+| Desynced (20+ inconsistent commands) | 87 | 61 |
+| Clean | 1,133 | 1,401 |
+
+Without Pole Star: 87 → 59 desynced of 1,220. 28 replays change from desynced to clean, and none from clean to desynced. 2 of the 242 Pole Star replays are desynced. 45 of the 61 desynced replays are on Attitude 1.0 (see "Remaining desyncs"). The Go tag counts are the same as the C++ tracer's for the replays in "Root cause 1" and for MM-029782AE.
 
 ## Tools (`tools/desync/`)
 
@@ -196,6 +229,8 @@ Liquipedia's notes for patches 1.18-1.20 contain no unit-behaviour fix that surv
 - `check.sh <openbw> <out> <replays...>` builds the tracer against an OpenBW copy and writes `name first_inconsistent count end_frame` for each replay, in parallel.
 - `variant.sh <openbw> <out> [integration flags]` runs `tools/integration` with harness and probe built against an OpenBW copy.
 - `collect` downgrades SC:R replays filtered by map, race and length into `.116.rep` files, for example `go run ./tools/desync/collect -replays <dir> -out <dir> -map "Pole Star" -n 30`.
+- `gotags [-scr-rules] <replays...>` runs the tag test on the Go engine, in parallel, and prints `name first_inconsistent count=<n> end_frame` (or `name error ...`). It reads SC:R replays directly.
+- `thg2inject in.rep out.rep` adds disabled Pit Doors to the `THG2` chunk of a 1.21 SC:R replay's map: one at the map centre and two on the way to each start location.
 - `mapinfo <legacy.rep>` lists CHK chunks, `UNIT` entries (type, owner, position, resources, property and flag masks, HP%), `THG2` entries with the disabled flag, the tileset, and the number of MTXM/TILE differences.
 
 To reproduce the numbers: copy `ref/openbw` to `$TMPDIR`, apply the diff, then run `check.sh` and `variant.sh` with the same integration flags as the samples above.

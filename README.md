@@ -33,4 +33,23 @@ These are the classic (SD) files from an SC:R install. To extract them again, us
 
 `downgrade.ReadSCRSettings` reads the SC:R object limits (`LMTS`), bug fixes (`BFIX`) and build (`GCFG`). Legacy replays get the 1.16 defaults. See [downgrade/README.md](downgrade/README.md).
 
-`obwhash -scr-rules` reads these settings and prints them to stderr. The engine has no SC:R rules option yet, so the flag then stops with an error. The default mode stays bit-for-bit identical to C++ OpenBW.
+## SC:R rules
+
+`bwgame.GameState.Rules` selects the engine rules. Set it before the replay loads. The zero value and `bwgame.DefaultRules()` give exact OpenBW behaviour. `scrrules.FromSettings(settings)` gives the SC:R rules for a replay's `downgrade.SCRSettings`:
+
+- Object limits from `LMTS`: bullets, sprites, images, orders and lone sprites (thingies). The "order supply low" threshold is 90% of the order limit. Only the pool sizes change. The free-list order stays the same.
+- Disabled `THG2` units (Pole Star 1.1 doors): the engine creates them and sets the disabled and no-collide status flags. Default rules stop with `disable thingy unit`, as OpenBW does.
+- The `BFIX`/`GCFG` order allocation rule and the flying SCV fix in `set_queued_order`. See [DESYNC.md](DESYNC.md).
+
+The unit limit stays 1700, also with SC:R rules. An OpenBW `unit_id` has an 11-bit index, and `downgrade` maps the 1.21 unit indexes 1,701-3,400 to 1-1,700 on the assumption of a 1,700-unit array. A 3,400-unit array gives the same allocation order while fewer than 1,700 units exist, and no game in the sample comes close.
+
+`obwhash -scr-rules` runs the game with the replay's settings and prints them to stderr. Without the flag, the engine stays bit-for-bit identical to C++ OpenBW.
+
+[tools/scrharness](tools/scrharness) builds a C++ harness from a patched OpenBW with the same rules. Compare the two engines with:
+
+```
+tools/scrharness/build.sh $TMPDIR/scrharness
+go run ./tools/difftest -out $TMPDIR/scr-difftest -harness $TMPDIR/scrharness/harness -obwhash-args "-scr-rules" -list tools/difftest/replays.txt
+```
+
+With `-scr-rules` in `-obwhash-args`, difftest gives obwhash the original SC:R replay, because the downgraded copy has no `LMTS`, `BFIX` or `GCFG`.
