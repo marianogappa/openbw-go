@@ -36,8 +36,9 @@ type UnitCreated struct {
 	Class  UnitClass
 }
 
-// UnitCompleted fires when a unit completes, once for each type it completes as.
-// An Archon or Dark Archon completes when its summon ends.
+// UnitCompleted fires each time a unit becomes complete: when its build ends, when a morph that
+// MorphStarted began ends or is cancelled (a Hydralisk whose Lurker Egg is cancelled completes again),
+// and when an Archon or Dark Archon summon ends.
 type UnitCompleted struct {
 	EventBase
 	Unit  UnitID
@@ -56,7 +57,11 @@ type UnitMorphed struct {
 }
 
 // MorphStarted fires when a Zerg morph or a refinery is paid for. For a Refinery, an Extractor or an
-// Assimilator, Unit is the Vespene Geyser and Morpher is the worker.
+// Assimilator, Unit is the Vespene Geyser and Morpher is the worker. It comes right after the UnitMorphed into
+// the egg, cocoon, Zerg building or refinery, and before the UnitMorphed of a Zerg building morph (Lair, Hive,
+// Greater Spire, Sunken and Spore Colony), whose type changes when it completes. The unit is incomplete
+// from MorphStarted until its next UnitCompleted; a UnitMorphed without MorphStarted (siege mode, cancels)
+// keeps the completed state.
 type MorphStarted struct {
 	EventBase
 	Unit    UnitID
@@ -68,8 +73,8 @@ type MorphStarted struct {
 }
 
 // UnitDestroyed fires when the engine decides that a unit dies, once per unit life.
-// A refinery death has Reverted set: the ID lives on as a neutral Vespene Geyser, so a rebuilt refinery
-// with the same ID can die again.
+// A refinery death has Reverted set: the ID lives on as a completed Vespene Geyser, so a rebuilt refinery
+// with the same ID can die again. A UnitMorphed to the geyser and a UnitOwnerChanged to neutral follow it.
 type UnitDestroyed struct {
 	EventBase
 	Unit   UnitID
@@ -94,7 +99,8 @@ type UnitDestroyed struct {
 	Class     UnitClass
 }
 
-// UnitOwnerChanged fires when a unit changes owner.
+// UnitOwnerChanged fires when a unit changes owner. A unit after its UnitDestroyed has none: the engine
+// also gives dying units to neutral when their player leaves, and the stream leaves that out.
 type UnitOwnerChanged struct {
 	EventBase
 	Unit     UnitID

@@ -86,6 +86,9 @@ func (c *lifeChecker) alive(id UnitID, e Event) {
 	if !c.created[id] {
 		c.fail("%T at frame %d for unit %d before UnitCreated", e, e.Base().Frame, id)
 	}
+	if c.destroyed[id] {
+		c.fail("%T at frame %d for unit %d after UnitDestroyed", e, e.Base().Frame, id)
+	}
 }
 
 func (c *lifeChecker) check(e Event) {

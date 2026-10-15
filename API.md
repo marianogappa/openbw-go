@@ -101,11 +101,11 @@ Every event embeds `EventBase{Seq, Frame, Cmd}` and has `Kind()`. Select with a 
 | Event | Fires | Notes |
 |---|---|---|
 | `UnitCreated` | right after `createUnit` returns | A trained unit is created when its production starts. `Source` and `Parent` say how and from what. Zerg buildings, refineries, eggs and Archons are morphs, not creations. |
-| `UnitCompleted` | end of `completeUnit`; end of an Archon summon | Once for each type a unit completes as (Larva, then Zergling; Hatchery, then Lair; High Templar, then Archon). |
+| `UnitCompleted` | end of `completeUnit`; end of an Archon summon | Each time a unit becomes complete: build end, end or cancel of a morph that `MorphStarted` began (a Hydralisk completes again when its Lurker Egg is cancelled), end of an Archon summon (High Templar, then Archon). |
 | `UnitMorphed` | end of `morphUnit`, and Infest Command Center | Every type change, also siege mode and cancels back to Drone or Hydralisk. |
-| `MorphStarted` | a Zerg morph or a refinery is paid for | `Into` is the target type. For a Refinery, Extractor or Assimilator, `Unit` is the geyser and `Morpher` the worker; it comes right after the geyser's `UnitMorphed`. |
-| `UnitDestroyed` | start of `killUnit` | One per unit life: a refinery ID can die again after a rebuild (`Reverted` marks each death; the ID lives on as a neutral geyser). `Reason`, `Killer`, `KillerType`, `KillerOwner`, `KillerParent`, `Container`: see below. |
-| `UnitOwnerChanged` | `setUnitOwner` | `Reason`: Mind Control, player left, refinery, infest, addon, trigger. |
+| `MorphStarted` | a Zerg morph or a refinery is paid for | `Into` is the target type. For a Refinery, Extractor or Assimilator, `Unit` is the geyser and `Morpher` the worker. It comes right after the `UnitMorphed` into the egg, cocoon, Zerg building or refinery, and before the `UnitMorphed` of a Zerg building morph (Lair, Hive, Greater Spire, Sunken, Spore), whose type changes at completion. The unit is incomplete from `MorphStarted` to its next `UnitCompleted`; a `UnitMorphed` without one (siege mode, cancels) keeps the completed state. |
+| `UnitDestroyed` | start of `killUnit` | One per unit life: a refinery ID can die again after a rebuild (`Reverted` marks each death; the ID lives on as a completed neutral geyser, and a `UnitMorphed` to the geyser and a `UnitOwnerChanged` to 11 follow). `Reason`, `Killer`, `KillerType`, `KillerOwner`, `KillerParent`, `Container`: see below. |
+| `UnitOwnerChanged` | `setUnitOwner` | `Reason`: Mind Control, player left, refinery, infest, addon, trigger. Not for a dying unit (after its `UnitDestroyed`), which the engine also gives to neutral when its player leaves. |
 | `ProductionCancelled` | each cancel site | `What`, `Type` or `Research`, `Why` (command, producer destroyed, owner changed, no supply). |
 | `ResearchStarted`, `ResearchCompleted` | cost paid; level gained | `Level` is 1 for tech. |
 | `PlayerLeft`, `PlayerDefeated`, `PlayerWon` | leave command or drop; victory triggers | `PlayerWon` can be missing when the replay ends first. |

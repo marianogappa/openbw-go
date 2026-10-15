@@ -57,6 +57,10 @@ func (g *Game) install(user bwgame.Hooks) {
 	g.funcs.Hooks = chainHooks(h, user)
 }
 
+func isDying(u *bwgame.Unit) bool {
+	return u.OrderType != nil && u.OrderType.ID == bwgame.OrdersDie
+}
+
 func isTurret(u *bwgame.Unit) bool {
 	return u.UnitType.Flags&bwgame.UnitTypeTFlagTurret != 0
 }
@@ -253,7 +257,7 @@ func (g *Game) onKillUnit(u *bwgame.Unit, kill bwgame.KillContext) {
 
 func (g *Game) onOwnerChanged(u *bwgame.Unit, from int32, reason bwgame.OwnerReason) {
 	class, ok := g.reported(u)
-	if !ok {
+	if !ok || isDying(u) {
 		return
 	}
 	g.emit(&UnitOwnerChanged{
