@@ -11,7 +11,7 @@ L1  openbw.Open(rep, StreamOptions) → *Game; for e := range g.Events()
 L0  g.Engine() → *bwgame.ReplayFunctions (no stability promise)
 ```
 
-Hard rule: no hook changes engine behaviour. Every engine change below only adds `if f.Hooks.X != nil { ... }` calls or hook-only fields. `tools/difftest` must stay 20/20 in default mode and with `-scr-rules` against the patched harness.
+Hard rule: no hook changes engine behaviour. Every engine change below only adds `if f.Hooks.X != nil { ... }` calls, hook-only fields, local variables that hooks read (for example the type before `morphUnit`), and two exported methods that split `ReplayFunctions.nextFrame` into its halves (2). `tools/difftest` must stay 20/20 in default mode and with `-scr-rules` against the patched harness.
 
 ## 1. Loading
 
@@ -75,14 +75,16 @@ const (
 ```go
 type StreamOptions struct {
 	Data        *Data         // nil: LoadData("") once per process
-	Kinds       Kind          // event kinds to emit; 0 emits nothing
+	Kinds       Kind          // event kinds to emit; 0 means DefaultKinds
 	Classes     ClassSet      // unit classes for unit events; 0 means AllClasses
 	TickEvery   int32         // emit Tick every N frames; 0: no ticks
 	MaxFrame    int32         // stop after processing this frame; 0: the replay end
 	Rules       RulesMode
 	CustomRules *bwgame.Rules // overrides Rules when not nil
+	Hooks       bwgame.Hooks  // raw L1 hooks, called after the stream's own hooks
 }
 
+// Game is one replay being played. It is not safe for concurrent use.
 type Game struct{ /* unexported */ }
 
 // Events steps the engine as the caller pulls events.
@@ -98,11 +100,53 @@ func (g *Game) Done() bool      // EndFrame or MaxFrame reached, or Err != nil
 
 func (g *Game) Replay() *rep.Replay          // the screp parse
 func (g *Game) Info() EngineInfo             // see 6
-func (g *Game) Unit(id UnitID) (Unit, bool)  // false if the unit is not alive
-func (g *Game) Units() iter.Seq[Unit]        // all alive units, slot 0..11, engine list order
-func (g *Game) Player(slot int) Player       // slot 0..11
+func (g *Game) Unit(id UnitID) (Unit, bool)  // false if the unit was removed
+func (g *Game) Units() iter.Seq[Unit]        // units not yet removed (dying ones too), owner 0..11, engine list order
+func (g *Game) Player(owner int) Player      // owner 0..11
+func (g *Game) UnitTypeInfo(t UnitType) UnitTypeInfo // this game's units.dat values (a map can change them)
 func (g *Game) Engine() *bwgame.ReplayFunctions // L0
 ```
+
+The value types read from live state:
+
+```go
+// UnitType is a units.dat ID. It marshals to JSON as screp's {"Name", "ID"} object.
+type UnitType uint16
+
+type Unit struct {
+	ID              UnitID
+	Type            UnitType
+	Owner           int8
+	X, Y            int32
+	HP, Shields     int32 // integer part
+	Energy          int32
+	Order           uint8
+	RemainingBuild  int32
+	Container       UnitID // the transport, Bunker or Carrier/Reaver; 0 if none
+	Completed, Burrowed, Cloaked, Loaded, Dying, Hallucination bool
+}
+
+type Player struct {
+	Owner                       int8
+	Race                        uint8
+	Minerals, Gas               int32
+	GatheredMinerals, GatheredGas int32
+	SupplyUsed, SupplyMax       float64
+	VictoryState                int32
+	Left                        bool
+}
+
+type UnitTypeInfo struct {
+	Minerals, Gas, BuildTime int32
+	Supply                   float64 // supply used; 0.5 for Zergling and Scourge
+	Building, Worker, Flyer  bool
+}
+
+// Stats is the PlayerStats row that Run records, computed now.
+func (g *Game) Stats(owner int) PlayerStats
+```
+
+`Stats` is public so that stream users get the same army and worker numbers as `Run`, with no second copy of the formula.
 
 Example:
 
@@ -113,8 +157,8 @@ if err != nil {
 }
 for e := range g.Events() {
 	d := e.(*openbw.UnitDestroyed)
-	if killer, ok := g.Unit(d.Killer); ok {
-		fmt.Println(d.Frame, d.Type, "killed by", killer.Type)
+	if d.Killer != 0 {
+		fmt.Println(d.Frame, d.Type, "killed by", d.KillerType)
 	}
 }
 return g.Err()
@@ -126,11 +170,26 @@ return g.Err()
 - The engine never runs ahead of the caller by more than one half-step.
 - Breaking the loop leaves the game paused. Calling `Events()` again continues with the next buffered event. The prototype checked this.
 - The stream ends when `Done()` is true. `MaxFrame = M` stops after the processing half-step that makes `Frame() == M`. Commands of frame `M` are not executed. This is `obwhash -max-frames` behaviour.
+- There is no `Close`: the stream holds no goroutine, so an abandoned `Game` is garbage.
+- Each event is a new value that the caller owns. The stream never reuses it, so callers can keep it.
+- Calling `Events()` inside its own loop body panics.
+- Frame-by-frame stepping (a viewer): subscribe `KindTick` with `TickEvery: 1` and read state on each `Tick`.
+
+The two halves need new exported methods in `bwgame`, with the same code and order as `nextFrame`:
+
+```go
+func (f *ReplayFunctions) ExecuteFrameActions() // the actions of CurrentFrame
+func (f *ReplayFunctions) ProcessFrame()        // StateFunctions.nextFrame: CurrentFrame++, processFrame, processTriggers
+```
+
+They do not recover. `Game` wraps each call in its own `recover` because `recoverEngineError` re-panics runtime errors.
 
 ### Filtering
 
 - `Kinds` is a bit set. Hooks for kinds that are not subscribed are not installed. An unsubscribed kind costs one nil check at each engine call site.
-- Some kinds need internal hooks: `CommandResult` needs `BeforeAction`, `AfterAction`, the reject hook and the build queue hooks (5.3). They are installed only when a kind that needs them is subscribed.
+- Some kinds need internal hooks: `CommandResult` needs `BeforeAction`, `AfterAction`, the reject hook and the build queue hooks (5.3). They are installed only when `KindCommandResult` is subscribed. `EventBase.Cmd` is set only then; otherwise it is -1 on every event.
+- Call sites that set hook context (kill reason, owner reason) do it through small helpers such as `killUnitWith(u, ctx)`, which store the context only when the hook is not nil.
+- `StreamOptions.Hooks` gives raw engine callbacks (for example a new `OnUnitDamaged`) to people who need what the events leave out. They run in the middle of engine functions: read state, never change it.
 - `Classes` filters unit events (`UnitCreated`, `UnitCompleted`, `UnitMorphed`, `MorphStarted`, `UnitDestroyed`, `UnitOwnerChanged`) by `UnitClass`. A filtered event is not allocated.
 
 ### Frame semantics
@@ -161,6 +220,9 @@ type EngineError struct {
 	Value any    // the recovered value; an error for bwgame errors
 	Stack []byte // the engine goroutine stack
 }
+
+func (e *EngineError) Error() string
+func (e *EngineError) Unwrap() error // Value if it is an error
 ```
 
 ### Rejected stream shapes
@@ -174,7 +236,11 @@ See "Decisions and alternatives rejected": channels, callbacks, `iter.Seq2[Event
 type Event interface {
 	Base() *EventBase
 	Kind() Kind
+	isEvent() // sealed: only this package defines events
 }
+
+// UnmarshalEvent decodes one event of a Result's JSON by its "Kind".
+func UnmarshalEvent(data []byte) (Event, error)
 
 type EventBase struct {
 	Seq   int64 `json:"-"` // 1, 2, 3, ... per game
@@ -204,7 +270,7 @@ const (
 )
 ```
 
-`Owner` fields are engine slots (0-11, 11 is neutral). They equal screp's `Player.SlotID`, not `Player.ID`.
+`Owner` fields are engine slots (0-11, 11 is neutral): the index in screp's `Header.Slots`. The engine reads slot `i` of the replay header into player `i`. This is usually screp's `Player.SlotID`, but the index is the definition. Commands carry screp's `Player.ID`; the engine maps it to the owner with `ownerOfPlayerID`.
 
 ### Unit classes
 
@@ -220,7 +286,14 @@ const (
 	ClassHallucination           // status_flag_hallucination, set at creation, never cleared
 	ClassSpell                   // Dark Swarm, Disruption Web, Scanner Sweep
 )
+
+// ClassSet is a bit set: bit c is UnitClass c.
+type ClassSet uint8
+
+const AllClasses ClassSet = 1<<(ClassSpell+1) - 1
 ```
+
+The class comes from the call site and the type, not from unit flags, so it is known when `UnitCreated` fires: `SourceHallucination` gives `ClassHallucination`, Interceptor and Scarab give `ClassFighter`, and so on.
 
 - Turret subunits (Tank and Goliath turrets) are never reported. They live and die with their parent.
 - Neutral units (minerals, geysers, critters, map doodad units) are `ClassNormal` with `Owner` 11.
@@ -243,9 +316,11 @@ OnPlayerEliminated  func(owner int32)          // exists
 OnVictoryState      func(owner, state int32)   // exists
 OnActionRejected    func(u *Unit, reason RejectReason)
 OnBuildQueue        func(u *Unit, op BuildQueueOp, index int)
+OnAddonBuildType    func(u *Unit, set bool)
+OnUnitDamaged       func(u, source *Unit, sourceOwner int32, damage Fp8) // raw only; no event kind
 ```
 
-`ReplayFunctions` gets `AfterAction func(owner, actionID int32, ok bool)` next to the existing `BeforeAction`.
+`ReplayFunctions` gets `AfterAction func(owner, actionID int32, ok bool)` next to the existing `BeforeAction`. `nextFrame` must take the reporting path (`executeActionsReportingFails`) when `AfterAction` is set, as it does for `BeforeAction`.
 
 ### UnitCreated
 
@@ -262,7 +337,9 @@ type UnitCreated struct {
 }
 ```
 
-Fires at each `createUnit` call site, after the caller finishes the unit (hallucination flag, fighter parent, heading). It does not fire inside `createUnit`, because the class and the parent are not known there. A failed `createUnit` (nil) fires nothing.
+Fires at each `createUnit` call site, right after `createUnit` returns a unit, before the caller calls anything else. The call site passes the source and the parent; the class follows from them. It does not fire inside `createUnit`, because the source and the parent are not known there. A failed `createUnit` (nil) fires nothing.
+
+It must fire before the caller continues because many callers call `completeUnit` at once (`spawnLarva`, `createInitialUnit`, `spawnBroodlings`, `orderPlaceMine`, `orderCastScannerSweep`, `triggerCreateUnit`, the returned Drone). A hook "after the caller finishes the unit" would emit `UnitCompleted` before `UnitCreated`.
 
 A trained unit is created when its production **starts**, not when it finishes: `secondaryOrderTrain` creates it hidden and incomplete. `UnitCompleted` comes later.
 
@@ -272,6 +349,7 @@ A trained unit is created when its production **starts**, not when it finishes: 
 | `SourceStart` | `createStartingUnit` (melee start units) | 0 |
 | `SourceTrained` | `secondaryOrderTrain`, `secondaryOrderTrainFighter` | the producer (building, Carrier, Reaver) |
 | `SourceBuilt` | `startPlacedBuilding` (SCV), `warpInProtossBuilding` (Probe), `placeAddonAtTarget`, `orderBuildNydusExit` | the SCV, the Probe, the building, the Nydus Canal |
+| `SourceHallucination` (recursive) | `addHallucinatedFighter` (a hallucinated Reaver's Scarabs) | the hallucinated Reaver |
 | `SourceLarva` | `spawnLarva` | the Hatchery, Lair or Hive |
 | `SourceSecondEggUnit` | `spawnSecondEggUnit` (second Zergling or Scourge) | the first unit of the egg |
 | `SourceBroodling` | `spawnBroodlings` | the Queen |
@@ -282,7 +360,9 @@ A trained unit is created when its production **starts**, not when it finishes: 
 | `SourceDroneReturned` | `cancelZergBuildingConstruction` for an Extractor (a new Drone) | the Extractor |
 | `SourceTrigger` | `triggerCreateUnit` | 0 |
 
-`UnitCreated` is always the first event of a unit. Where a call site changes the new unit with an evented function (`triggerCreateUnit` gives an addon to 11, or kills the unit when placement fails), the hook fires right after `createUnit`, before that change.
+`UnitCreated` is always the first event of a unit. Where a call site changes the new unit with an evented function (`triggerCreateUnit` gives an addon to 11, or kills the unit when placement fails), that change comes after `UnitCreated`.
+
+Every unit with a `UnitCreated` gets a `UnitDestroyed`, also when the engine removes it without `killUnit`. One site does that: `placeHallucination` calls `destroyUnit` when it cannot place the hallucination. A hook call at that `destroyUnit` emits `UnitDestroyed` with `ReasonRemoved`. The other `destroyUnit` calls are for turret subunits, which are never reported, and inside `createUnit` before it returns.
 
 Not created, so no `UnitCreated`:
 
@@ -335,7 +415,9 @@ type MorphStarted struct {
 - Siege Tank Tank Mode ↔ Siege Mode on each siege and unsiege.
 - Vespene Geyser → Refinery (built), Refinery → Vespene Geyser (destroyed, see `Reverted`).
 - Cancels: Cocoon → Mutalisk, Lurker Egg → Hydralisk (`revertEggMorph`), building → Drone (`cancelZergBuildingConstruction`).
-- Infest Command Center: Command Center → Infested Command Center, with `UnitOwnerChanged`.
+- Infest Command Center: Command Center → Infested Command Center, with `UnitOwnerChanged`. `orderInfestedCommandCenter` does not call `morphUnit`: it assigns `u.UnitType` directly. It needs its own `OnUnitMorphed` call after that assignment, before `setUnitOwner`.
+
+`OnUnitMorphed` is called at the end of `morphUnit` for every call, with the type read at its start. It is not filtered by "type changed", because no caller passes the current type.
 
 `MorphStarted` exists because two morph starts have no type change or hide the target type:
 
@@ -347,6 +429,8 @@ type MorphStarted struct {
 | `orderDroneBuild` for an Extractor, after `buildRefinery` | the Extractor (former geyser) | the Drone | Vespene Geyser → Extractor |
 
 So every Zerg production start is one `MorphStarted`, and every non-Zerg production start is one `UnitCreated` (or `UnitMorphed` Geyser → Refinery/Assimilator).
+
+A paid-for morph has a `MorphStarted`; a refused one has none. `orderZergBuildingMorph` without supply or resources sends the building back to idle and leaves the type in its build queue. That is neither a start nor a `ProductionCancelled`; the command shows it only as `Accepted` with no `Produced` unit.
 
 ### UnitDestroyed
 
@@ -367,7 +451,9 @@ type UnitDestroyed struct {
 }
 ```
 
-Fires in `killUnit` (C++ `kill_unit`), when the engine decides the unit dies. The engine removes the unit later, in `orderDie`. Between the two, `Unit()` returns it with `Dying == true`. If the unit's order is already `Die`, nothing fires: one event per unit ID.
+Fires in `killUnit` (C++ `kill_unit`), when the engine decides the unit dies. The engine removes the unit later, in `orderDie`. Between the two, `Unit()` returns it with `Dying == true`.
+
+`killUnit` has no guard: the engine can call it again on a dying unit (for example `destroyLoadedUnits` or `destroyRegularUnit` on a unit that `unitDealDamage` already killed). So `killUnit` reads `u.OrderType.ID == OrdersDie` at its start, before `setUnitOrderPos`, and fires only when that was false. The existing `onKillUnit` call at the end stays as it is. Result: one `UnitDestroyed` per unit ID, except a geyser, which gets one with `Reverted` each time a refinery on it dies.
 
 The reason comes from a hook-only `killContext` field on `StateFunctions`. Call sites set it before `killUnit` and clear it after. A site that sets nothing gives `ReasonOther`.
 
@@ -375,23 +461,25 @@ The reason comes from a hook-only `killContext` field on `StateFunctions`. Call 
 |---|---|---|
 | `ReasonDamage` | `unitDealDamage`: weapons, Psionic Storm, Irradiate, nukes. Plague never kills: `updateUnitStatusTimers` checks `Hp > damage`. | `sourceUnit`, `sourceOwner` as passed |
 | `ReasonContainer` | `unitDealDamage` loop over loaded units, `destroyLoadedUnits` (units that a Bunker cannot unload) | the container's killer; `Container` set |
-| `ReasonSpell` | `consumeUnit`, `spawnBroodlings` (the target), hallucinations killed by spells (`blindUnit`, `restoreUnit`, `empShockwave`, `maelstrom`) | the caster |
+| `ReasonSpell` | `consumeUnit`, `spawnBroodlings` (the target), hallucinations killed by spells (`blindUnit`, `restoreUnit`, `empShockwave`, `maelstrom`, `orderCastMindControl`) | the caster |
 | `ReasonSpell` | a hallucination that gets a status effect (`executeSecondaryOrder`, `Hallucination2`) | 0 |
 | `ReasonCancelled` | `cancelBuildingUnit` (building, egg, training unit), `cancelZergBuildingConstruction` (Extractor) | 0 |
 | `ReasonExpired` | remove timer at 0 (`updateUnitValues`): hallucinations, Broodlings, spell units, orphan Interceptors; `orderScanner` | 0 |
 | `ReasonDepleted` | `unitGatherResourcesFrom`: a mineral field mined out | 0 |
-| `ReasonRemoved` | `UserActionFlags & 4` set before `killUnit`: the second Archon Templar, the Drone that becomes an Extractor, trigger remove | 0 |
+| `ReasonRemoved` | `UserActionFlags & 4` set before `killUnit`: the second Archon Templar, the Drone that becomes an Extractor, trigger remove, map units under a start location (`createStartingUnits`); and `placeHallucination` failure | 0 |
 | `ReasonDetonated` | the unit kills itself: `initializeBullet` (Scarab, Infested Terran), `orderSpiderMine`, `orderSelfDestructing`, `explodeOnSignal`, `orderNukeLaunch` | 0 |
-| `ReasonLinked` | killed because another unit died: units in training in a destroyed building, Interceptors and Scarabs inside a dead Carrier or Reaver, Nydus exit, nuke in a silo | 0 |
+| `ReasonLinked` | killed because another unit died: units in training in a destroyed building, Interceptors and Scarabs inside a dead Carrier or Reaver, Interceptors with no parent (`orderInterceptorAttack`, `orderInterceptorReturn`), Nydus exit, nuke in a silo | 0 |
 | `ReasonTrigger` | trigger kill actions | 0 |
-| `ReasonOther` | any other `killUnit` call, for example `orderLarva` (Larva off creep), `startSieging`, `finishLanding`, `createStartingUnits` | 0 |
+| `ReasonOther` | any other `killUnit` call, for example `orderLarva` (Larva off creep), `startSieging`, `finishLanding` | 0 |
 
 Edge cases:
 
-- **Units in a transport that dies** fire before the transport in the same half-step. Their `X, Y` is the transport position.
+- **Units in a transport that dies from damage** (`unitDealDamage`, not a building) fire before the transport, in the same half-step. Their `X, Y` is the transport position.
+- **Units in a Bunker, or in a transport killed any other way** (trigger, `ReasonOther`), fire later, from `destroyLoadedUnits` when the container is removed in `orderDie`, so after the container's event. A Bunker first unloads them; only those it cannot unload die. The recorder keeps the container's kill context by unit ID to fill `Killer` for these.
+- **Carrier or Reaver death**: fighters inside die with it (`ReasonLinked`); fighters outside get a remove timer and die later (`ReasonExpired`). Fighters still in its build queue fire no `ProductionCancelled`: `destroyGroundedBuilding` does not run for a unit.
 - **Refinery, Extractor, Assimilator**: `UnitDestroyed` with `Reverted: true`, then later (in `orderDie`) `UnitMorphed` to Vespene Geyser and `UnitOwnerChanged` to 11. The ID stays valid. Unit-lifecycle consumers must not treat `Reverted` IDs as gone.
 - **Archon merge** and **Drone to Extractor**: the removed unit fires `ReasonRemoved`. It is not a loss in combat.
-- **Hallucinations** are classed `ClassHallucination`. Their deaths are not filtered out of the stream; `Run` drops them by default.
+- **Hallucinations** are classed `ClassHallucination`. They are in the stream and in `Run` output by default; consumers that count losses filter by `Class`.
 
 ### UnitOwnerChanged
 
@@ -409,11 +497,11 @@ Fires in `setUnitOwner` when the owner changes, not for turret subunits.
 
 | `Reason` | Call site |
 |---|---|
-| `OwnerMindControl` | `triggerGiveUnitTo` from `orderCastMindControl`, with the units it carries: loaded units, addon, unit in production, Nydus exit |
+| `OwnerMindControl` | `triggerGiveUnitTo` from `orderCastMindControl`, with the units it carries: loaded units, Interceptors and Scarabs, the worker inside a refinery, addon, addon in construction, Nydus exit |
 | `OwnerPlayerLeft` | `removePlayer` → `makeUnitNeutral`: every unit of a leaving or defeated player goes to 11 |
 | `OwnerRefinery` | `buildRefinery` (11 to player), `revertRefineryToGeyser` (player to 11) |
 | `OwnerInfest` | `orderInfestedCommandCenter` |
-| `OwnerAddon` | `connectAddon`: an addon and its nuke join the building's owner |
+| `OwnerAddon` | `connectAddon`: an addon and its nuke join the building's owner; `buildingAbandonAddon` → `makeUnitNeutral`: the addon of a dead, lifted or infested building goes to 11 |
 | `OwnerTrigger` | `triggerCreateUnit` gives a created addon to 11 |
 | `OwnerOther` | any other `setUnitOwner` call |
 
@@ -423,7 +511,7 @@ Fires in `setUnitOwner` when the owner changes, not for turret subunits.
 type ProductionCancelled struct {
 	EventBase
 	Owner    int8
-	Producer UnitID // the building, larva, egg or worker that held the production
+	Producer UnitID // the unit whose queue held it; for a cancel of the incomplete unit itself, its ConnectedUnit or 0
 	Unit     UnitID // the incomplete unit, 0 if it was not created yet
 	What     ProductionKind // Unit, Building, Morph, Research, Upgrade, Addon
 	Type     UnitType       // for Unit, Building, Morph, Addon
@@ -434,7 +522,7 @@ type ProductionCancelled struct {
 
 | Call site | `What` | `Why` |
 |---|---|---|
-| `cancelBuildingUnit` (returns true) | Unit, Building, Morph (egg, cocoon, Lurker egg) | Command, or ProducerDestroyed from `destroyGroundedBuilding` |
+| `cancelBuildingUnit` (returns true) | Unit, Building, Morph (egg, cocoon, Lurker egg) | Command; ProducerDestroyed from `destroyGroundedBuilding`; OwnerChanged from `giveUnitTo` through `cancelBuildQueueIndex` |
 | `cancelBuildQueueIndex` for a slot with no unit yet | Unit | Command, ProducerDestroyed, OwnerChanged (`giveUnitTo`) |
 | `cancelBuildingMorph` (Lair, Hive, Greater Spire, Sunken, Spore) | Morph | Command or ProducerDestroyed |
 | `cancelResearch`, `cancelUpgrade` | Research, Upgrade | `unitDestroyed` argument: ProducerDestroyed; from `giveUnitTo`: OwnerChanged; else Command |
@@ -457,7 +545,13 @@ type ResearchStarted struct {
 	Level    int32 // 1 for tech
 }
 
-type ResearchCompleted ResearchStarted
+type ResearchCompleted struct {
+	EventBase
+	Owner    int8
+	Unit     UnitID
+	Research Research
+	Level    int32
+}
 ```
 
 - Started: `actionResearch` and `actionUpgrade` after they charge the cost. They run inside a command, so `Cmd` is set.
@@ -487,7 +581,8 @@ type PlayerWon struct {
 
 - `PlayerLeft`: `playerLeft` and `playerDropped` (`frame.go`). The leave command calls `playerLeft`, so `Cmd` is set. The player's units then fire `UnitOwnerChanged` with `OwnerPlayerLeft`.
 - `PlayerDefeated`: `onPlayerEliminated` in the trigger victory check.
-- `PlayerWon`: `onVictoryState` with a state of 3 or more.
+- `PlayerWon`: `onVictoryState` with a state of 3 or more (`player_won` in the engine).
+- A replay can end before the melee victory trigger runs (for example right after the loser's leave command), so `PlayerWon` can be missing. Use screp's `Computed.WinnerTeam` for the winner. `PlayerLeft` could reuse `OnVictoryState` (states 1 and 2 inside a command), but a dedicated hook keeps it apart from trigger defeat, which also sets state 2.
 
 ### Tick
 
@@ -506,12 +601,14 @@ type UnitID uint32
 
 func (id UnitID) Index() uint16      // 1..1700
 func (id UnitID) Generation() uint32
-func (id UnitID) LegacyTag() uint16  // the 1.16 tag and OpenBW unit_id_t: index | (generation%32)<<11
-func (id UnitID) SCRTag() uint32     // the 1.21 tag: (index==1 ? 1 : index+1700) | generation<<13
+func (id UnitID) LegacyTag() uint16           // the 1.16 tag and OpenBW unit_id_t: index | (generation%32)<<11
+func (id UnitID) MatchesSCRTag(tag uint32) bool // the downgrade maps tag to LegacyTag()
 ```
 
+`MatchesSCRTag` applies the downgrade's own `legacyUnitTag` mapping, so it is exact by construction. A function that builds a 1.21 tag from a `UnitID` is not offered: index 1 can come from 1.21 index 1 or 1701, and SC:R's generation above 5 bits is unknown to the engine.
+
 - It is `bwgame.UnitID32` (`getUnitID32`): `u.Index+1 | (u.UnitIDGeneration % 1<<21) << 11`. `UnitIDGeneration` is a `uint32` that `initializeUnit` increments on each reuse of the slot, so the ID does not wrap in a real game. OpenBW's 16-bit `unit_id_t` wraps after 32 reuses of one slot; it is not unique.
-- screp's `UnitTag` is the raw tag in the command. For legacy replays it equals `LegacyTag()`. For 1.21 replays it equals `SCRTag()`, under the index mapping in `downgrade/README.md` and on the condition that SC:R counts generations per slot from the same start. The implementation adds a test: on clean replays, every 1.21 Select tag equals `SCRTag()` of the unit the engine resolves.
+- screp's `UnitTag` is the raw tag in the command. For legacy replays it equals `LegacyTag()`. For 1.21 replays use `MatchesSCRTag`. To get the unit of a command, read `CommandResult.Selection`: the engine resolved it.
 - `UnitID` is a plain number in JSON.
 
 ## 5. Enriched commands
@@ -535,7 +632,7 @@ type SourceCommand struct {
 	Frame      uint32
 	PlayerID   byte
 	ID         byte   // the source command ID (0x63 stays 0x63)
-	Position   int    // position in its frame block
+	Position   int    // position among the commands of its frame, over all blocks of that frame
 	Action     int32  // index in Loadable's action stream; -1 if dropped
 	DropReason string // a Reason* constant if dropped
 }
@@ -544,9 +641,9 @@ type SourceCommand struct {
 - `translateBlock` appends one `SourceCommand` for each command it splits, with `Action` = the count of commands written so far, or -1 for a drop. For legacy input, `Prepare` walks the actions the same way and copies them unchanged.
 - Commands after a `ReasonUnknownLength` or `ReasonTruncated` drop are not split, so they are not in `Commands`. `PrepareForOpenBW` becomes a wrapper of `Prepare`.
 
-Mapping to screp's `Commands.Cmds`: group both by frame. Position `p` in a frame maps to the `p`-th screp command of that frame if its `Type.ID` equals `SourceCommand.ID`. Else `ScrepIndex = -1`. screp skips the rest of a block after a parse error (`ParseErrCmds`), and the downgrade can do the same with other commands, so only matching positions link. Frames are unique per block in the replay format.
+Mapping to screp's `Commands.Cmds`: group both by frame and walk the two lists of a frame in step. Position `p` links to the `p`-th screp command of that frame while the IDs match. screp's Land command is the Build command (0x0c) with its virtual ID `0xfe` (`VirtualTypeIDLand`), so 0x0c matches 0xfe. Linking stops for the rest of the frame at the first ID mismatch, or at the first `ParseErrCmd` of screp or length drop of the downgrade in that frame. The rest of the frame has `ScrepIndex = -1`. The block size is one byte, so a busy frame can span several blocks; a parse error ends only its own block in both parsers, so positions after it in the same frame are not reliable. The result is exact or unlinked, never a guess.
 
-Engine side: `Action` `n` is the `n`-th `BeforeAction` call. `executeActionGroup` reads the actions in the order the downgrade wrote them.
+Engine side: `Action` `n` is the `n`-th `readAction` call (counted where `OnAction` is called today). `executeActionGroup` reads the actions in the order the downgrade wrote them. An unknown player ID throws, so no action is skipped without an error.
 
 ### 5.2 CommandResult
 
@@ -584,7 +681,7 @@ type RejectReason uint8 // NoUnit, NotOwner, Requirements, Invalid, QueueFull, B
 `Outcome`:
 
 - `Accepted`/`Rejected` is the `bool` that `readAction` returns, through `AfterAction`. For order commands (Right Click, Stop, Attack...) it means at least one selected unit took the order. It says nothing about the result of the order.
-- `actionBuild` returns true also when `canPlaceBuilding` fails or `placeBuilding` returns early for supply or resources. The game client checks these before it sends the command, so in a replay this signals a desync. `NoEffect` is set when an accepted Build caused no `OnBuildQueue` push and no addon or landing order.
+- `actionBuild` returns true also when `canPlaceBuilding` fails or `placeBuilding` returns early (supply, resources, or a Drone already in `DroneBuild` or landing). The game client checks most of these before it sends the command, so in a replay this signals a desync. Each of these early exits calls `OnActionRejected`. `NoEffect` is an accepted Build with at least one `Rejection`. A rule based on "no build queue push" would be wrong: the Nydus exit (`BuildNydusExit`), landing and `CTFCOP2` set an order and push nothing.
 
 `Rejections`: `OnActionRejected` is called at the refusing `return` of these functions, with the reason of the check that failed. The checks are the engine's own, in the engine's order. Nothing is re-implemented.
 
@@ -592,7 +689,7 @@ type RejectReason uint8 // NoUnit, NotOwner, Requirements, Invalid, QueueFull, B
 |---|---|
 | Train, Train Fighter | `actionTrain`, `actionTrainFighter`, `buildQueuePush` |
 | Unit Morph, Building Morph | `actionMorph`, `actionMorphBuilding` (one `Rejection` for each refused selected unit) |
-| Build | `actionBuild`, `canPlaceBuilding` result in `actionBuild`, `placeBuilding` |
+| Build | `actionBuild`, `canPlaceBuilding` result in `actionBuild`, every early `return` in `placeBuilding` before `setUnitOrderPos` |
 | Research, Upgrade | `actionResearch`, `actionUpgrade` |
 
 `Minerals` or `Gas`: `hasAvailableResourcesFor` compares both; the hook reads the same two values and reports the first one that is short. Other commands have no reasons, only `Outcome`.
@@ -608,9 +705,11 @@ type RejectReason uint8 // NoUnit, NotOwner, Requirements, Invalid, QueueFull, B
 `EventBase.Cmd` is set by two mechanisms. Both are exact by construction. Nothing else is linked.
 
 1. **Synchronous**: every event emitted between `BeforeAction` and `AfterAction` of action `n` gets `Cmd = n`. Examples: `ResearchStarted`, `ProductionCancelled` from a cancel command, `PlayerLeft`, `UnitOwnerChanged` of the leaving player's units.
-2. **Shadow build queue**: production goes through `Unit.BuildQueue` and `BuildQueueLimbo` (and `Building.AddonBuildType` for addons). The game mirrors each queue with a slice of `Action` values, keyed by unit ID. `OnBuildQueue(u, op, index)` is called at each mutation site: `buildQueuePush` (and its limbo merge), `buildQueueClearSingle`, `BuildQueue.Erase` in `secondaryOrderTrain`, `secondaryOrderTrainFighter` and `cancelBuildQueueIndex`, and the reset in `initializeUnit`. A push inside command `n` stores `n`; any other push stores -1. The mirror applies the same operations as the engine, so the front of the mirror is the front of the queue.
-   - `UnitCreated` (Trained, Built), `MorphStarted`, the second unit of an egg and `UnitCreated` of an addon take `Cmd` from the producer's mirror front at that moment.
+2. **Shadow build queue**: production goes through `Unit.BuildQueue` and `BuildQueueLimbo` (and `Building.AddonBuildType` for addons). The game mirrors each queue with a slice of `Action` values, keyed by unit index. `OnBuildQueue(u, op, index)` is called at each mutation site: `buildQueuePush` (and its limbo merge), `buildQueueClearSingle`, `BuildQueue.Erase` in `secondaryOrderTrain` (two sites), `secondaryOrderTrainFighter` and `cancelBuildQueueIndex`, and the reset in `initializeUnit`. This is every write to these fields in `bwgame` today. `OnAddonBuildType(u, set)` is called where `AddonBuildType` is set (`placeBuilding`) or cleared (`secondaryOrderBuildAddon`, three sites, and `initializeUnitType`). A push inside command `n` stores `n`; any other push stores -1. The mirror applies the same operations as the engine, so the front of the mirror is the front of the queue.
+   - `UnitCreated` (Trained, Built by SCV or Probe), `MorphStarted` and `UnitCreated` of an addon take `Cmd` from the producer's mirror front at that moment.
+   - The second unit of an egg takes the `Cmd` of the egg's `MorphStarted`: the recorder keeps it by unit ID. The mirror front is gone by then (`orderZergUnitMorph` state 2 calls `buildQueueClearSingle` before `orderZergBirth`).
    - `placeBuilding` pushes the building type to the worker's queue, and the SCV or Probe creates the building from it, so Terran and Protoss buildings link to their Build command. Drone buildings link through `orderDroneBuild`.
+   - The Nydus exit is not linked: the Build command only sets the Canal's order.
 
 `Run` inverts the links: `CommandResult.Produced` lists the `UnitID`s of events with that `Cmd`.
 
@@ -628,11 +727,8 @@ type RejectReason uint8 // NoUnit, NotOwner, Requirements, Invalid, QueueFull, B
 func Run(replay []byte, opts Options) (*Result, error)
 
 type Options struct {
-	Data           *Data
-	MaxFrame       int32
-	Rules          RulesMode
-	Kinds          Kind          // default DefaultKinds
-	Classes        ClassSet      // default: all but ClassFighter and ClassSpell
+	StreamOptions                // Data, Kinds, MaxFrame, Rules, CustomRules, Hooks; Run sets TickEvery
+	                             // Classes 0 here means all but ClassFighter and ClassSpell
 	Commands       bool          // include screp's Commands, like screp -cmds
 	MapData        bool          // include screp's MapData, like screp -map
 	CommandResults ResultsMode   // default ResultsActions
@@ -669,7 +765,7 @@ const (
 )
 ```
 
-`Run` uses only `Open`, `Events`, `Player`, `Units` and `Info`. It always subscribes `KindCommandResult` (for trust signals) and `KindTick` (at the GCD of `StatsEvery` and `UnitSnapshots.Every`), and drops them from `Events` in the output.
+`Run` uses only `Open`, `Events`, `Stats`, `Units` and `Info`. It always subscribes `KindCommandResult` (for trust signals) and `KindTick` (at the GCD of `StatsEvery` and `UnitSnapshots.Every`), and drops them from `Events` in the output.
 
 ### Result
 
@@ -690,6 +786,7 @@ type Result struct {
 
 type EngineInfo struct {
 	Version         string // module version from debug.ReadBuildInfo, or "devel"
+	ScrepVersion    string // the screp module version: Header, Computed and Commands are screp's JSON
 	OpenBWCommit    string // "4b046d5", the reference the port matches
 	DataHash        string // Data.FilesHash()
 	SourceFormat    string // "legacy", "1.18-1.20", "1.21+"
@@ -704,7 +801,7 @@ type Trust struct {
 	DroppedCommands  int            // downgrade drops
 	DroppedByReason  map[string]int `json:",omitempty"`
 	UnlinkedCommands int            // screp commands with no SourceCommand or Action
-	NotExecuted      int            // commands at or after the stop frame
+	NotExecuted      int            // actions in Loadable that the engine never read (stop frame, replay end, or out-of-order frames)
 	Desync           DesyncSignal
 	Production       []ProductionTrust // one per playing slot
 }
@@ -781,7 +878,9 @@ type UnitSnapshot struct {
 
 ### JSON shape
 
-- Field names are Go names (PascalCase), as screp writes them. They are stable within a `SchemaVersion`. New fields do not change the version. A rename, removal or change of meaning increments it.
+- Field names are Go names (PascalCase), as screp writes them. They are stable within a `SchemaVersion`. New fields and new enum values do not change the version; readers must ignore unknown fields and accept unknown enum strings. A rename, removal or change of meaning increments it. screp's parts follow screp's version, which `Engine.ScrepVersion` records.
+- The JSON round-trips: `Result` has an `UnmarshalJSON` that decodes `Events` with `UnmarshalEvent`, so L3 code can read cached results with the same types.
+- Until v1, `bwgame` (L0) has no compatibility promise, although it is importable. The `openbw` package follows semver.
 - Enum values are strings: `"Kind": "UnitDestroyed"`, `"Reason": "Damage"`, `"Outcome": "Rejected"`.
 - `Type` in events is screp's object `{"Name": "Zerg Zergling", "ID": 37}` (`repcmd.UnitByID`). `Research` is `{"Tech": {...}}` or `{"Upgrade": {...}}`, with screp's `TechByID`/`UpgradeByID`. Snapshots use plain IDs for size.
 - Each event is one object with `"Kind"` and its own fields. `Cmd` and zero `UnitID`s are omitted when -1 or 0.
@@ -901,11 +1000,16 @@ Overhead targets, measured with `tools/bench` against the commit before the hook
 
 Engine time today is about 1-1.5 s for a 15-minute game (1.2 s for MM-CB157510 in the prototype, including the polling).
 
+- Allocation: one per emitted event (a few thousand per game) plus one `Selection` slice per `CommandResult`. `Units()` yields values and allocates nothing.
+- Concurrency: one `Data` for any number of games; one goroutine per `Game`. Games share only read-only data, so throughput should scale with cores.
+- Early stop: `break` or `MaxFrame` stops the engine at once; the cost is the frames simulated so far.
+
 ## 9. Verification plan
 
 - `tools/difftest` on `tools/difftest/replays.txt`: 20/20 with `-out $TMPDIR/api-difftest`, and 20/20 with `-harness` from `tools/scrharness/build.sh` and `-obwhash-args -scr-rules`.
 - `obwhash` output does not change: it installs no new hooks.
-- Event invariants on all 20 replays: each `UnitID` has at most one `UnitCreated` and at most one `UnitDestroyed` without `Reverted`; no unit event before the unit's `UnitCreated` except map units; `Seq` increases, `Frame` never decreases.
+- Event invariants on all 20 replays: each `UnitID` has at most one `UnitCreated` and at most one `UnitDestroyed` without `Reverted`; every `UnitDestroyed` has a `UnitCreated` (map units included); no unit event before the unit's `UnitCreated`; `UnitCompleted` never before `UnitCreated`; `Seq` increases, `Frame` never decreases.
+- Link invariants: every `ScrepIndex` points to a screp command with the same frame, player ID and (mapped) type ID.
 - `gotags` and `Trust.Desync` give the same counts on the replays in DESYNC.md.
 - The shadow queue equals `Unit.BuildQueue` in length and types after every half-step (debug build check).
 - `-race` test with 4 parallel games on one `Data`.
@@ -932,3 +1036,60 @@ Engine time today is about 1-1.5 s for a 15-minute game (1.2 s for MM-CB157510 i
 | One `Data` per process, shared. | **One `GlobalState` per game**: memory per game for no gain; the race test shows sharing is safe. |
 | `RulesAuto`: SC:R rules for SC:R replays. | **OpenBW rules by default**: Pole Star replays fail to load and bullet-limit games desync (DESYNC.md). |
 | No state checkpoints, no L3 analyses (one example). | Not needed for the first users. A checkpoint is a large opt-in output and can come later with `state_copier`. |
+
+## Review changes
+
+An adversarial review checked the spec against `bwgame/` and screp. These are the changes and why.
+
+**Event semantics (checked in the engine code)**
+
+| Change | Why |
+|---|---|
+| `UnitCreated` fires right after `createUnit` returns, not "after the caller finishes the unit" | `spawnLarva`, `createInitialUnit`, Broodlings, mines, Scanner, triggers and the returned Drone call `completeUnit` at once, so `UnitCompleted` came first. The class comes from the source and the type. |
+| `killUnit` reads `OrdersDie` at its start | `killUnit` has no guard and can run twice on one unit; the old text read the order after `setUnitOrderPos` had set it. |
+| `placeHallucination` failure emits `UnitDestroyed` (`ReasonRemoved`) | It calls `destroyUnit` without `killUnit`, so the unit had a `UnitCreated` and no end. |
+| Infest Command Center needs its own `OnUnitMorphed` call | `orderInfestedCommandCenter` sets `u.UnitType` directly, not through `morphUnit`. |
+| Transport deaths split by cause | Only `unitDealDamage` kills passengers first. Bunkers and non-damage deaths kill them later in `destroyLoadedUnits`. |
+| One `UnitDestroyed` per ID, except geysers | A geyser can carry several refineries over a game; each death is `Reverted` on the same ID. |
+| Reason and owner tables completed | `createStartingUnits` sets flag 4 (Removed, not Other); Mind Control on a hallucination; parentless Interceptors; `buildingAbandonAddon`; Mind Control also moves fighters and the refinery worker. |
+| Second egg unit links through the egg's `MorphStarted` | The egg's queue front is already cleared when `orderZergBirth` spawns it. |
+| `AddonBuildType` gets its own hook; the Nydus exit is not linked | The mirror listed no addon sites; the Nydus exit Build only sets an order. |
+| Hallucinations stay in `Run` output | Two places in the spec disagreed; the CLI has no flag for them. |
+| `PlayerWon` can be missing | Replays can end before the victory trigger runs. |
+
+**Enriched commands**
+
+| Change | Why |
+|---|---|
+| Land matches by screp's virtual ID `0xfe` | screp turns Build with `BuildingLand` into `TypeLand`; the ID check unlinked every Land. |
+| `Position` counts over all blocks of a frame; linking stops at the first mismatch or parse error in a frame | Block size is one byte, so a frame can span several blocks; "frames are unique per block" was false. |
+| `NoEffect` = accepted Build with a `Rejection` | The old "no queue push" rule called every Nydus exit, landing and `CTFCOP2` Build `NoEffect`. |
+| `SCRTag()` replaced by `MatchesSCRTag` | The downgrade maps 1.21 index 1 and 1701 to the same index and drops generation bits, so a 1.21 tag cannot be rebuilt. The check is exact. |
+| `NotExecuted` counts unread actions | The old "at or after the stop frame" misses actions stalled by out-of-order frames. |
+| `Cmd` is set only with `KindCommandResult` | The spec did not say which hooks fill `Cmd` when only unit events are subscribed. |
+
+**API and Go idiom**
+
+| Change | Why |
+|---|---|
+| `ExecuteFrameActions` and `ProcessFrame` in `bwgame` | `Game` cannot call the unexported halves; `recoverEngineError` re-panics runtime errors, so `Game` recovers itself. |
+| `AfterAction` selects the reporting action path | `nextFrame` only takes it for `OnActionFail` or `BeforeAction`. |
+| `Unit`, `Player`, `UnitType`, `ClassSet`, `UnitTypeInfo`, `Stats` defined | They were used but not defined. Army value needs this game's costs, and stream users need the same stats as `Run`. |
+| `Options` embeds `StreamOptions`; `Kinds` 0 means `DefaultKinds` in both | Duplicate fields and a zero value that emitted nothing. |
+| `StreamOptions.Hooks` and a raw `OnUnitDamaged` | DESIGN.md promises raw L1 hooks for what events leave out; the spec gave no way to add them next to the stream's own hooks. |
+| Sealed `Event`, `UnmarshalEvent`, `Result.UnmarshalJSON` | L3 reads cached results (DESIGN.md), which needs decoding of the event list. |
+| `EngineError` implements `error`; `Game` is not concurrent-safe; events are never reused; no `Close` | Missing contracts. |
+| `ScrepVersion`; unknown fields and enum values are tolerated; `bwgame` has no promise before v1 | Output includes screp's JSON, which changes with screp, not with `SchemaVersion`. |
+| `Owner` = index in screp's `Header.Slots` | The engine reads slot `i` into player `i`; `SlotID` is a header field that usually, not by definition, equals it. |
+
+**Foundation check: what third parties build with no library change**
+
+| Consumer | How | Gap |
+|---|---|---|
+| Build order | Stream `MorphStarted`, `UnitCreated` with `SourceBuilt`/`SourceTrained`, `ResearchStarted`, `ProductionCancelled`, `MaxFrame` | None |
+| Army value curve | `Run` stats, or `Tick` + `g.Stats` in the stream | None (was: no unit costs, no shared formula) |
+| Fight detection | `UnitDestroyed` with position, killer and class, clustered in time and space; HP from `Units()` on ticks | Fights with no deaths need `OnUnitDamaged` through `StreamOptions.Hooks` |
+| Map control | `Units()` positions on ticks, or unit snapshots | Vision and creep only through `Engine()` (L0) |
+| Replay viewer | `KindTick`, `TickEvery: 1`, `Units()`, `Engine()` for sprites and bullets | No seek: replay from frame 0 (about 1 s per game) until checkpoints exist |
+| Classifier at 8 minutes | `MaxFrame: 8*60*24` or `break` | None |
+| screpdb ingestion | `Run` JSON; rows keyed by replay and event index (`Seq` is not in the JSON); `ScrepIndex` joins screp commands | None |
