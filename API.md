@@ -2,6 +2,8 @@
 
 Package `openbw`, import `github.com/marianogappa/openbw-go`. It is a library: it runs the engine on a replay and gives raw engine facts as Go values through a stream. It writes no files, has no output format and does no analysis. Recorders, statistics, build orders and desync heuristics belong to the tools that use it.
 
+The API speaks engine terms only: player slots, engine action indexes, source command indexes and `UnitID`s. The library packages (`openbw`, `bwgame`, `downgrade`) do not import a replay parser. [screpsim](https://github.com/marianogappa/screpsim) joins these facts to [screp](https://github.com/icza/screp)'s commands, players and unit tags.
+
 ```
 stream  openbw.Open(replay, Options) → *Game; for e := range g.Events(); g.Unit, g.Units, g.Player
 L1      Options.Hooks: raw bwgame.Hooks, called after the stream's own hooks
@@ -35,7 +37,7 @@ type Options struct {
 - `Hooks` run inside `Open` for the map units, before `Open` returns the `Game`, and then inside `Events` and `AdvanceTo`. A panic in a hook stops the game like an engine panic (`*EngineError`). `bwgame.Hooks`, `CustomRules`, `Engine()`, `Prepared()` and `Data.Global()` are package `bwgame`/`downgrade` API with no stability promise.
 
 - One `Data` is safe for concurrent use by any number of games. The engine never writes to `bwgame.GlobalState`; a `-race` test runs games in parallel on one `Data`.
-- `Open` downgrades the replay in memory (`downgrade.Prepare`), selects the rules and loads the map. The map units are frame 0 events and come first. It parses with screp only when `KindCommandResult` is subscribed (for `ScrepIndex`); otherwise `Replay()` parses on its first call. screp never writes to the process log.
+- `Open` downgrades the replay in memory (`downgrade.Prepare`), selects the rules and loads the map. The map units are frame 0 events and come first.
 - `RulesAuto` gives SC:R rules (`scrrules.FromSettings`) for SC:R replays and exact OpenBW rules for legacy replays. `RulesOpenBW` forces OpenBW rules.
 
 ## The stream
@@ -83,16 +85,53 @@ func (g *Game) Units() iter.Seq[Unit]                // not yet removed (dying t
 func (g *Game) Player(owner int8) Player             // owner 0..11; others give only Owner
 func (g *Game) PlayingSlots() []int8                 // occupied, computer or left at load
 func (g *Game) UnitTypeInfo(t UnitType) UnitTypeInfo // this game's units.dat values
-func (g *Game) Replay() (*rep.Replay, error)         // screp's parse: header, players, map; parsed once on demand
-func (g *Game) ReplayPlayer(owner int8) *rep.Player  // screp's player with SlotID == owner, or nil
+func (g *Game) Header() Header                       // the replay's game info as the engine read it
+func (g *Game) SourceCommands() []SourceCommand      // the original replay's command stream, as the downgrade read it
 func (g *Game) Prepared() *downgrade.Prepared        // SC:R settings, dropped commands, command index
 func (g *Game) Info() EngineInfo
 func (g *Game) Engine() *bwgame.ReplayFunctions      // reads only: do not step the engine
 ```
 
-`Unit`, `Player` and `UnitTypeInfo` are copies. `Player` has resources, gathered totals, supply used and max, victory state and `Left`. `EngineInfo` has the module version, screp's version, the OpenBW commit, the data hash, the replay's source format and `RulesInfo` (`SCR`, `Custom`, object limits and the rule flags).
+`Unit`, `Player` and `UnitTypeInfo` are copies. `Player` has resources, gathered totals, supply used and max, victory state and `Left`. `EngineInfo` has the module version, the OpenBW commit, the data hash, the replay's source format and `RulesInfo` (`SCR`, `Custom`, object limits and the rule flags).
 
-`Owner` is the engine slot (0-11, 11 is neutral): screp's `Player.SlotID`, not `Player.ID`. `ReplayPlayer(owner)` gives the screp player. Commands also carry screp's `PlayerID`.
+`Owner` is the engine slot (0-11, 11 is neutral), the index of the slot in the game info.
+
+## Replay header
+
+```go
+type Header struct {
+	MapName  string
+	EndFrame int32 // the replay's frame count
+	GameType int32
+	Slots    [12]Slot
+}
+
+type Slot struct {
+	Owner      int8
+	PlayerID   int32 // the player ID that the slot's commands carry; -1 for none
+	Name       string
+	Controller int32 // game info controller: 0 inactive, 1 computer game, 2 occupied, 5 computer, 6 open, 7 neutral, ...
+	Race       uint8 // game info race: 0 Zerg, 1 Terran, 2 Protoss, 6 random
+	Force      int32
+}
+```
+
+`Header` is what the engine read from the game info at load, before the map load changes the slots. `MapName` has the engine's Korean decoding; `Name` is the raw name without control characters.
+
+## Source commands
+
+```go
+type SourceCommand struct {
+	Frame     int32
+	PlayerID  byte
+	ID        byte   // command ID in the original replay; 1.21 IDs are not translated
+	Action    int32  // engine action index; -1 if the downgrade dropped the command
+	Dropped   string // a downgrade.Reason constant, or ""
+	EndsBlock bool   // the downgrade could not read past this command; the rest of its frame block is missing
+}
+```
+
+`SourceCommands` is the command stream of the original replay (SC:R or legacy), in stream order, with every command that the downgrade read, kept or dropped. It is the map from the replay's commands to the engine's actions. A joiner walks it frame by frame next to its own parse of the replay: the same frame, position in the frame, player ID and command ID name the same command.
 
 ## Events
 
@@ -146,9 +185,8 @@ The ID is unique within a game. OpenBW's 16-bit `unit_id_t` wraps after 32 reuse
 type CommandResult struct {
 	EventBase
 	Action      int32       // index in the engine's action stream; Cmd == Action
-	ScrepIndex  int32       // index in screp's Commands.Cmds; -1 if the link is not exact
-	PlayerID    byte        // screp player ID
-	Owner       int8        // engine slot
+	Source      int32       // index in SourceCommands(); -1 if the downgrade has no source for the action
+	Owner       int8        // player slot that issued the command
 	ActionID    byte        // legacy action ID the engine executed
 	Outcome     Outcome     // Accepted, Rejected, NoEffect
 	Rejections  []Rejection // {Unit, Reason}: the engine's own refusing checks
@@ -161,7 +199,7 @@ type CommandResult struct {
 - `Accepted`/`Rejected` is the `bool` the engine's action function returns. For orders it means at least one unit took the order, not that the order succeeded.
 - `NoEffect` is an accepted Build with a `Rejection`: `actionBuild` returns true also when placement, supply or resources fail.
 - `RejectReason`: `NoUnit`, `NotOwner`, `Requirements`, `Invalid`, `QueueFull`, `Busy`, `Supply`, `Minerals`, `Gas`, `Placement`. Reasons exist for Train, Train Fighter, Unit and Building Morph, Build, Research and Upgrade.
-- `ScrepIndex`: the downgrade numbers every source command (`Prepared.Commands`). Both lists are walked per frame in step; linking stops in a frame at the first ID mismatch, parse error or length drop. Exact or unlinked, never a guess.
+- `Source`: the downgrade numbers every command it reads and records the action that each kept command becomes. `SourceCommands()[Source].Action == Action`. The player ID is `Header().Slots[Owner].PlayerID`.
 
 `EventBase.Cmd` (only with `KindCommandResult`) links an event to its command in two exact ways:
 
@@ -181,7 +219,9 @@ Effects of orders after the command returns (kills, spells, Mind Control), Larva
 | Events are pointer structs behind a sealed interface; a type switch selects them. | **One struct with a Kind and all fields**: unclear which fields are valid. |
 | Filter at subscription: hooks for unsubscribed kinds stay nil. `NoKinds` and `AdvanceTo` for state-only and hooks-only use. | **Emit everything and filter after**: allocations for events nobody reads. **The `KindTick` with `TickEvery: 0` trick**: hides the intent. |
 | Explicit sentinels (`UnitTypeNone`, `NoResearch`) for fields that do not apply. | **Zero values**: 0 is Marine and Stim Packs, so a naive ingestion writes wrong facts. |
-| screp parse on demand, silent. | **Parse in `Open` with screp's default logger**: 25% of `Open` for callers that never read it, and output on the process's stderr. |
+| Engine terms only; screpsim joins them to screp. The library packages do not import screp. | **screp types in the API (`Replay()`, `ScrepIndex`, the screp `PlayerID`)**: every engine release would depend on a screp release, and screp users would get two copies of the parse. |
+| `downgrade` reads the replay sections itself (zlib, PKWARE, the 1.21 command layouts it needs). | **screp's decoder**: a dependency for about 200 lines, and the downgrade must see the same command boundaries as the engine. |
+| Unit, tech and upgrade names from OpenBW's `bwenums.h` ("Terran Marine"), generated by `tools/genenums`. | **screp's names**: a screp import for strings; screpsim users have screp's names for screp's IDs. |
 | `UnitCreated` at production start, plus `MorphStarted` for Zerg. | **Creation at completion**: the engine creates the unit at start; it would hide cancels. **A generic ProductionStarted**: duplicates `UnitCreated` for Terran and Protoss. |
 | Report fighters, mines, hallucinations and spell units, with a `Class`. | **Leave them out**: Interceptor kills could not name the killer, and mine, Scarab and hallucination lives would be missing. |
 | `UnitDestroyed` at `killUnit` with a reason from the call site. | **At removal**: the killer is gone. **Killer from `LastAttackingPlayer`**: set by any damage, not the kill. |
@@ -190,7 +230,7 @@ Effects of orders after the command returns (kills, spells, Mind Control), Larva
 | Rejection reasons from hooks at the engine's own `return false` sites. | **Re-check costs and supply outside the engine**: a second copy of engine logic that can drift. |
 | Production links by mirroring `BuildQueue` operations. | **Match by player, type and time**: guesses. **An origin field in `bwgame.Unit`**: changes state that the hash sees. |
 | Map units are frame 0 events. | **Leave them out**: minerals and geysers die or become refineries. |
-| Owner is the engine slot; command results also carry screp's `PlayerID`. | **Only `PlayerID`**: neutral units and computer slots have none. |
+| Owner is the engine slot; `Header().Slots[Owner].PlayerID` gives the replay's player ID. | **Only `PlayerID`**: neutral units and computer slots have none. |
 | One `Data` per process, shared. | **One `GlobalState` per game**: memory per game for no gain. |
 | `RulesAuto`: SC:R rules for SC:R replays. | **OpenBW rules by default**: Pole Star replays fail to load and bullet-limit games desync (DESYNC.md). |
 | Enums have `String` only; consumers choose their own encoding. | **`MarshalJSON`/`MarshalText` on every type**: an output format by the back door. |

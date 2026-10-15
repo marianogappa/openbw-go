@@ -167,11 +167,10 @@ type CommandResult struct {
 	EventBase
 	// Action is the index in the engine's action stream. Cmd equals Action.
 	Action int32
-	// ScrepIndex is the index in screp's Commands.Cmds, or -1 if the link is not exact.
-	ScrepIndex int32
-	// PlayerID is screp's player ID; Owner is the engine slot.
-	PlayerID byte
-	Owner    int8
+	// Source is the index of the command in the original replay's command stream (Game.SourceCommands), or -1.
+	Source int32
+	// Owner is the player slot that issued the command.
+	Owner int8
 	// ActionID is the legacy action ID that the engine executed.
 	ActionID byte
 	Outcome  Outcome

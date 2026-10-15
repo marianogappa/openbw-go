@@ -33,6 +33,8 @@ for e := range g.Events() {
 return g.Err()
 ```
 
+The API speaks engine terms: player slots, action indexes and unit IDs. `g.Header()` has the replay's game info, and `g.SourceCommands()` maps the replay's command stream to the engine's actions. To join the engine's facts to [screp](https://github.com/icza/screp)'s commands, players and unit tags, use [screpsim](https://github.com/marianogappa/screpsim).
+
 Inside the loop, `g.Unit`, `g.Units` and `g.Player` read the live state. `break` stops early; a new `range g.Events()` continues. `Options.TickEvery` adds a `Tick` event every N frames for sampling state. `Options.Hooks` adds raw engine hooks, and `g.Engine()` gives the engine itself. See [example_test.go](example_test.go).
 
 The game data comes from `$OPENBW_DATA`, or from `openbw.LoadData(dir)` passed as `Options.Data`. One `Data` is safe to share between games running in parallel.
@@ -56,7 +58,22 @@ These are the classic (SD) files from an SC:R install. To extract them again, us
 
 ## Reference source
 
-`ref/openbw` is a git-ignored clone of OpenBW at commit `4b046d5` (2026-08-13), the latest upstream. OpenBW has no licence, so its source is not committed here.
+`ref/openbw` is a git-ignored clone of OpenBW at commit `4b046d5` (2026-08-13), the latest upstream. The C++ tools (`tools/harness`, `tools/scrharness`, `tools/screp/integration/probe`) build against it.
+
+## Tests and tools
+
+Tests read the game data from `$OPENBW_DATA` (default `testdata/bwdata`) and replays from `$OPENBW_REPLAYS` (default `testdata/replays`). Both defaults are git-ignored, and tests skip when the files are missing. Replay paths in tests and in the `replays.txt` lists are relative to `$OPENBW_REPLAYS`, for example `cwalggdl/replays-cwal-dl/...` (cwal.gg SC:R 1v1 replays) and `scmapanalyzer/replays/...` (team and older replays).
+
+The tools in `tools/` are part of this module and use no replay parser. The tools that compare with [screp](https://github.com/icza/screp) are a separate module in [tools/screp](tools/screp), so this module's `go.mod` does not require screp:
+
+- `tools/screp/integration`: the end-to-end run in [INTEGRATION.md](INTEGRATION.md). It uses screp's command analysis.
+- `tools/screp/downgradecheck`: a test that compares each downgraded command with screp's parse of the original replay.
+
+```
+go -C tools/screp test ./...
+```
+
+The check that every screp command has exactly one command result is in screpsim (`tools/linkcheck`).
 
 ## SC:R replays
 
@@ -84,3 +101,7 @@ go run ./tools/difftest -out $TMPDIR/scr-difftest -harness $TMPDIR/scrharness/ha
 ```
 
 With `-scr-rules` in `-obwhash-args`, difftest gives obwhash the original SC:R replay, because the downgraded copy has no `LMTS`, `BFIX` or `GCFG`.
+
+## Licence
+
+LGPL-3.0: see [COPYING.LESSER](COPYING.LESSER) and [COPYING](COPYING). The engine is derived from OpenBW, which has no licence file; [NOTICE](NOTICE) explains the choice. No Blizzard data is included.

@@ -42,7 +42,6 @@ type result struct {
 	commands       int
 	dropped        int
 	selections     int
-	screpLinked    int
 	digest         string
 	serialDigest   string
 	openbwDigest   string
@@ -127,6 +126,8 @@ type validator struct {
 	results int
 	plain   *plainRun
 	source  map[int32]*downgrade.SourceCommand
+	header  openbw.Header
+	sources []openbw.SourceCommand
 }
 
 func (v *validator) liveUnit(check string, id openbw.UnitID, e openbw.Event) *life {
@@ -271,10 +272,13 @@ func (v *validator) commandResult(e *openbw.CommandResult) {
 		v.r.fail("command order", "result %d has Action %d Cmd %d", i, e.Action, e.Cmd)
 		return
 	}
+	playerID := v.header.Slots[e.Owner].PlayerID
 	if src := v.source[e.Action]; src == nil {
 		v.r.fail("command source", "action %d has no source command", e.Action)
-	} else if int32(src.Frame) != e.Frame || src.PlayerID != e.PlayerID {
-		v.r.fail("command source", "action %d: result frame %d player %d, source frame %d player %d", e.Action, e.Frame, e.PlayerID, src.Frame, src.PlayerID)
+	} else if int32(src.Frame) != e.Frame || int32(src.PlayerID) != playerID {
+		v.r.fail("command source", "action %d: result frame %d player %d, source frame %d player %d", e.Action, e.Frame, playerID, src.Frame, src.PlayerID)
+	} else if e.Source < 0 || int(e.Source) >= len(v.sources) || v.sources[e.Source].Action != e.Action {
+		v.r.fail("command source", "action %d: Source %d is not its source command", e.Action, e.Source)
 	}
 	if i >= len(v.plain.actions) {
 		v.r.fail("command engine", "action %d not executed by the plain engine", i)
@@ -293,22 +297,6 @@ func (v *validator) commandResult(e *openbw.CommandResult) {
 		v.r.fail("selection", "action %d %#x at frame %d: result %v, engine %v", i, e.ActionID, e.Frame, got, p.selection)
 	}
 	v.r.selections++
-	if e.ScrepIndex >= 0 {
-		v.checkScrepLink(e)
-	}
-}
-
-func (v *validator) checkScrepLink(e *openbw.CommandResult) {
-	r, err := v.g.Replay()
-	if err != nil || r.Commands == nil || int(e.ScrepIndex) >= len(r.Commands.Cmds) {
-		v.r.fail("screp link", "action %d links to screp command %d that does not exist", e.Action, e.ScrepIndex)
-		return
-	}
-	base := r.Commands.Cmds[e.ScrepIndex].BaseCmd()
-	if int32(base.Frame) != e.Frame || base.PlayerID != e.PlayerID {
-		v.r.fail("screp link", "action %d at frame %d player %d links to screp frame %d player %d", e.Action, e.Frame, e.PlayerID, base.Frame, base.PlayerID)
-	}
-	v.r.screpLinked++
 }
 
 func (v *validator) event(e openbw.Event) {
@@ -355,10 +343,8 @@ func validateReplay(data *openbw.Data, path string) *result {
 		return r
 	}
 	r.rulesSCR = g.Info().Rules.SCR
-	if parsed, err := g.Replay(); err == nil && parsed.Header != nil {
-		r.mapName = cleanMapName(parsed.Header.Map)
-	}
-	v := &validator{r: r, g: g, alive: map[openbw.UnitID]*life{}, dead: map[openbw.UnitID]bool{}, plain: plain, source: map[int32]*downgrade.SourceCommand{}}
+	r.mapName = cleanMapName(g.Header().MapName)
+	v := &validator{r: r, g: g, header: g.Header(), sources: g.SourceCommands(), alive: map[openbw.UnitID]*life{}, dead: map[openbw.UnitID]bool{}, plain: plain, source: map[int32]*downgrade.SourceCommand{}}
 	for i := range g.Prepared().Commands {
 		c := &g.Prepared().Commands[i]
 		if c.Action >= 0 {

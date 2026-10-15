@@ -3,8 +3,6 @@ package openbw
 import (
 	"iter"
 
-	"github.com/icza/screp/rep"
-
 	"github.com/marianogappa/openbw-go/bwgame"
 )
 
@@ -186,18 +184,3 @@ func playingSlots(st *bwgame.State) []int8 {
 
 // PlayingSlots are the owners of the players in the game (occupied, computer or left at load).
 func (g *Game) PlayingSlots() []int8 { return append([]int8(nil), g.playing...) }
-
-// ReplayPlayer is screp's player in engine slot owner (screp's Player.SlotID), or nil.
-// It is nil also when Replay fails.
-func (g *Game) ReplayPlayer(owner int8) *rep.Player {
-	r, err := g.Replay()
-	if err != nil || r.Header == nil || owner < 0 {
-		return nil
-	}
-	for _, p := range r.Header.Players {
-		if p.SlotID == uint16(owner) {
-			return p
-		}
-	}
-	return nil
-}

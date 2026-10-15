@@ -1,7 +1,8 @@
 package openbw
 
 import (
-	"github.com/icza/screp/rep/repcmd"
+	"strconv"
+
 	"github.com/marianogappa/openbw-go/bwgame"
 	"github.com/marianogappa/openbw-go/downgrade"
 )
@@ -52,12 +53,19 @@ func unitTypeOf(t *bwgame.UnitTypeT) UnitType {
 	return UnitType(t.ID)
 }
 
-// Name is screp's name of the type, or "None" for UnitTypeNone.
+// Name is OpenBW's name of the type, for example "Terran Marine", or "None" for UnitTypeNone.
 func (t UnitType) Name() string {
 	if t == UnitTypeNone {
 		return "None"
 	}
-	return repcmd.UnitByID(uint16(t)).Name
+	return tableName(int(t), unitTypeNames[:])
+}
+
+func tableName(i int, names []string) string {
+	if i < len(names) && names[i] != "" {
+		return names[i]
+	}
+	return strconv.Itoa(i)
 }
 
 // String is Name.
@@ -79,13 +87,13 @@ func (r Research) Valid() bool { return r.ID != noResearchID }
 
 func researchOf(r bwgame.Research) Research { return Research{Upgrade: r.Upgrade, ID: r.ID} }
 
-// String is screp's name of the tech or upgrade, or "None" for NoResearch.
+// String is OpenBW's name of the tech or upgrade, for example "Stim Packs", or "None" for NoResearch.
 func (r Research) String() string {
 	if !r.Valid() {
 		return "None"
 	}
 	if r.Upgrade {
-		return repcmd.UpgradeByID(r.ID).Name
+		return tableName(int(r.ID), upgradeNames[:])
 	}
-	return repcmd.TechByID(r.ID).Name
+	return tableName(int(r.ID), techNames[:])
 }

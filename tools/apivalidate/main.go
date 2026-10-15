@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io"
-	"log"
 	"maps"
 	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -17,11 +16,9 @@ import (
 	openbw "github.com/marianogappa/openbw-go"
 )
 
-var discardLogger = log.New(io.Discard, "", 0)
-
 func main() {
 	mode := flag.String("mode", "validate", "select, validate, cost or trace")
-	list := flag.String("list", "", "file with one replay path per line ('#' starts a comment line)")
+	list := flag.String("list", "", "file with one replay path per line, relative to $OPENBW_REPLAYS ('#' starts a comment line)")
 	dataDir := flag.String("data", "testdata/bwdata", "game data directory")
 	workers := flag.Int("j", runtime.NumCPU(), "parallel games")
 	scrDir := flag.String("scr", "", "select: directory of SC:R 1v1 replays")
@@ -36,7 +33,10 @@ func main() {
 	var err error
 	switch *mode {
 	case "select":
-		err = selectReplays(*scrDir, *scrCount, *otherDir, *otherCount, os.Stdout, os.Stderr)
+		var data *openbw.Data
+		if data, err = openbw.LoadData(*dataDir); err == nil {
+			err = selectReplays(data, *scrDir, *scrCount, *otherDir, *otherCount, os.Stdout, os.Stderr)
+		}
 	case "trace":
 		var data *openbw.Data
 		if data, err = openbw.LoadData(*dataDir); err == nil {
@@ -76,10 +76,17 @@ func readList(path string) ([]string, error) {
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
 		if line != "" && !strings.HasPrefix(line, "#") {
-			paths = append(paths, line)
+			paths = append(paths, filepath.Join(replaysDir(), line))
 		}
 	}
 	return paths, s.Err()
+}
+
+func replaysDir() string {
+	if dir := os.Getenv("OPENBW_REPLAYS"); dir != "" {
+		return dir
+	}
+	return "testdata/replays"
 }
 
 func parallel[T any](n, workers int, run func(int) T) []T {
@@ -128,7 +135,7 @@ func validate(data *openbw.Data, paths []string, workers int) error {
 }
 
 func report(results []*result) {
-	var errs, scr, legacy, scrSame, noLoad, events, unitEvents, checkpoints, units, commands, dropped, selections, linked int
+	var errs, scr, legacy, scrSame, noLoad, events, unitEvents, checkpoints, units, commands, dropped, selections int
 	var frames int64
 	checks := map[string]int{}
 	byMap, noLoadMaps := map[string]int{}, map[string]int{}
@@ -162,7 +169,6 @@ func report(results []*result) {
 		commands += r.commands
 		dropped += r.dropped
 		selections += r.selections
-		linked += r.screpLinked
 		frames += int64(r.frames)
 		for check, n := range r.failureByCheck {
 			checks[check] += n
@@ -177,7 +183,7 @@ func report(results []*result) {
 	}
 	fmt.Printf("\nreplays %d (SC:R %d, legacy %d, errors %d), frames %d\n", len(results), scr, legacy, errs, frames)
 	fmt.Printf("events %d, unit events %d, checkpoints %d, units compared %d\n", events, unitEvents, checkpoints, units)
-	fmt.Printf("command results %d, selections compared %d, screp links checked %d, dropped by downgrade %d\n", commands, selections, linked, dropped)
+	fmt.Printf("command results %d, selections compared %d, dropped by downgrade %d\n", commands, selections, dropped)
 	fmt.Printf("SC:R replays with the same stream under OpenBW rules: %d of %d; %d do not load without SC:R rules (disabled thingy units)\n", scrSame, scr, noLoad)
 	fmt.Printf("maps: %v\n", byMap)
 	fmt.Printf("maps that do not load without SC:R rules: %v\n", noLoadMaps)

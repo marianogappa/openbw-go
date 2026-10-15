@@ -45,10 +45,10 @@ func TestExamples(t *testing.T) {
 		run  func()
 		want []string
 	}{
-		{"Example", Example, []string{"3380 SCV of player 1 killed by Zergling of player 0\n", "end frame 21140\n"}},
-		{"filterKinds", Example_filterKinds, []string{"1039 1 Built Barracks\n", "1513 0 Morph Spawning Pool\n"}},
+		{"Example", Example, []string{"3380 Terran SCV of player 1 killed by Zerg Zergling of player 0\n", "end frame 21140\n"}},
+		{"filterKinds", Example_filterKinds, []string{"1039 1 Built Terran Barracks\n", "1513 0 Morph Zerg Spawning Pool\n"}},
 		{"readState", Example_readState, []string{"frame 4320 player 1: 172 minerals, 0 gas, supply 19/26\n"}},
-		{"earlyStop", Example_earlyStop, []string{"frame 370: player 1 command 0x1f rejected: [{3615 Minerals}]\nselected Command Center at 288,2960\nstopped at frame 370 of 21140\n"}},
+		{"earlyStop", Example_earlyStop, []string{"frame 370: player 1 command 0x1f rejected: [{3615 Minerals}]\nselected Terran Command Center at 288,2960\nstopped at frame 370 of 21140\n"}},
 		{"parallel", Example_parallel, []string{"game 0: 224 units destroyed\ngame 1: 338 units destroyed\n"}},
 	}
 	for _, ex := range examples {

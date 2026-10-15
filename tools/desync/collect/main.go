@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/icza/screp/repparser"
+	openbw "github.com/marianogappa/openbw-go"
 	"github.com/marianogappa/openbw-go/downgrade"
 )
 
@@ -31,6 +31,7 @@ type replay struct {
 func main() {
 	replays := flag.String("replays", "", "directory with SC:R replays (searched recursively)")
 	out := flag.String("out", "", "directory for the downgraded .116.rep files")
+	dataDir := flag.String("data", "", "game data directory (default $OPENBW_DATA)")
 	var f filter
 	flag.StringVar(&f.mapName, "map", "", "only maps whose name contains this text")
 	flag.StringVar(&f.race, "race", "", "only matchups that contain this race letter (T, Z or P)")
@@ -42,13 +43,18 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
-	if err := run(*replays, *out, f); err != nil {
+	data, err := openbw.LoadData(*dataDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "collect:", err)
+		os.Exit(1)
+	}
+	if err := run(data, *replays, *out, f); err != nil {
 		fmt.Fprintln(os.Stderr, "collect:", err)
 		os.Exit(1)
 	}
 }
 
-func run(replayDir, outDir string, f filter) error {
+func run(data *openbw.Data, replayDir, outDir string, f filter) error {
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return err
 	}
@@ -61,7 +67,7 @@ func run(replayDir, outDir string, f filter) error {
 		if collected == f.count {
 			break
 		}
-		r, ok := readReplay(path)
+		r, ok := readReplay(data, path)
 		if !ok || !f.matches(r) {
 			continue
 		}
@@ -92,12 +98,27 @@ func replayPaths(dir string) ([]string, error) {
 	return paths, err
 }
 
-func readReplay(path string) (replay, bool) {
-	r, err := repparser.ParseFileConfig(path, repparser.Config{})
-	if err != nil || len(r.Header.Players) != 2 {
+var raceLetters = map[uint8]string{0: "Z", 1: "T", 2: "P"}
+
+func readReplay(data *openbw.Data, path string) (replay, bool) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
 		return replay{}, false
 	}
-	return replay{path: path, mapName: plainMapName(r.Header.Map), matchup: r.Header.Matchup(), frames: int(r.Header.Frames)}, true
+	g, err := openbw.Open(raw, openbw.Options{Data: data, Kinds: openbw.NoKinds})
+	if err != nil {
+		return replay{}, false
+	}
+	slots := g.PlayingSlots()
+	if len(slots) != 2 {
+		return replay{}, false
+	}
+	h := g.Header()
+	var races []string
+	for _, slot := range slots {
+		races = append(races, raceLetters[h.Slots[slot].Race])
+	}
+	return replay{path: path, mapName: plainMapName(h.MapName), matchup: strings.Join(races, "v"), frames: int(h.EndFrame)}, true
 }
 
 func plainMapName(name string) string {

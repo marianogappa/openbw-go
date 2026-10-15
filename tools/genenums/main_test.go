@@ -13,6 +13,7 @@ import (
 const (
 	bwenumsPath   = "../../ref/openbw/bwenums.h"
 	generatedPath = "../../bwgame/enums.go"
+	namesPath     = "../../names.go"
 )
 
 func readBwenums(t *testing.T) []byte {
@@ -39,6 +40,17 @@ func TestGeneratedFileIsUpToDate(t *testing.T) {
 	}
 	if !bytes.Equal(got, want) {
 		t.Fatal("bwgame/enums.go is stale: run go run ./tools/genenums")
+	}
+	wantNames, err := renderNames(blocks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotNames, err := os.ReadFile(namesPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(gotNames, wantNames) {
+		t.Fatal("names.go is stale: run go run ./tools/genenums")
 	}
 }
 

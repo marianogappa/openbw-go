@@ -4,16 +4,25 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
 
 	openbw "github.com/marianogappa/openbw-go"
 )
 
-var exampleReplay = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-CB157510-11C2-11F1-A3DD-FA167B5461B6.rep"
+var exampleReplay = replayPath("cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-CB157510-11C2-11F1-A3DD-FA167B5461B6.rep")
 
 var exampleReplays = []string{
 	exampleReplay,
-	"/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-Esccccccc/MM-4862526E-25E0-11F1-A3DD-FA167B5461B6.rep",
+	replayPath("cwalggdl/replays-cwal-dl/30-Esccccccc/MM-4862526E-25E0-11F1-A3DD-FA167B5461B6.rep"),
+}
+
+func replayPath(name string) string {
+	dir := os.Getenv("OPENBW_REPLAYS")
+	if dir == "" {
+		dir = "testdata/replays"
+	}
+	return filepath.Join(dir, name)
 }
 
 // Open a replay, range over its events and check the error after the loop.

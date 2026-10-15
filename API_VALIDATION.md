@@ -2,6 +2,10 @@
 
 Validation of package `openbw` on 210 replays with [tools/apivalidate](tools/apivalidate), a test tool. Run date: 2026-10-15, at commit `6a614f2`.
 
+Re-run after the screp split (engine terms only, screp links moved to [screpsim](https://github.com/marianogappa/screpsim)): all semantic checks pass with the same counts. screpsim's `tools/linkcheck` on the same 210 replays: every one of the 1,184,569 screp commands has exactly one command result, in order.
+
+Replay paths in the list are relative to `$OPENBW_REPLAYS`.
+
 ```
 go run ./tools/apivalidate -list tools/apivalidate/replays.txt               # semantic checks
 go run ./tools/apivalidate -mode cost -list tools/apivalidate/replays.txt    # cost
@@ -28,7 +32,7 @@ Each replay runs with `AllKinds`, `AllClasses` and `TickEvery: 2880` (a checkpoi
 | Completed state | The completed state from the events equals the engine's completed flag for every alive unit at each checkpoint. | 210 | Pass |
 | Command results | One `CommandResult` per executed action, `Action` 0, 1, 2, ... in order, `Cmd == Action`; frame and player equal the downgrade's source command; count equals a plain engine run. | 210 | Pass (0 source commands dropped) |
 | Outcome and selection | `ActionID`, `Owner`, accepted or rejected, and `Selection` equal what a plain engine run executed (`BeforeAction`/`AfterAction`). | 210 | Pass (1,184,569 selections) |
-| screp links | Every `ScrepIndex` names a screp command with the same frame and player. | 210 | Pass (1,184,569 linked) |
+| Command sources | `Source` names the source command of the action, with the same frame and the slot's player ID (`Header`). | 210 | Pass |
 | Event links | No event has a `Cmd` of a later action. `Seq` is 1, 2, 3, ...; `Frame` never decreases. | 210 | Pass |
 | Engine unchanged | Frame and state hash at the end equal a plain engine run. | 210 | Pass |
 | Rules on and off, legacy | `RulesAuto` and `RulesOpenBW` give the same stream. | 25 | Pass |
@@ -57,7 +61,7 @@ Serial, 20 games (15,601 frames on average), each configuration on the same repl
 | `DefaultKinds` | 2,101 | 2,033 | -0.5% | 2,203 | 315,307 | 13.5 | 4.1 |
 | `AllKinds` (no `Tick`) | 2,107 | 2,040 | -0.1% | 8,006 | 346,532 | 16.1 | 4.7 |
 
-The stream's CPU cost is below the measurement noise. `AllKinds` adds about 33,000 allocations and 2.7 MB per game (events, rejections, selections and the screp parse for command links). Live memory per game is the engine state, plus 0.5 MB that the `Game` keeps (mostly the prepared replay and its command index), plus 0.6 MB with `KindCommandResult` (the screp parse and the command tracking). The game data is shared and not counted.
+The stream's CPU cost is below the measurement noise. `AllKinds` adds about 33,000 allocations and 2.7 MB per game (events, rejections, selections and, at that time, the screp parse for command links, which is now in screpsim). Live memory per game is the engine state, plus 0.5 MB that the `Game` keeps (mostly the prepared replay and its command index), plus 0.6 MB with `KindCommandResult` (the command tracking and, at that time, the screp parse). The game data is shared and not counted.
 
 Throughput, 210 games on 12 workers, best of 2 rounds:
 

@@ -1,8 +1,6 @@
 package openbw
 
 import (
-	"bytes"
-	"log"
 	"slices"
 	"testing"
 
@@ -67,28 +65,19 @@ func TestOpenOptions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.kinds != DefaultKinds || g.parsed || g.links != nil {
-		t.Fatalf("default game: kinds %v, parsed %v, %d links", g.kinds, g.parsed, len(g.links))
+	if g.kinds != DefaultKinds || g.sources != nil {
+		t.Fatalf("default game: kinds %v, %d sources", g.kinds, len(g.sources))
+	}
+	h := g.Header()
+	if h.MapName == "" || h.EndFrame != g.EndFrame() {
+		t.Errorf("header %+v, end frame %d", h, g.EndFrame())
 	}
 	for _, owner := range g.PlayingSlots() {
-		if p := g.ReplayPlayer(owner); p == nil || p.SlotID != uint16(owner) {
-			t.Errorf("no screp player for slot %d", owner)
+		if s := h.Slots[owner]; s.Owner != owner || s.PlayerID < 0 || s.Name == "" {
+			t.Errorf("slot %d: %+v", owner, s)
 		}
 	}
 	if p := g.Player(99); p != (Player{Owner: 99}) {
 		t.Errorf("player 99: %+v", p)
-	}
-}
-
-func TestReplayParseIsQuiet(t *testing.T) {
-	replay := readReplay(t, testReplays[0])
-	var out bytes.Buffer
-	flags, prefix, writer := log.Flags(), log.Prefix(), log.Writer()
-	log.SetOutput(&out)
-	defer func() { log.SetOutput(writer); log.SetFlags(flags); log.SetPrefix(prefix) }()
-	g := &Game{raw: replay[:len(replay)*2/3]}
-	g.Replay()
-	if out.Len() != 0 {
-		t.Fatalf("screp logged %q", out.String())
 	}
 }

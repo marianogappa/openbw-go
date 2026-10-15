@@ -13,9 +13,16 @@ import (
 )
 
 const (
-	cwalReplays  = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/"
-	otherReplays = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/scmapanalyzer/replays/"
+	cwalReplays  = "cwalggdl/replays-cwal-dl/"
+	otherReplays = "scmapanalyzer/replays/"
 )
+
+func replaysDir() string {
+	if dir := os.Getenv("OPENBW_REPLAYS"); dir != "" {
+		return dir
+	}
+	return "testdata/replays"
+}
 
 var testReplays = []string{
 	cwalReplays + "30-NEW-lillljilililili/MM-CB157510-11C2-11F1-A3DD-FA167B5461B6.rep",
@@ -48,7 +55,7 @@ func testData(t testing.TB) *Data {
 
 func readReplay(t testing.TB, path string) []byte {
 	t.Helper()
-	replay, err := os.ReadFile(path)
+	replay, err := os.ReadFile(filepath.Join(replaysDir(), path))
 	if err != nil {
 		t.Skipf("no replay: %v", err)
 	}
@@ -166,10 +173,11 @@ func TestStreamInvariants(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		sources := g.SourceCommands()
 		c := &lifeChecker{t: t, created: map[UnitID]bool{}, destroyed: map[UnitID]bool{}}
 		counts := map[Kind]int{}
 		var lastAction int32 = -1
-		results, linked := 0, 0
+		results, sourced := 0, 0
 		for e := range g.Events() {
 			c.check(e)
 			counts[e.Kind()]++
@@ -180,9 +188,9 @@ func TestStreamInvariants(t *testing.T) {
 				}
 				lastAction = e.Action
 				results++
-				if e.ScrepIndex >= 0 {
-					linked++
-					checkScrepLink(t, g, e)
+				if e.Source >= 0 {
+					sourced++
+					checkSource(t, g, sources, e)
 				}
 			case *Tick:
 				checkShadowQueues(t, g)
@@ -205,30 +213,22 @@ func TestStreamInvariants(t *testing.T) {
 		if info := g.Info(); info.Rules.SCR == legacy || info.Rules.Custom || info.DataHash == "" {
 			t.Errorf("engine info %+v for source format %s", info, g.prepared.Report.SourceFormat)
 		}
-		if !legacy && linked < results*99/100 {
-			t.Errorf("%d of %d command results linked to screp", linked, results)
+		if sourced != results {
+			t.Errorf("%d of %d command results have a source command", sourced, results)
 		}
 		if got, want := bwgame.StateHash(g.st), plainEngineHash(t, data, replay, g.Frame()); got != want {
 			t.Errorf("state hash %x with the stream, %x without", got, want)
 		}
-		t.Logf("frame %d, results %d (linked %d), counts %v", g.Frame(), results, linked, counts)
+		t.Logf("frame %d, results %d, counts %v", g.Frame(), results, counts)
 	})
 }
 
-func checkScrepLink(t *testing.T, g *Game, r *CommandResult) {
+func checkSource(t *testing.T, g *Game, sources []SourceCommand, r *CommandResult) {
 	t.Helper()
-	cmds := g.replay.Commands.Cmds
-	base := cmds[r.ScrepIndex].BaseCmd()
-	var source *downgrade.SourceCommand
-	for i := range g.prepared.Commands {
-		if g.prepared.Commands[i].Action == r.Action {
-			source = &g.prepared.Commands[i]
-			break
-		}
-	}
-	if source == nil || int32(base.Frame) != r.Frame || base.PlayerID != r.PlayerID || !screpIDMatches(source.ID, base.Type.ID) {
-		t.Fatalf("action %d at frame %d player %d links to screp command %d at frame %d player %d type %#x",
-			r.Action, r.Frame, r.PlayerID, r.ScrepIndex, base.Frame, base.PlayerID, base.Type.ID)
+	c := sources[r.Source]
+	slot := g.Header().Slots[r.Owner]
+	if c.Action != r.Action || c.Frame != r.Frame || int32(c.PlayerID) != slot.PlayerID || c.Dropped != "" {
+		t.Fatalf("action %d at frame %d slot %d (player %d) has source %d: %+v", r.Action, r.Frame, r.Owner, slot.PlayerID, r.Source, c)
 	}
 }
 

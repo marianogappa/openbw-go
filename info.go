@@ -4,7 +4,6 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/icza/screp/repparser"
 	"github.com/marianogappa/openbw-go/bwgame"
 )
 
@@ -16,7 +15,6 @@ const modulePath = "github.com/marianogappa/openbw-go"
 // EngineInfo identifies the engine, the data and the rules of a game.
 type EngineInfo struct {
 	Version      string
-	ScrepVersion string
 	OpenBWCommit string
 	DataHash     string
 	// SourceFormat is the replay format that the downgrade read, for example "legacy".
@@ -76,7 +74,6 @@ func Version() string { return moduleVersion() }
 func (g *Game) Info() EngineInfo {
 	return EngineInfo{
 		Version:      Version(),
-		ScrepVersion: repparser.Version,
 		OpenBWCommit: OpenBWCommit,
 		DataHash:     g.data.FilesHash(),
 		SourceFormat: g.prepared.Report.SourceFormat,

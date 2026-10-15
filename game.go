@@ -3,13 +3,9 @@ package openbw
 import (
 	"errors"
 	"fmt"
-	"io"
 	"iter"
-	"log"
 	"runtime/debug"
 
-	"github.com/icza/screp/rep"
-	"github.com/icza/screp/repparser"
 	"github.com/marianogappa/openbw-go/bwgame"
 	"github.com/marianogappa/openbw-go/downgrade"
 	"github.com/marianogappa/openbw-go/scrrules"
@@ -44,17 +40,14 @@ type Game struct {
 	maxFrame int32
 	tick     int32
 
-	data      *Data
-	raw       []byte
-	replay    *rep.Replay
-	replayErr error
-	parsed    bool
-	prepared  *downgrade.Prepared
-	st        *bwgame.State
-	funcs     *bwgame.ReplayFunctions
-	rules     RulesInfo
-	links     screpLinks
-	playing   []int8
+	data     *Data
+	prepared *downgrade.Prepared
+	st       *bwgame.State
+	funcs    *bwgame.ReplayFunctions
+	rules    RulesInfo
+	sources  []int32
+	header   Header
+	playing  []int8
 
 	buf          []Event
 	head         int
@@ -68,8 +61,6 @@ type Game struct {
 }
 
 const legacyFormat = "legacy"
-
-var discardLogger = log.New(io.Discard, "", 0)
 
 // Open prepares a replay (SC:R or legacy bytes) and returns a game at frame 0.
 // The events of the map load (frame 0) come first from Events.
@@ -92,7 +83,6 @@ func Open(replay []byte, opts Options) (*Game, error) {
 		maxFrame:       opts.MaxFrame,
 		tick:           opts.TickEvery,
 		data:           data,
-		raw:            replay,
 		prepared:       prepared,
 		containerKills: map[UnitID]killerInfo{},
 	}
@@ -112,15 +102,14 @@ func Open(replay []byte, opts Options) (*Game, error) {
 	g.funcs = bwgame.NewReplayFunctions(g.st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	g.install(opts.Hooks)
 	if g.wants(KindCommandResult) {
-		if parsed, err := g.Replay(); err == nil {
-			g.links = linkCommands(parsed, prepared)
-		}
+		g.sources = actionSources(prepared.Commands)
 	}
 	if err := g.load(prepared.Loadable); err != nil {
 		return nil, err
 	}
 	g.commandsNext = true
 	g.playing = playingSlots(g.st)
+	g.header = readHeader(g.funcs)
 	return g, nil
 }
 
@@ -231,19 +220,6 @@ func (g *Game) Done() bool {
 		return false
 	}
 	return g.funcs.IsDone() || g.maxFrame > 0 && g.st.CurrentFrame >= g.maxFrame
-}
-
-// Replay is the screp parse of the replay: header, players, map and commands.
-// The first call parses; later calls return the same values.
-func (g *Game) Replay() (*rep.Replay, error) {
-	if !g.parsed {
-		g.parsed = true
-		g.replay, g.replayErr = repparser.ParseConfig(g.raw, repparser.Config{Commands: true, MapData: true, Logger: discardLogger})
-		if g.replayErr != nil {
-			g.replayErr = fmt.Errorf("openbw: parse replay: %w", g.replayErr)
-		}
-	}
-	return g.replay, g.replayErr
 }
 
 // Engine gives the engine (L0) for reads. It has no stability promise.

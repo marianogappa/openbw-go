@@ -60,6 +60,15 @@ Today screp says "player 1 issued Train Zergling at frame 3000". With the engine
 
 That answers the question screp users ask most: "what actually happened, not just what was clicked".
 
+The join lives in a separate module:
+
+```
+screp  <-  screpsim  ->  openbw-go
+```
+
+- openbw-go speaks engine terms only: player slots, action indexes, source command indexes and `UnitID`s. `Game.SourceCommands` and `CommandResult.Source` are the exact map from the replay's command stream to the engine's actions. `Game.Header` has the game info facts. The library packages never import screp, so an engine release never waits for a screp release.
+- [screpsim](https://github.com/marianogappa/screpsim) parses with screp and returns screp's own types (`*rep.Replay`, `repcmd.Cmd`). It adds the engine facts keyed by screp's identifiers: the command index in `Commands.Cmds`, the player slot and the unit tag. A link is exact or absent.
+
 ## Out of scope
 
 - Recorders, output formats (JSON, Parquet, SQLite) and CLIs that write reports.

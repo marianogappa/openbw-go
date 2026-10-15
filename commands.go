@@ -3,8 +3,6 @@ package openbw
 import (
 	"slices"
 
-	"github.com/icza/screp/rep"
-	"github.com/icza/screp/rep/repcmd"
 	"github.com/marianogappa/openbw-go/bwgame"
 	"github.com/marianogappa/openbw-go/downgrade"
 )
@@ -137,11 +135,10 @@ func (g *Game) selection(owner int32) []UnitID {
 func (g *Game) beforeAction(owner, actionID int32, payload []byte) {
 	t := g.cmd
 	r := &CommandResult{
-		Action:     t.executed,
-		ScrepIndex: g.links.screpIndex(t.executed),
-		PlayerID:   byte(g.funcs.ActionState().PlayerID[owner]),
-		Owner:      int8(owner),
-		ActionID:   byte(actionID),
+		Action:   t.executed,
+		Source:   g.source(t.executed),
+		Owner:    int8(owner),
+		ActionID: byte(actionID),
 	}
 	if byte(actionID) == actionSelect || byte(actionID) == actionShiftSelect {
 		r.MissingTags, r.ForeignTags = g.tagTest(owner, payload)
@@ -183,7 +180,7 @@ func (g *Game) afterAction(owner, actionID int32, ok bool) {
 	r := t.current
 	selectionAfter := t.selectionAfter
 	if r == nil {
-		r = &CommandResult{Action: t.executed, ScrepIndex: g.links.screpIndex(t.executed), Owner: int8(owner), ActionID: byte(actionID)}
+		r = &CommandResult{Action: t.executed, Source: g.source(t.executed), Owner: int8(owner), ActionID: byte(actionID)}
 		selectionAfter = false
 	}
 	t.current, t.selectionAfter = nil, false
@@ -202,93 +199,23 @@ func (g *Game) afterAction(owner, actionID int32, ok bool) {
 	g.emit(r, r.Action)
 }
 
-type screpLinks []int32
+func actionSources(commands []downgrade.SourceCommand) []int32 {
+	var sources []int32
+	for i, c := range commands {
+		if c.Action < 0 {
+			continue
+		}
+		for int(c.Action) >= len(sources) {
+			sources = append(sources, -1)
+		}
+		sources[c.Action] = int32(i)
+	}
+	return sources
+}
 
-func (l screpLinks) screpIndex(action int32) int32 {
-	if action < 0 || int(action) >= len(l) {
+func (g *Game) source(action int32) int32 {
+	if action < 0 || int(action) >= len(g.sources) {
 		return -1
 	}
-	return l[action]
-}
-
-func screpIDMatches(sourceID, screpID byte) bool {
-	return sourceID == screpID || sourceID == repcmd.TypeIDBuild && screpID == repcmd.VirtualTypeIDLand
-}
-
-func linkCommands(r *rep.Replay, p *downgrade.Prepared) screpLinks {
-	actions := 0
-	for _, c := range p.Commands {
-		if c.Action >= 0 {
-			actions++
-		}
-	}
-	links := make(screpLinks, actions)
-	for i := range links {
-		links[i] = -1
-	}
-	if r.Commands == nil {
-		return links
-	}
-	cmds := r.Commands.Cmds
-	byFrame := map[uint32][]int{}
-	for i, c := range cmds {
-		f := uint32(c.BaseCmd().Frame)
-		byFrame[f] = append(byFrame[f], i)
-	}
-	cutoff := parseErrorCutoffs(r.Commands, byFrame)
-	stopped := map[uint32]bool{}
-	for _, c := range p.Commands {
-		f := c.Frame
-		if stopped[f] {
-			continue
-		}
-		frameCmds := byFrame[f]
-		limit, hasLimit := cutoff[f]
-		switch {
-		case c.DropReason == downgrade.ReasonUnknownLength || c.DropReason == downgrade.ReasonTruncated,
-			hasLimit && c.Position >= limit,
-			c.Position >= len(frameCmds):
-			stopped[f] = true
-			continue
-		}
-		base := cmds[frameCmds[c.Position]].BaseCmd()
-		if base.PlayerID != c.PlayerID || base.Type == nil || !screpIDMatches(c.ID, base.Type.ID) {
-			stopped[f] = true
-			continue
-		}
-		if c.Action >= 0 && int(c.Action) < actions {
-			links[c.Action] = int32(frameCmds[c.Position])
-		}
-	}
-	return links
-}
-
-func parseErrorCutoffs(cs *rep.Commands, byFrame map[uint32][]int) map[uint32]int {
-	cutoff := map[uint32]int{}
-	if len(cs.ParseErrCmds) == 0 {
-		return cutoff
-	}
-	index := make(map[repcmd.Cmd]int, len(cs.Cmds))
-	for i, c := range cs.Cmds {
-		index[c] = i
-	}
-	for _, pec := range cs.ParseErrCmds {
-		f := uint32(pec.Frame)
-		prev := -1
-		if pec.PrevCmd != nil {
-			if i, ok := index[pec.PrevCmd]; ok {
-				prev = i
-			}
-		}
-		n := 0
-		for _, i := range byFrame[f] {
-			if i <= prev {
-				n++
-			}
-		}
-		if old, ok := cutoff[f]; !ok || n < old {
-			cutoff[f] = n
-		}
-	}
-	return cutoff
+	return g.sources[action]
 }
