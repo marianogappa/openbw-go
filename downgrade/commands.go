@@ -373,3 +373,7 @@ func (t *commandTranslator) drop(frame uint32, playerID, id byte, reason string)
 	}
 	t.dropped = append(t.dropped, DroppedCommand{ID: id, Frame: frame, PlayerID: playerID, Count: 1, Reason: reason})
 }
+
+func LegacyUnitTag(tag121 uint32) uint16 {
+	return legacyUnitTag(tag121)
+}
