@@ -1,9 +1,5 @@
 package downgrade
 
-import (
-	"github.com/icza/screp/repparser/repdecoder"
-)
-
 type Report struct {
 	SourceFormat string
 	Dropped      []DroppedCommand
@@ -27,18 +23,6 @@ func (r Report) DroppedCount() int {
 	return total
 }
 
-func formatName(format repdecoder.RepFormat) string {
-	switch format {
-	case repdecoder.RepFormatLegacy:
-		return "legacy"
-	case repdecoder.RepFormatModern:
-		return "1.18-1.20"
-	case repdecoder.RepFormatModern121:
-		return "1.21+"
-	}
-	return "unknown"
-}
-
 func Downgrade(scr []byte) (legacy []byte, report Report, err error) {
 	src, err := readSourceSections(scr)
 	if err != nil {
@@ -60,12 +44,12 @@ func Prepare(replay []byte) (*Prepared, error) {
 	if err != nil {
 		return nil, err
 	}
-	if src.format == repdecoder.RepFormatLegacy {
+	if src.format == formatLegacy {
 		settings := src.settings()
 		return &Prepared{
 			Loadable: replay,
 			Settings: settings,
-			Report:   Report{SourceFormat: formatName(src.format), SCRSettings: settings},
+			Report:   Report{SourceFormat: src.format.String(), SCRSettings: settings},
 			Commands: indexLegacyActions(src.actions),
 		}, nil
 	}
@@ -85,9 +69,9 @@ func PrepareForOpenBW(rep []byte) (loadable []byte, settings SCRSettings, err er
 }
 
 func downgradeSections(src sourceSections) (legacy []byte, report Report, commands []SourceCommand, err error) {
-	report.SourceFormat = formatName(src.format)
+	report.SourceFormat = src.format.String()
 	report.SCRSettings = src.settings()
-	if src.format == repdecoder.RepFormatLegacy {
+	if src.format == formatLegacy {
 		return encodeLegacyReplay(src.gameInfo, src.actions, src.mapData), report, indexLegacyActions(src.actions), nil
 	}
 	translator := newCommandTranslator(slotPlayerIDs(src.gameInfo))

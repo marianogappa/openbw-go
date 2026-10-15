@@ -3,8 +3,6 @@ package downgrade
 import (
 	"encoding/binary"
 	"fmt"
-
-	"github.com/icza/screp/rep/repcore"
 )
 
 const (
@@ -43,11 +41,7 @@ func colorFromFootprint(cclr []byte, slot int) (uint32, bool) {
 	if start+cclrFootprintSize > len(cclr) {
 		return 0, false
 	}
-	color := repcore.ColorByFootprint(cclr[start : start+cclrFootprintSize])
-	if color == nil {
-		return 0, false
-	}
-	return color.ID, true
+	return colorByFootprint(cclr[start : start+cclrFootprintSize])
 }
 
 func downgradePlayerColors(gameInfo, cclr []byte) []string {

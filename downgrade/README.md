@@ -12,6 +12,12 @@ legacy, report, err := downgrade.Downgrade(scr)
 
 A legacy replay as input comes back re-encoded, with the same content.
 
+## Input
+
+`downgrade` reads the replay sections itself: legacy replays (PKWARE-compressed segments, or the uncompressed ones that it writes), 1.18-1.20 and 1.21 replays (zlib-compressed or raw chunks; a 1.21 replay has a 4-byte length before the game info), and the SC:R sections after the map (`LMTS`, `BFIX`, `CCLR`, `GCFG`). `SourceFormat(replay)` names the format.
+
+`Prepare` also numbers every command of the original stream (`Prepared.Commands`): frame, player ID, command ID, position in the frame, the engine action it becomes (or -1) and the drop reason. `openbw.Game.SourceCommands` exposes it.
+
 ## Output format
 
 The output is what `ref/openbw/replay.h` reads:
@@ -67,7 +73,7 @@ In the cwal.gg sample, `CCLR` is all zeros except when a player picked a custom 
 
 ### Commands
 
-The stream is frame blocks: `u32` frame, `u8` block size, then commands. Each command is a `u8` player ID, a `u8` command ID and a payload. Lengths come from `actions.h` and screp.
+The stream is frame blocks: `u32` frame, `u8` block size, then commands. Each command is a `u8` player ID, a `u8` command ID and a payload. Lengths come from `actions.h` and the 1.21 command layouts.
 
 - `0x60`-`0x65` (1.21 Right Click, Targeted Order, Unload, Select, Select Add, Select Remove) become `0x14`, `0x15`, `0x29`, `0x09`, `0x0A`, `0x0B`. Each 4-byte unit tag becomes a 2-byte OpenBW `unit_id`:
   - A 1.21 tag is a 13-bit index (unit array index + 1) and a generation in the bits above it. An OpenBW `unit_id` is an 11-bit index and a 5-bit generation.
@@ -97,13 +103,14 @@ New chunks go first, because OpenBW stops reading at the first chunk whose size 
 
 ## Results
 
-`go test ./downgrade` checks 4 replays from each directory of `cwalggdl` (108 replays). Set `DOWNGRADE_REPLAYS_PER_DIR=1000` to check all of them. For each replay, the test:
+`go test ./downgrade` checks 4 replays from each directory of `$OPENBW_REPLAYS/cwalggdl` (108 replays). Set `DOWNGRADE_REPLAYS_PER_DIR=1000` to check all of them. For each replay, the test:
 
 - reads the output with a reader that mirrors `replay.h`, including the crc32,
 - parses every command with the lengths in `actions.h`, and checks the player IDs and selection sizes,
-- compares each command (frame, player, ID) with screp's parse of the original, and for selections, right clicks, targeted orders and unloads also the positions, unit types, orders and unit indexes,
 - checks that OpenBW finds every chunk it needs in the map,
 - checks that downgrading the output again gives the same bytes.
+
+`go -C tools/screp test ./downgradecheck` uses the same sample and compares each command (frame, player, ID) with screp's parse of the original, and for selections, right clicks, targeted orders and unloads also the positions, unit types, orders and unit indexes. It is in the `tools/screp` module, so package `downgrade` does not import screp.
 
 All 2,934 cwal.gg replays (all 1.21+): 15,063,239 commands, 0 dropped. 2,373 maps changed `VER` 206 to 205 and got `STR ` from `STRx`. 11 player colors came from `CCLR`.
 

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/icza/screp/repparser/repdecoder"
 	"github.com/marianogappa/openbw-go/downgrade"
 )
 
@@ -52,7 +51,7 @@ func parseConfig() (config, []string, error) {
 	flag.IntVar(&cfg.limit, "n", 0, "compare at most this many replays (0: all)")
 	flag.IntVar(&cfg.maxLines, "max-lines", 100, "print at most this many differences per frame (0: all)")
 	flag.BoolVar(&cfg.noActions, "no-actions", false, "run both engines without replay actions")
-	listPath := flag.String("list", "", "file with one replay path per line ('#' starts a comment line)")
+	listPath := flag.String("list", "", "file with one replay path per line, relative to $OPENBW_REPLAYS ('#' starts a comment line)")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "usage: difftest [flags] [-list replays.txt] [replay.rep|dir ...]")
 		flag.PrintDefaults()
@@ -95,10 +94,17 @@ func readReplayList(path string) ([]string, error) {
 	for _, line := range strings.Split(string(data), "\n") {
 		line = strings.TrimSpace(line)
 		if line != "" && !strings.HasPrefix(line, "#") {
-			replays = append(replays, line)
+			replays = append(replays, filepath.Join(replaysDir(), line))
 		}
 	}
 	return replays, nil
+}
+
+func replaysDir() string {
+	if dir := os.Getenv("OPENBW_REPLAYS"); dir != "" {
+		return dir
+	}
+	return "testdata/replays"
 }
 
 func buildObwhash(outDir string) (string, error) {
@@ -134,9 +140,7 @@ func collectReplays(args []string, limit int) ([]string, error) {
 }
 
 func isLegacyReplay(data []byte) bool {
-	dec := repdecoder.New(data)
-	defer dec.Close()
-	return dec.RepFormat() == repdecoder.RepFormatLegacy
+	return downgrade.SourceFormat(data) == "legacy"
 }
 
 func legacyReplayPath(cfg config, replay string) (string, error) {
