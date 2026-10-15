@@ -9,7 +9,8 @@ import zipfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_TOOL = HERE.parent / "tools" / "casc_extract_one" / "casc_extract_one"
+DEFAULT_TOOL = HERE / "casc-tools" / "casc_extract_one"
+REPO_ROOT = HERE.parent.parent
 
 DAT_FILES = ["units", "weapons", "upgrades", "techdata", "flingy", "sprites", "images", "orders"]
 TILESETS = ["badlands", "platform", "install", "AshWorld", "Jungle", "Desert", "Ice", "Twilight"]
@@ -40,8 +41,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--casc", default="/Applications/StarCraft", help="SC:R install folder")
     ap.add_argument("--tool", default=str(DEFAULT_TOOL), help="path to casc_extract_one binary")
-    ap.add_argument("--out", default=str(HERE / "bwdata"), help="output folder")
-    ap.add_argument("--zip", default=str(HERE / "bwdata.zip"), help="output zip")
+    ap.add_argument("--out", default=str(REPO_ROOT / "testdata" / "bwdata"), help="output folder")
+    ap.add_argument("--zip", default="", help="also write the files to this zip")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -65,11 +66,12 @@ def main():
             failed.append(rel)
 
     files = sorted(p for p in out.rglob("*") if p.is_file())
-    with zipfile.ZipFile(args.zip, "w", zipfile.ZIP_DEFLATED) as z:
-        for p in files:
-            z.write(p, p.relative_to(out).as_posix())
+    if args.zip:
+        with zipfile.ZipFile(args.zip, "w", zipfile.ZIP_DEFLATED) as z:
+            for p in files:
+                z.write(p, p.relative_to(out).as_posix())
 
-    print(f"extracted {len(files)} files ({len(entries)} from images.tbl) -> {args.zip}")
+    print(f"extracted {len(files)} files ({len(entries)} from images.tbl) -> {out}")
     if failed:
         print(f"{len(failed)} failed:", *failed, sep="\n  ")
         sys.exit(1)
