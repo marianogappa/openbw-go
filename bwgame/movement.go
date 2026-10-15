@@ -57,7 +57,7 @@ func (f *StateFunctions) unitTypeCanFitAt(unitType *UnitTypeT, pos Xy) bool {
 
 func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 	c0 := f.gameSt.Regions.Contours[0]
-	for i := contourLowerBound(c0, pos.Y); i != 0; {
+	for i := f.gameSt.Regions.contourLowerBound(0, pos.Y); i != 0; {
 		i--
 		if inner[0]+c0[i].V[0] < pos.Y {
 			break
@@ -67,7 +67,7 @@ func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 		}
 	}
 	c1 := f.gameSt.Regions.Contours[1]
-	for i := contourUpperBound(c1, pos.X); i != len(c1); i++ {
+	for i := f.gameSt.Regions.contourUpperBound(1, pos.X); i != len(c1); i++ {
 		if inner[1]+c1[i].V[0] > pos.X {
 			break
 		}
@@ -76,7 +76,7 @@ func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 		}
 	}
 	c2 := f.gameSt.Regions.Contours[2]
-	for i := contourUpperBound(c2, pos.Y); i != len(c2); i++ {
+	for i := f.gameSt.Regions.contourUpperBound(2, pos.Y); i != len(c2); i++ {
 		if inner[2]+c2[i].V[0] > pos.Y {
 			break
 		}
@@ -85,7 +85,7 @@ func (f *StateFunctions) canFitAt(pos Xy, inner [4]int32) bool {
 		}
 	}
 	c3 := f.gameSt.Regions.Contours[3]
-	for i := contourLowerBound(c3, pos.X); i != 0; {
+	for i := f.gameSt.Regions.contourLowerBound(3, pos.X); i != 0; {
 		i--
 		if inner[3]+c3[i].V[0] < pos.X {
 			break
@@ -427,10 +427,10 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 	c2 := f.gameSt.Regions.Contours[2]
 	c3 := f.gameSt.Regions.Contours[3]
 
-	i0 := contourUpperBound(c0, pos.Y-inner[0])
-	i1 := contourLowerBound(c1, pos.X-inner[1])
-	i2 := contourLowerBound(c2, pos.Y-inner[2])
-	i3 := contourUpperBound(c3, pos.X-inner[3])
+	i0 := f.gameSt.Regions.contourUpperBound(0, pos.Y-inner[0])
+	i1 := f.gameSt.Regions.contourLowerBound(1, pos.X-inner[1])
+	i2 := f.gameSt.Regions.contourLowerBound(2, pos.Y-inner[2])
+	i3 := f.gameSt.Regions.contourUpperBound(3, pos.X-inner[3])
 
 	expand := func(c Contour) Contour {
 		c.V[0] += inner[c.Dir]
@@ -548,7 +548,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 	}
 
 	if newPos.Y < pos.Y {
-		for i := contourUpperBound(c0, pos.Y-inner[0]); i != 0; {
+		for i := f.gameSt.Regions.contourUpperBound(0, pos.Y-inner[0]); i != 0; {
 			i--
 			c := expand(c0[i])
 			if c.V[0] < newPos.Y {
@@ -560,7 +560,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 		}
 	}
 	if newPos.X > pos.X {
-		for i := contourLowerBound(c1, pos.X-inner[1]); i != len(c1); i++ {
+		for i := f.gameSt.Regions.contourLowerBound(1, pos.X-inner[1]); i != len(c1); i++ {
 			c := expand(c1[i])
 			if c.V[0] > newPos.X {
 				break
@@ -571,7 +571,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 		}
 	}
 	if newPos.Y > pos.Y {
-		for i := contourLowerBound(c2, pos.Y-inner[2]); i != len(c2); i++ {
+		for i := f.gameSt.Regions.contourLowerBound(2, pos.Y-inner[2]); i != len(c2); i++ {
 			c := expand(c2[i])
 			if c.V[0] > newPos.Y {
 				break
@@ -582,7 +582,7 @@ func (f *StateFunctions) checkUnitMovementTerrainCollision(u *Unit, movement Xy)
 		}
 	}
 	if newPos.X < pos.X {
-		for i := contourUpperBound(c3, pos.X-inner[3]); i != 0; {
+		for i := f.gameSt.Regions.contourUpperBound(3, pos.X-inner[3]); i != 0; {
 			i--
 			c := expand(c3[i])
 			if c.V[0] < newPos.X {

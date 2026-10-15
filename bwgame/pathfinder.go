@@ -1016,7 +1016,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 
 	pfAddLocalTerrain := func() {
 		c0 := f.gameSt.Regions.Contours[0]
-		for i := contourLowerBound(c0, w.curPosMin.Y-w.inner[0]-1); i != len(c0); i++ {
+		for i := f.gameSt.Regions.contourLowerBound(0, w.curPosMin.Y-w.inner[0]-1); i != len(c0); i++ {
 			if c0[i].V[0] > w.curPos.Y-w.inner[0]-1 {
 				break
 			}
@@ -1027,7 +1027,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			}
 		}
 		c1 := f.gameSt.Regions.Contours[1]
-		for i := contourUpperBound(c1, w.curPos.X-w.inner[1]); i != len(c1); i++ {
+		for i := f.gameSt.Regions.contourUpperBound(1, w.curPos.X-w.inner[1]); i != len(c1); i++ {
 			if c1[i].V[0] > w.curPosMax.X-w.inner[1]+1 {
 				break
 			}
@@ -1038,7 +1038,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			}
 		}
 		c2 := f.gameSt.Regions.Contours[2]
-		for i := contourUpperBound(c2, w.curPos.Y-w.inner[2]); i != len(c2); i++ {
+		for i := f.gameSt.Regions.contourUpperBound(2, w.curPos.Y-w.inner[2]); i != len(c2); i++ {
 			if c2[i].V[0] > w.curPosMax.Y-w.inner[2]+1 {
 				break
 			}
@@ -1049,7 +1049,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			}
 		}
 		c3 := f.gameSt.Regions.Contours[3]
-		for i := contourLowerBound(c3, w.curPosMin.X-w.inner[3]-1); i != len(c3); i++ {
+		for i := f.gameSt.Regions.contourLowerBound(3, w.curPosMin.X-w.inner[3]-1); i != len(c3); i++ {
 			if c3[i].V[0] > w.curPos.X-w.inner[3]-1 {
 				break
 			}

@@ -1058,6 +1058,7 @@ var contourNextRelative = [4][2]int{{1, -1}, {1, 1}, {-1, 1}, {-1, -1}}
 
 func (c *regionsCreator) createContours() {
 	c.regions.Contours = [4][]Contour{}
+	c.regions.contourIndexes = [4]contourIndex{}
 
 	w := &contourWalker{c: c}
 	for w.next() {
