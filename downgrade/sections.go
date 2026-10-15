@@ -13,6 +13,9 @@ const (
 	gameInfoSize    = 633
 	playerNamesSize = 0x300
 	sectionIDCCLR   = 0x524c4343
+	sectionIDLMTS   = 0x53544d4c
+	sectionIDBFIX   = 0x58494642
+	sectionIDGCFG   = 0x47464347
 	legacyReplayID  = 0x53526572
 	modernReplayID  = 0x53526573
 )
@@ -23,6 +26,9 @@ type sourceSections struct {
 	actions      []byte
 	mapData      []byte
 	playerColors []byte
+	limits       []byte
+	bugFixes     []byte
+	gameConfig   []byte
 }
 
 func readSourceSections(data []byte) (s sourceSections, err error) {
@@ -52,7 +58,7 @@ func readSourceSections(data []byte) (s sourceSections, err error) {
 	if s.mapData, err = readSizedSection(dec); err != nil {
 		return s, fmt.Errorf("map data: %w", err)
 	}
-	s.playerColors = readOptionalPlayerColors(dec)
+	s.readTrailingSections(dec)
 	return s, nil
 }
 
@@ -109,23 +115,31 @@ func skipPlayerNames(dec repdecoder.Decoder) error {
 	return err
 }
 
-func readOptionalPlayerColors(dec repdecoder.Decoder) []byte {
-	if dec.RepFormat() == repdecoder.RepFormatLegacy {
-		return nil
+func (s *sourceSections) readTrailingSections(dec repdecoder.Decoder) {
+	if s.format == repdecoder.RepFormatLegacy {
+		return
 	}
 	if err := skipPlayerNames(dec); err != nil {
-		return nil
+		return
 	}
-	for {
-		if err := dec.NewSection(); err != nil {
-			return nil
-		}
+	for dec.NewSection() == nil {
 		data, sectionID, err := dec.Section(0)
 		if err != nil {
-			return nil
+			return
 		}
-		if uint32(sectionID) == sectionIDCCLR {
-			return data
-		}
+		s.keepTrailingSection(uint32(sectionID), data)
+	}
+}
+
+func (s *sourceSections) keepTrailingSection(sectionID uint32, data []byte) {
+	switch sectionID {
+	case sectionIDCCLR:
+		s.playerColors = data
+	case sectionIDLMTS:
+		s.limits = data
+	case sectionIDBFIX:
+		s.bugFixes = data
+	case sectionIDGCFG:
+		s.gameConfig = data
 	}
 }

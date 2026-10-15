@@ -8,6 +8,7 @@ type Report struct {
 	SourceFormat string
 	Dropped      []DroppedCommand
 	Changes      []string
+	SCRSettings  SCRSettings
 }
 
 func (r Report) DroppedByID() map[byte]int {
@@ -44,6 +45,7 @@ func Downgrade(scr []byte) (legacy []byte, report Report, err error) {
 		return nil, report, err
 	}
 	report.SourceFormat = formatName(src.format)
+	report.SCRSettings = src.settings()
 	if src.format == repdecoder.RepFormatLegacy {
 		return encodeLegacyReplay(src.gameInfo, src.actions, src.mapData), report, nil
 	}
