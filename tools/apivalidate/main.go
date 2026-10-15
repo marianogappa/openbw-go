@@ -25,7 +25,7 @@ func main() {
 func run() {
 	mode := flag.String("mode", "validate", "select, validate, cost, scaling or trace")
 	list := flag.String("list", "", "file with one replay path per line, relative to $OPENBW_REPLAYS ('#' starts a comment line)")
-	dataDir := flag.String("data", "testdata/bwdata", "game data directory")
+	dataDir := flag.String("data", defaultDataDir(), "game data directory")
 	workers := flag.Int("j", runtime.NumCPU(), "parallel games")
 	scrDir := flag.String("scr", "", "select: directory of SC:R 1v1 replays")
 	scrCount := flag.Int("scr-n", 170, "select: SC:R replays to take, round robin over maps")
@@ -122,6 +122,13 @@ func readList(path string) ([]string, error) {
 		}
 	}
 	return paths, s.Err()
+}
+
+func defaultDataDir() string {
+	if dir := os.Getenv("OPENBW_DATA"); dir != "" {
+		return dir
+	}
+	return "testdata/bwdata"
 }
 
 func replaysDir() string {

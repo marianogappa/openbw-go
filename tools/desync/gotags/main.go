@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"flag"
 	"fmt"
 	"os"
@@ -101,7 +102,7 @@ func check(global *bwgame.GlobalState, path string, useSCRRules bool) (res resul
 }
 
 func main() {
-	data := flag.String("data", "testdata/bwdata", "game data directory")
+	data := flag.String("data", cmp.Or(os.Getenv("OPENBW_DATA"), "testdata/bwdata"), "game data directory")
 	useSCRRules := flag.Bool("scr-rules", false, "run the engine with the replay's SC:R rules")
 	workers := flag.Int("workers", runtime.NumCPU(), "replays checked in parallel")
 	flag.Usage = func() {
