@@ -180,6 +180,12 @@ Otherwise the order is dropped after the queue cleanup. A test copy with this ch
 
 Liquipedia's notes for patches 1.18-1.20 contain no unit-behaviour fix that survived. The PTR A Dragoon and Valkyrie fixes were reverted. The OpenBW issue tracker has no Remastered-specific gameplay issue. The SC:R-only gameplay differences found are the `LMTS` limits and the BFIX/GCFG order rule above.
 
+## Implemented
+
+- `downgrade.ReadSCRSettings` and `Report.SCRSettings` read `LMTS`, `BFIX` and `GCFG` from the original SC:R replay. Legacy replays get the 1.16 defaults. `OrderAllocationRule()`, `FlyingSCVFix()` and `OrderSupplyLowThreshold()` give the conditions in "BFIX and GCFG".
+- `obwhash` loads SC:R replays directly (downgrade in memory). `-scr-rules` reads the settings.
+- Not yet implemented: the engine option that applies the limits, the disabled `THG2` units and the order allocation rule. Until then `-scr-rules` stops with an error.
+
 ## Tools (`tools/desync/`)
 
 - `tracer.cpp`, `Makefile` (`make OPENBW=<copy> OUT=<binary>`): plays a downgraded replay on an OpenBW copy. Flags:

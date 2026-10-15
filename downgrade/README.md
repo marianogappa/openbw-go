@@ -27,6 +27,30 @@ Each section is `u32` crc32, `u32` segment count, then for each segment a `u32` 
 
 The SC:R sections after the map (player names, `SKIN`, `LMTS`, `BFIX`, `CCLR`, `GCFG` and others) are dropped.
 
+## SC:R settings
+
+The output drops `LMTS`, `BFIX` and `GCFG`. To keep them, read them from the original replay:
+
+```go
+settings, err := downgrade.ReadSCRSettings(scr)
+```
+
+`Downgrade` also puts them in `Report.SCRSettings`.
+
+| Field | Source | Legacy replay or missing section |
+|---|---|---|
+| `Limits` | `LMTS`: images, sprites, lone sprites, units, bullets, orders, fog sprites (7 `u32`) | `Legacy116Limits`: 5000, 2500, 500, 1700, 100, 2000, 500 |
+| `BugFixes` | `BFIX` (8 bytes) | all zero |
+| `GameConfig` | `GCFG`: `u32` build at offset 4, `u8` at offset `0x10` | `nil` |
+
+Methods for the rules in [DESYNC.md](../DESYNC.md):
+
+- `OrderAllocationRule()`: `BFIX` byte 0 bit `0x4`, or `GCFG` offset `0x10` is not 5, or `GCFG` build > 8153.
+- `FlyingSCVFix()`: the rule above and `GCFG` build ≥ 9713.
+- `OrderSupplyLowThreshold()`: 90% of the order limit (3600 for SC:R, 1800 for 1.16).
+
+The cwal.gg sample has `LMTS` 10000, 5000, 1000, 3400, 400, 4000, 1000, `BFIX` `04 00 00 00 00 00 00 00` and `GCFG` build 13515.
+
 Load the output with `replay_player::load_replay_file` or `replay_functions::load_replay_data`. `replay_player::load_replay_data` does not read the section framing.
 
 ## What changes

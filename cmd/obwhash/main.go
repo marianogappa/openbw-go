@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/marianogappa/openbw-go/bwgame"
+	"github.com/marianogappa/openbw-go/downgrade"
 )
 
 const defaultDataDirectory = "/Users/mariano.gappa/Code/go/src/github.com/marianogappa/openbw-go/testdata/bwdata"
@@ -21,10 +23,11 @@ type options struct {
 	dumpUnitsFrame int32
 	maxFrames      int32
 	noActions      bool
+	scrRules       bool
 }
 
 func exitWithUsage() {
-	fmt.Fprintf(os.Stderr, "usage: obwhash [-data dir] [-every N] [-dump-units F] [-max-frames M] [-no-actions] replay.rep\n")
+	fmt.Fprintf(os.Stderr, "usage: obwhash [-data dir] [-every N] [-dump-units F] [-max-frames M] [-no-actions] [-scr-rules] replay.rep\n")
 	os.Exit(1)
 }
 
@@ -64,6 +67,8 @@ func parseOptions(args []string) options {
 			opts.maxFrames = parseIntArgument("-max-frames", args[i])
 		case arg == "-no-actions":
 			opts.noActions = true
+		case arg == "-scr-rules":
+			opts.scrRules = true
 		case arg != "" && arg[0] != '-' && opts.replayPath == "":
 			opts.replayPath = arg
 		default:
@@ -227,7 +232,11 @@ func (r *runner) run() error {
 	r.funcs = bwgame.NewReplayFunctions(r.st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	r.funcs.OnActionFail = r.reportActionFail
 	r.funcs.SkipActions = r.opts.noActions
-	if err := r.funcs.LoadReplayFile(r.opts.replayPath); err != nil {
+	replay, err := r.loadableReplay()
+	if err != nil {
+		return err
+	}
+	if err := r.funcs.LoadReplayData(replay); err != nil {
 		return err
 	}
 	r.afterFrame()
@@ -240,6 +249,37 @@ func (r *runner) run() error {
 	fmt.Fprintf(r.out, "end %d %016x\n", r.st.CurrentFrame, bwgame.StateHash(r.st))
 	r.printSummary()
 	return nil
+}
+
+func (r *runner) loadableReplay() ([]byte, error) {
+	data, err := os.ReadFile(r.opts.replayPath)
+	if err != nil {
+		return nil, err
+	}
+	loadable, settings, err := downgrade.PrepareForOpenBW(data)
+	if r.opts.scrRules {
+		if err != nil {
+			return nil, fmt.Errorf("read SC:R settings: %w", err)
+		}
+		return loadable, applySCRRules(settings)
+	}
+	if err != nil {
+		return data, nil
+	}
+	return loadable, nil
+}
+
+func applySCRRules(settings downgrade.SCRSettings) error {
+	fmt.Fprintf(os.Stderr, "scr_settings limits=%+v bfix=%x game_config=%+v order_allocation_rule=%t\n",
+		settings.Limits, settings.BugFixes, gameConfigText(settings.GameConfig), settings.OrderAllocationRule())
+	return errors.New("-scr-rules: the engine has no SC:R rules option yet")
+}
+
+func gameConfigText(config *downgrade.GameConfig) string {
+	if config == nil {
+		return "none"
+	}
+	return fmt.Sprintf("build=%d unknown10=%d", config.Build, config.Unknown10)
 }
 
 func (r *runner) exitWithError(err any) {
