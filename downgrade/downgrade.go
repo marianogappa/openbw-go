@@ -44,6 +44,22 @@ func Downgrade(scr []byte) (legacy []byte, report Report, err error) {
 	if err != nil {
 		return nil, report, err
 	}
+	return downgradeSections(src)
+}
+
+func PrepareForOpenBW(rep []byte) (loadable []byte, settings SCRSettings, err error) {
+	src, err := readSourceSections(rep)
+	if err != nil {
+		return nil, settings, err
+	}
+	if src.format == repdecoder.RepFormatLegacy {
+		return rep, src.settings(), nil
+	}
+	legacy, report, err := downgradeSections(src)
+	return legacy, report.SCRSettings, err
+}
+
+func downgradeSections(src sourceSections) (legacy []byte, report Report, err error) {
 	report.SourceFormat = formatName(src.format)
 	report.SCRSettings = src.settings()
 	if src.format == repdecoder.RepFormatLegacy {

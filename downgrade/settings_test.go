@@ -95,3 +95,35 @@ func TestOrderAllocationRuleFromGameConfigAlone(t *testing.T) {
 		}
 	}
 }
+
+func TestPrepareForOpenBWDowngradesSCRReplays(t *testing.T) {
+	scr := readSampleReplay(t)
+	loadable, settings, err := PrepareForOpenBW(scr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, _, _ := Downgrade(scr)
+	if string(loadable) != string(want) {
+		t.Error("an SC:R replay must come back downgraded")
+	}
+	if settings.Limits != scrSampleLimits {
+		t.Errorf("limits = %+v, want %+v", settings.Limits, scrSampleLimits)
+	}
+}
+
+func TestPrepareForOpenBWKeepsLegacyReplays(t *testing.T) {
+	legacy, _, err := Downgrade(readSampleReplay(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loadable, settings, err := PrepareForOpenBW(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(loadable) != string(legacy) {
+		t.Error("a legacy replay must come back unchanged")
+	}
+	if settings != LegacySettings() {
+		t.Errorf("settings = %+v, want the 1.16 defaults", settings)
+	}
+}
