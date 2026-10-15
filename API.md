@@ -21,24 +21,28 @@ func Open(replay []byte, opts Options) (*Game, error)
 
 type Options struct {
 	Data        *Data         // nil: LoadData("") once per process
-	Kinds       Kind          // event kinds to emit; 0 means DefaultKinds (all but CommandResult and Tick)
+	Kinds       Kind          // event kinds to emit; 0 means DefaultKinds, NoKinds means none
 	Classes     ClassSet      // unit classes for unit events; 0 means AllClasses
-	TickEvery   int32         // emit Tick every N frames; 0: no ticks
-	MaxFrame    int32         // stop after processing this frame; 0: the replay end
+	TickEvery   int32         // emit Tick every N frames; 0: no ticks; negative: Open fails
+	MaxFrame    int32         // stop after processing this frame; 0: the replay end; negative: Open fails
 	Rules       RulesMode     // RulesAuto (default) or RulesOpenBW
 	CustomRules *bwgame.Rules // overrides Rules when not nil
 	Hooks       bwgame.Hooks  // raw L1 hooks; they must not change engine state
 }
 ```
 
+- `DefaultKinds` is an explicit list of the unit, production, research and player kinds. A kind added later is opt-in.
+- `Hooks` run inside `Open` for the map units, before `Open` returns the `Game`, and then inside `Events` and `AdvanceTo`. A panic in a hook stops the game like an engine panic (`*EngineError`). `bwgame.Hooks`, `CustomRules`, `Engine()`, `Prepared()` and `Data.Global()` are package `bwgame`/`downgrade` API with no stability promise.
+
 - One `Data` is safe for concurrent use by any number of games. The engine never writes to `bwgame.GlobalState`; a `-race` test runs games in parallel on one `Data`.
-- `Open` parses the replay with screp, downgrades it in memory (`downgrade.Prepare`), selects the rules and loads the map. The map units are frame 0 events and come first.
+- `Open` downgrades the replay in memory (`downgrade.Prepare`), selects the rules and loads the map. The map units are frame 0 events and come first. It parses with screp only when `KindCommandResult` is subscribed (for `ScrepIndex`); otherwise `Replay()` parses on its first call. screp never writes to the process log.
 - `RulesAuto` gives SC:R rules (`scrrules.FromSettings`) for SC:R replays and exact OpenBW rules for legacy replays. `RulesOpenBW` forces OpenBW rules.
 
 ## The stream
 
 ```go
 func (g *Game) Events() iter.Seq[Event]
+func (g *Game) AdvanceTo(frame int32) error // step without yielding; events stay buffered
 func (g *Game) Err() error // check after the loop; *EngineError if the engine failed
 func (g *Game) Done() bool // end frame or MaxFrame reached, or Err != nil
 func (g *Game) Frame() int32
@@ -51,6 +55,8 @@ func (g *Game) EndFrame() int32
 - `Game` is not safe for concurrent use. It holds no goroutine, so there is no `Close`.
 - `Kinds` filters at the source: hooks for unsubscribed kinds are not installed, and filtered events are not allocated. `Classes` filters unit events the same way.
 - A panic in the loop body is not recovered. An engine panic stops the stream and `Err` returns `*EngineError{Frame, Value, Stack}`.
+- The loop body runs only when an event arrives. With sparse `Kinds` (for example only `KindPlayerWon`), use `TickEvery` as a heartbeat to stop early.
+- `AdvanceTo(frame)` steps until the processing half-step that makes `Frame() >= frame`, or `Done`. It yields nothing; events of the subscribed kinds stay buffered and `Events` gives them next. For state-only or hooks-only use, `Kinds: NoKinds` buffers nothing.
 
 ### Frame semantics
 
@@ -60,30 +66,33 @@ Each frame has two half-steps, in the engine's own order:
 |---|---|---|
 | Load | 0 | map and start units |
 | Commands of frame F | F | `CommandResult` and the events that commands cause at once (research start, cancels, player left) |
-| Processing of frame F+1 | F+1 | what units, bullets and orders do; then triggers (`PlayerDefeated`, `PlayerWon`); then `Tick` |
+| Processing of frame F+1 | F+1 | what units, bullets and orders do; then triggers (`PlayerDefeated`, `PlayerWon`); then `Tick` (F+1) |
+
+So for one `Frame` value F the order is: processing events of F, `Tick` F, then the commands of F with their `CommandResult`s. `Tick` F is not the last event with frame F; state read at `Tick` F is the state that the commands of F see.
 
 - `Seq` is strictly increasing and `Frame` never decreases.
 - A `CommandResult` comes after the events it caused.
 - `MaxFrame = M` stops after the processing half-step that makes `Frame() == M`. Commands of frame `M` are not executed (`obwhash -max-frames`).
-- State read inside the loop is the state at the end of the half-step that produced the event. Event fields hold the values at emission time.
+- State read inside the loop is the state at the end of the half-step that produced the event, the same for every event of that half-step. Resources read at a `UnitCreated` can already include later spending of the same half-step, and `Unit(id)` can still be true at a `UnitDestroyed`. Event fields hold the values at emission time; `Options.Hooks` see the state at the moment of the event.
 
 ## State (L0 reads)
 
 ```go
 func (g *Game) Unit(id UnitID) (Unit, bool)          // false if removed
 func (g *Game) Units() iter.Seq[Unit]                // not yet removed (dying too), owner 0..11, no turrets
-func (g *Game) Player(owner int) Player              // owner 0..11
-func (g *Game) PlayingSlots() []int                  // occupied, computer or left at load
+func (g *Game) Player(owner int8) Player             // owner 0..11; others give only Owner
+func (g *Game) PlayingSlots() []int8                 // occupied, computer or left at load
 func (g *Game) UnitTypeInfo(t UnitType) UnitTypeInfo // this game's units.dat values
-func (g *Game) Replay() *rep.Replay                  // screp's parse: header, players, map
+func (g *Game) Replay() (*rep.Replay, error)         // screp's parse: header, players, map; parsed once on demand
+func (g *Game) ReplayPlayer(owner int8) *rep.Player  // screp's player with SlotID == owner, or nil
 func (g *Game) Prepared() *downgrade.Prepared        // SC:R settings, dropped commands, command index
 func (g *Game) Info() EngineInfo
-func (g *Game) Engine() *bwgame.ReplayFunctions
+func (g *Game) Engine() *bwgame.ReplayFunctions      // reads only: do not step the engine
 ```
 
 `Unit`, `Player` and `UnitTypeInfo` are copies. `Player` has resources, gathered totals, supply used and max, victory state and `Left`. `EngineInfo` has the module version, screp's version, the OpenBW commit, the data hash, the replay's source format and `RulesInfo` (`SCR`, `Custom`, object limits and the rule flags).
 
-`Owner` is the engine slot (0-11, 11 is neutral): the index in screp's `Header.Slots`. Commands also carry screp's `PlayerID`.
+`Owner` is the engine slot (0-11, 11 is neutral): screp's `Player.SlotID`, not `Player.ID`. `ReplayPlayer(owner)` gives the screp player. Commands also carry screp's `PlayerID`.
 
 ## Events
 
@@ -92,20 +101,31 @@ Every event embeds `EventBase{Seq, Frame, Cmd}` and has `Kind()`. Select with a 
 | Event | Fires | Notes |
 |---|---|---|
 | `UnitCreated` | right after `createUnit` returns | A trained unit is created when its production starts. `Source` and `Parent` say how and from what. Zerg buildings, refineries, eggs and Archons are morphs, not creations. |
-| `UnitCompleted` | end of `completeUnit` | Once for each type a unit completes as (Larva, then Zergling; Hatchery, then Lair). |
+| `UnitCompleted` | end of `completeUnit`; end of an Archon summon | Once for each type a unit completes as (Larva, then Zergling; Hatchery, then Lair; High Templar, then Archon). |
 | `UnitMorphed` | end of `morphUnit`, and Infest Command Center | Every type change, also siege mode and cancels back to Drone or Hydralisk. |
-| `MorphStarted` | a Zerg morph is paid for | `Into` is the target type; `Morpher` is the Drone for an Extractor. |
-| `UnitDestroyed` | start of `killUnit` | One per unit ID. `Reason`, `Killer`, `KillerType`, `KillerOwner` (-1 if unknown), `KillerParent` (Carrier or Reaver of a fighter), `Container`. A refinery death has `Reverted`: the ID lives on as a neutral geyser. |
+| `MorphStarted` | a Zerg morph or a refinery is paid for | `Into` is the target type. For a Refinery, Extractor or Assimilator, `Unit` is the geyser and `Morpher` the worker; it comes right after the geyser's `UnitMorphed`. |
+| `UnitDestroyed` | start of `killUnit` | One per unit life: a refinery ID can die again after a rebuild (`Reverted` marks each death; the ID lives on as a neutral geyser). `Reason`, `Killer`, `KillerType`, `KillerOwner`, `KillerParent`, `Container`: see below. |
 | `UnitOwnerChanged` | `setUnitOwner` | `Reason`: Mind Control, player left, refinery, infest, addon, trigger. |
 | `ProductionCancelled` | each cancel site | `What`, `Type` or `Research`, `Why` (command, producer destroyed, owner changed, no supply). |
 | `ResearchStarted`, `ResearchCompleted` | cost paid; level gained | `Level` is 1 for tech. |
 | `PlayerLeft`, `PlayerDefeated`, `PlayerWon` | leave command or drop; victory triggers | `PlayerWon` can be missing when the replay ends first. |
 | `CommandResult` | after each executed command | See below. |
-| `Tick` | every `TickEvery` frames, last in the frame | Read state here. |
+| `Tick` | every `TickEvery` frames, after the processing half-step | Before the commands of the same frame. Read state here. |
 
 `UnitClass`: `ClassNormal`, `ClassFighter` (Interceptor, Scarab), `ClassSpiderMine`, `ClassHallucination`, `ClassSpell` (Dark Swarm, Disruption Web, Scanner Sweep). The class is known at creation.
 
 `OnUnitDamaged` and the other raw hooks have no event kind. Use `Options.Hooks` for them.
+
+Killer facts on `UnitDestroyed`:
+
+- `Killer` is the unit that dealt the killing damage as the engine sees it, 0 if none; `KillerType` is then `UnitTypeNone`.
+- A Scarab's bullet belongs to its Reaver, so Scarab kills name the Reaver. `KillerParent` is the Carrier when `Killer` is an Interceptor, else 0.
+- A Spider Mine or a Scourge dies when it hits, and the engine clears its bullet's owner unit. Its kills have `Killer` 0 and only `KillerOwner`.
+- `KillerOwner` is the player who fired the attack (the bullet owner), -1 if unknown. It can differ from the `Killer`'s current owner, for example after the player left.
+- With `ReasonContainer` (a unit inside a Bunker or transport), the killer fields are those of the `Container`'s death.
+- `DeathReason`: `Damage`, `Container`, `Spell`, `Cancelled`, `Expired`, `Depleted`, `Removed`, `Detonated`, `Linked`, `Trigger`, `OffCreep` (Larva), `Crushed` (under a landing building, which is the `Killer`), `Blocked` (a Siege Tank that sieges on a building). `Other` is not emitted by the current engine.
+
+Fields that do not apply have explicit sentinels: `UnitTypeNone` for a unit type, `NoResearch` (`Research.Valid()` false) for a research. `ProductionCancelled` has `Type` for units and `Research` for tech and upgrades.
 
 ## Unit IDs
 
@@ -132,7 +152,7 @@ type CommandResult struct {
 	ActionID    byte        // legacy action ID the engine executed
 	Outcome     Outcome     // Accepted, Rejected, NoEffect
 	Rejections  []Rejection // {Unit, Reason}: the engine's own refusing checks
-	Selection   []UnitID    // the units the command acts on; for selects, the selection after it
+	Selection   []UnitID    // the units the command acts on; for selects and hotkeys, the selection after it
 	MissingTags uint8       // Select/Shift Select tags that resolve to no unit
 	ForeignTags uint8       // tags of another player's units in a Select of 2+ tags
 }
@@ -146,7 +166,7 @@ type CommandResult struct {
 `EventBase.Cmd` (only with `KindCommandResult`) links an event to its command in two exact ways:
 
 1. Events between the start and end of command `n` get `Cmd = n`.
-2. A shadow of every build queue: `UnitCreated` of trained units, buildings and addons, and `MorphStarted`, take the command that pushed the production. The second unit of an egg takes the egg's command.
+2. A shadow of every build queue: `UnitCreated` of trained units, buildings and addons, and `MorphStarted` (also of refineries), take the command that pushed the production. The second unit of an egg takes the egg's command.
 
 Effects of orders after the command returns (kills, spells, Mind Control), Larva spawns, map and trigger units, and completions are not linked (`Cmd = -1`).
 
@@ -159,9 +179,11 @@ Effects of orders after the command returns (kills, spells, Mind Control), Larva
 | Streaming base: `Events() iter.Seq[Event]` + `Err()`, like `bufio.Scanner`. | **Channels**: a goroutine per game, leaks on early stop, slower. **Callbacks only** (raw `bwgame.Hooks`): no natural early stop, state is mid-mutation. **`iter.Seq2[Event, error]`**: the error in every element although there is at most one. **`Next()`/`Event()`**: `iter.Pull` gives that. |
 | Yield at half-step boundaries (after commands, after processing). | **Yield inside hooks**: state is mid-engine-function, and `break` would need to unwind the engine. **One yield per frame**: command events would see state after the next processing step. |
 | Events are pointer structs behind a sealed interface; a type switch selects them. | **One struct with a Kind and all fields**: unclear which fields are valid. |
-| Filter at subscription: hooks for unsubscribed kinds stay nil. | **Emit everything and filter after**: allocations for events nobody reads. |
+| Filter at subscription: hooks for unsubscribed kinds stay nil. `NoKinds` and `AdvanceTo` for state-only and hooks-only use. | **Emit everything and filter after**: allocations for events nobody reads. **The `KindTick` with `TickEvery: 0` trick**: hides the intent. |
+| Explicit sentinels (`UnitTypeNone`, `NoResearch`) for fields that do not apply. | **Zero values**: 0 is Marine and Stim Packs, so a naive ingestion writes wrong facts. |
+| screp parse on demand, silent. | **Parse in `Open` with screp's default logger**: 25% of `Open` for callers that never read it, and output on the process's stderr. |
 | `UnitCreated` at production start, plus `MorphStarted` for Zerg. | **Creation at completion**: the engine creates the unit at start; it would hide cancels. **A generic ProductionStarted**: duplicates `UnitCreated` for Terran and Protoss. |
-| Report fighters, mines, hallucinations and spell units, with a `Class`. | **Leave them out**: kills by Scarabs and Interceptors could not name the killer. |
+| Report fighters, mines, hallucinations and spell units, with a `Class`. | **Leave them out**: Interceptor kills could not name the killer, and mine, Scarab and hallucination lives would be missing. |
 | `UnitDestroyed` at `killUnit` with a reason from the call site. | **At removal**: the killer is gone. **Killer from `LastAttackingPlayer`**: set by any damage, not the kill. |
 | Refinery death is `UnitDestroyed` with `Reverted`; the ID lives on. | **A new geyser ID**: the engine keeps the same unit; later events use the old ID. |
 | Unique `UnitID` from the 21-bit generation. | **16-bit `unit_id_t`**: wraps. **A creation counter**: cannot map to replay tags. |
