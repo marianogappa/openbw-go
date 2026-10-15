@@ -48,10 +48,13 @@ type IntrusiveList[T any, A LinkAccessor[T]] struct {
 }
 
 func (l *IntrusiveList[T, A]) link(v *T) *Link[T] {
+	return (*Link[T])(unsafe.Add(unsafe.Pointer(v), l.linkOffsetPlusOne-1))
+}
+
+func (l *IntrusiveList[T, A]) learnLinkOffset(v *T) {
 	if l.linkOffsetPlusOne == 0 {
 		l.linkOffsetPlusOne = linkOffset[T, A](v) + 1
 	}
-	return (*Link[T])(unsafe.Add(unsafe.Pointer(v), l.linkOffsetPlusOne-1))
 }
 
 func linkOffset[T any, A LinkAccessor[T]](v *T) uintptr {
@@ -115,6 +118,7 @@ func (l *IntrusiveList[T, A]) setPrevOf(v *T, prev *T) {
 }
 
 func (l *IntrusiveList[T, A]) Insert(pos *T, v *T) *T {
+	l.learnLinkOffset(v)
 	before := pos
 	after := l.Prev(before)
 	l.setPrevOf(before, v)
@@ -157,6 +161,8 @@ func (l *IntrusiveList[T, A]) PopFront() {
 func (l *IntrusiveList[T, A]) Swap(n *IntrusiveList[T, A]) {
 	l.first, n.first = n.first, l.first
 	l.last, n.last = n.last, l.last
+	linkOffsetPlusOne := max(l.linkOffsetPlusOne, n.linkOffsetPlusOne)
+	l.linkOffsetPlusOne, n.linkOffsetPlusOne = linkOffsetPlusOne, linkOffsetPlusOne
 }
 
 func (l *IntrusiveList[T, A]) All() iter.Seq[*T] {
