@@ -194,7 +194,7 @@ func (f *StateFunctions) newThingy() *Thingy {
 		f.st.FreeThingies.PopFront()
 		return r
 	}
-	if len(f.st.Thingies) >= 500 {
+	if uint(len(f.st.Thingies)) >= f.gameSt.Rules.ObjectLimits().LoneSprites {
 		return nil
 	}
 	t := &Thingy{}

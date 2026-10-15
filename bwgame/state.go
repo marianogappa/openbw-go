@@ -52,10 +52,12 @@ type GameState struct {
 	Regions Regions
 
 	Triggers []Trigger
+
+	Rules Rules
 }
 
 func NewGameState() *GameState {
-	return &GameState{Regions: NewRegions()}
+	return &GameState{Regions: NewRegions(), Rules: DefaultRules()}
 }
 
 type StateBaseCopyable struct {
@@ -188,10 +190,18 @@ func NewState(global *GlobalState, game *GameState) *State {
 	st.Global = global
 	st.Game = game
 	st.CreepLife = NewCreepLife()
-	st.UnitsContainer = NewObjectContainer[Unit](1700, 17)
-	st.BulletsContainer = NewObjectContainer[Bullet](100, 10)
-	st.SpritesContainer = NewObjectContainer[Sprite](2500, 25)
-	st.ImagesContainer = NewObjectContainer[Image](5000, 50)
-	st.OrdersContainer = NewObjectContainer[Order](2000, 20)
+	st.newObjectContainers()
 	return st
+}
+
+func (st *State) newObjectContainers() {
+	limits := DefaultRules().ObjectLimits()
+	if st.Game != nil {
+		limits = st.Game.Rules.ObjectLimits()
+	}
+	st.UnitsContainer = NewObjectContainer[Unit](UnitLimit, 17)
+	st.BulletsContainer = NewObjectContainer[Bullet](limits.Bullets, 10)
+	st.SpritesContainer = NewObjectContainer[Sprite](limits.Sprites, 25)
+	st.ImagesContainer = NewObjectContainer[Image](limits.Images, 50)
+	st.OrdersContainer = NewObjectContainer[Order](limits.Orders, 20)
 }

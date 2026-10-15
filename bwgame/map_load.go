@@ -205,19 +205,14 @@ func (f *GameLoadFunctions) resetObjectContainers() {
 		st.PlayerUnits[i].Clear()
 	}
 
-	st.UnitsContainer = NewObjectContainer[Unit](1700, 17)
+	st.newObjectContainers()
 
 	st.ActiveBulletsSize = 0
 	st.ActiveBullets.Clear()
-	st.BulletsContainer = NewObjectContainer[Bullet](100, 10)
 
-	st.SpritesContainer = NewObjectContainer[Sprite](2500, 25)
 	st.SpritesOnTileLine = make([]SpriteList, f.gameSt.MapTileHeight)
 
-	st.ImagesContainer = NewObjectContainer[Image](5000, 50)
-
 	st.ActiveOrdersSize = 0
-	st.OrdersContainer = NewObjectContainer[Order](2000, 20)
 
 	st.ActiveThingiesSize = 0
 	st.ActiveThingies.Clear()
@@ -1132,11 +1127,21 @@ func (l *mapDataLoader) tagThg2(r DataReader) {
 			owner = 11
 		}
 		if l.useMapSettings || owner == 11 {
-			f.createInitialUnit(f.getUnitType(unitType), Xy{X: x, Y: y}, owner)
+			u := f.createInitialUnit(f.getUnitType(unitType), Xy{X: x, Y: y}, owner)
 			if flags&0x80 != 0 {
-				throwError("disable thingy unit")
+				f.disableThingyUnit(u)
 			}
 		}
+	}
+}
+
+func (f *GameLoadFunctions) disableThingyUnit(u *Unit) {
+	if !f.gameSt.Rules.DisabledThingyUnits {
+		throwError("disable thingy unit")
+	}
+	if u != nil {
+		f.uSetStatusFlag(u, UnitStatusFlagDisabled)
+		f.uSetStatusFlag(u, UnitStatusFlagNoCollide)
 	}
 }
 

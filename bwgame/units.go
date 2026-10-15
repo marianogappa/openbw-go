@@ -1690,6 +1690,9 @@ func (f *StateFunctions) setQueuedOrder(u *Unit, interrupt bool, orderType *Orde
 		}
 		f.removeQueuedOrder(u, o)
 	}
+	if !f.canAllocateOrder(u, orderType) {
+		return
+	}
 	if orderType.ID == OrdersCloak {
 		throwError("cloak fixme")
 	}
@@ -1715,7 +1718,7 @@ func (f *StateFunctions) issueOrder(u *Unit, queue bool, orderType *OrderTypeT, 
 		queue = false
 	}
 	if queue {
-		if u.OrderQueueCount < 8 && f.st.ActiveOrdersSize < 1800 {
+		if u.OrderQueueCount < 8 && f.st.ActiveOrdersSize < f.gameSt.Rules.OrderSupplyLowThreshold() {
 			f.queueOrderBack(u, orderType, target)
 		}
 	} else {
