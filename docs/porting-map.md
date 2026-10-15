@@ -1,6 +1,6 @@
 # Engine porting map
 
-This map splits the OpenBW engine into 14 chunks that agents can port in parallel. It covers `state_functions`, `game_load_functions` and `actions.h`.
+This map was the plan for the port of the OpenBW engine to package `bwgame`. It splits the engine into 14 chunks and maps each C++ range to its Go file. It covers `state_functions`, `game_load_functions` and `actions.h`. Use it to find the Go code for a C++ function, and the conventions that the port follows.
 
 - Source: `ref/openbw` at commit `4b046d5`. All line numbers refer to that commit.
 - `bwgame.h` lines are written as `L1234`. `actions.h` lines are written as `A123`.
@@ -12,7 +12,7 @@ This map splits the OpenBW engine into 14 chunks that agents can port in paralle
 
 | Chunk | Subsystem | Go files | C++ ranges | Lines |
 |---|---|---|---|---|
-| C00 | Foundation (prerequisite) | `state.go`, `engine_types.go`, `lcg.go`, `hooks.go`, `stubs_cNN.go` | `L1`–`L331`, `L13197`–`L13206`, plus the shared structs listed below | ~350 |
+| C00 | Foundation (prerequisite) | `state.go`, `engine_types.go`, `lcg.go`, `hooks.go` | `L1`–`L331`, `L13197`–`L13206`, plus the shared structs listed below | ~350 |
 | C01 | Core queries and flag helpers | `queries.go` | `L332`–`L1934`, `L12204`–`L12310`, `L17242`–`L17323` | 1,792 |
 | C02 | Unit operations (gather, build, own, load, addons) | `unit_ops.go` | `L1935`–`L3723` | 1,789 |
 | C03 | Orders: basic, workers, Terran | `orders_basic.go` | `L3724`–`L3812`, `L3817`–`L3863`, `L4028`–`L5732` | 1,841 |
@@ -30,28 +30,7 @@ This map splits the OpenBW engine into 14 chunks that agents can port in paralle
 
 Not in any chunk (see "Skip or port elsewhere"): `L19556`–`L19761` (`state_copier`, `copy_state`), `L21966`–`L21980` (`string_table_data`), `L21982`–`L22336` (`global_init`), `L22338`–`L22394` (`game_player`).
 
-## Dependency order
-
-Every chunk calls into almost every other chunk, so the call graph has cycles. Stubs break the cycles (see "Stub plan"). With stubs, all 14 chunks can be ported at the same time after C00.
-
-### Waves
-
-| Wave | Chunks | Why |
-|---|---|---|
-| 0 (serial, first) | C00 | Types, containers, `lcg_rand`, hooks, and the stub files with every Go signature. Nothing compiles without it. |
-| 1 (parallel) | C01, C07, C09, C10, C11, C13 | Most-called code. C11 calls only C01. C07 calls only C01 and a few C06/C10 helpers. C13 makes the first integration test possible. |
-| 2 (parallel) | C02, C05, C06, C08, C12 | Mid-level mechanics. |
-| 3 (parallel) | C03, C04, C14 | Leaf callers: orders and actions. Nothing calls them except C05 (`execute_main_order`) and the replay driver. |
-
-If agents are limited, use this priority: C00, C01, C09, C10, C13, C05, C06, C07, C12, C02, C08, C11, C03, C04, C14.
-
-### Integration milestones
-
-1. **Empty game**: C00, C01, C05, C06, C09, C10, C12, C13. Load a melee map, create the starting units, run `process_frame` twice (`L21908`–`L21911`), then run N frames without actions. Compare `lcg_rand_state`, `random_counts` and unit positions with the C++ harness.
-2. **Economy**: add C02, C03, C11, C14. Replays with worker and build commands only.
-3. **Full game**: add C04, C07 (if still stubbed), C08. All replays.
-
-### Calls between chunks
+## Calls between chunks
 
 Counts are call sites found by name. They include some false positives from overloads that share a name.
 
@@ -71,19 +50,6 @@ Counts are call sites found by name. They include some false positives from over
 | C12 | C01 (81), C02 (13), C05 (`active_players`, `remove_player`), C06 (`unit_dying`), C08 (`unburrow_unit`), C10 (21), C11 (`unit_can_receive_order`) |
 | C13 | C01 (46), C02 (`kill_unit`), C03 (`make_unit_hallucination`, `set_remove_timer`), C05 (`active_players`, `process_frame`, `update_unit_sprite`), C09 (`create_thingy`), C10 (`create_unit`, `complete_unit`, `create_initial_unit`, `finish_building_unit`, `place_completed_unit`, `find_units`), C12 (`spawn_larva`, `spread_creep_completely`) |
 | C14 | C01 (152), C02 (25), C05 (`player_left`, `player_dropped`), C06 (`rectangle_can_fit_at`, `unit_dead`, `unit_target_is_enemy`, `unit_type_can_fit_at`), C07 (`pathfinder_adjust_destination`, `pathfinder_adjust_target_pos`, `pathfinder_find_long_path`), C08 (`unburrow_unit`, `unit_deal_damage`), C09 (`sprite_run_anim`), C10 (`find_unit_noexpand`, `issue_order`, `set_queued_order`, `set_unit_order`, `unit_is_factory`, `update_unit_speed`), C11 (`unit_can_*`, `unit_build_order_valid`) |
-
-## Stub plan
-
-The goal: every chunk compiles and runs its tests before its dependencies exist.
-
-1. C00 writes one file per chunk: `bwgame/stubs_c01.go` … `bwgame/stubs_c14.go`.
-2. Each stub file holds the final Go signature of every function in that chunk, with the body `panic(notPorted("<c++ name>"))`.
-3. A chunk agent owns its stub file. It deletes each stub as it ports the function, and deletes the file at the end. It must not edit another chunk's stub file.
-4. Signatures are fixed by C00. If a chunk needs a signature change, it asks the C00 owner. Do not change a signature locally.
-5. A test that reaches an unported function panics with the C++ name. This tells the agent which chunk is missing.
-6. `notPorted` lives in C00 and returns an error value that names the function, so `go vet` stays clean.
-
-C00 writes the signatures from the function lists in this file. It uses the naming rules and the overload table below.
 
 ## Go conventions for all chunks
 
@@ -152,7 +118,7 @@ C00 writes the signatures from the function lists in this file. It uses the nami
 | `xy_length(xy)` L1607 / `(xy_fp8)` L1615 | `xyLength` / `xyLengthFP8` |
 | `atan<integer_bits>` L1636 | One Go function per instantiation that the code uses, named by type (for example `atanFP8`) |
 
-## C00 Foundation (prerequisite, one agent)
+## C00 Foundation
 
 Not part of the 14 chunks, but every chunk needs it.
 
@@ -250,7 +216,7 @@ Functions:
 `execute_main_order:7623`, `resume_building_unit:8153`, `rally_unit:8181`, `secondary_order_Train:8194`, `secondary_order_BuildAddon:8242`, `secondary_order_Cloak:8265`, `secondary_order_Decloak:8269`, `secondary_order_SpawningLarva:8273`, `secondary_order_SpreadCreep:8292`, `secondary_order_CloakNearbyUnits:8306`, `secondary_order_TrainFighter:8329`, `secondary_order_ShieldBattery:8384`, `execute_secondary_order:8407`, `update_unit:8448`, `reveal_sight_at:12311`, `refresh_unit_vision:12369`, `turn_turret:12387`, `update_unit_movement:12407`, `update_thingy_visibility:12439`, `update_unit_sprite:12465`, `unit_can_fire_from_bunker:12473`, `create_bunker_fire_animation:12480`, `try_attack_something:12502`, `order_hidden_BunkerGuard:12557`, `execute_hidden_unit_main_order:12572`, `execute_hidden_unit_secondary_order:12640`, `update_hidden_unit:12656`, `unit_can_detect:12672`, `unit_calculate_detected_flags:12680`, `remove_target_references:12716`, `remove_target_references:12753`, `update_unit_detected_flags:12758`, `update_psionic_matrix:12777`, `update_dead_unit:12801`, `update_disruption_web:12828`, `update_units:12879`, `update_bullets:12980`, `sprite_is_doodad:12998`, `update_thingy:13004`, `update_thingies:13015`, `active_players:13051`, `player_left:13057`, `player_dropped:13066`, `remove_player:13075`, `process_frame:13088`, `next_frame:13191`, `local_unit_status_error:13207`
 
 Pitfalls:
-- `execute_main_order` (`L7623`–`L8152`) is a 530-line switch over every order id. It calls all of C03 and C04. Port it first with stubs.
+- `execute_main_order` (`L7623`–`L8152`) is a 530-line switch over every order id. It calls all of C03 and C04.
 - `update_units` (`L12879`–`L12978`) is the main tick. Keep the exact pass order: order timers, disruption web, dead units, movement, map revealers vision, sprites and cloak counters, `update_unit` on visible units, hidden units, cloaked units, psionic matrix, lurker hit ring, map revealers. Each pass sets `iscript_flingy` and `iscript_unit`. Some passes take the next pointer before the body (`&*i++`) and some use range-for. Copy each one.
 - `update_bullets` (`L12980`) sets `iscript_bullet` and `iscript_flingy`.
 - `process_frame` (`L13088`) and `next_frame` (`L13191`): `update_tiles` is true one frame in 100. On those frames all tiles `visible` are reset to `0xff`.
@@ -386,7 +352,7 @@ Pitfalls:
 - `setup_f` (`L21797`) is a callback in the middle of loading. The replay layer uses it to set players and races.
 - `UNIT` invalid units call `lcg_rand(14)` (`L21625`).
 - `load_map_data` ends with two `process_frame` calls (`L21908`–`L21911`).
-- `read_grp` may already be ported by the data phase (PLAN phase 1). Reuse it if so.
+- `read_grp` is in `global_state.go`.
 
 ## C14 Player actions → `actions.go`
 
@@ -402,8 +368,8 @@ Pitfalls:
 - `calc_group_move` (`A107`) and `get_group_move_pos` (`A183`) decide formation move targets. They use lambdas (`A133`).
 - `action_default_order` (`A368`) uses `find_unit_noexpand` with a lambda (`A373`).
 - `read_action_*` (`A1004`–`A1335`) are templates on the reader. In Go use one byte reader type.
-- `read_action(owner, r)` (`A1348`) switches on the action id. Unknown ids panic. The replay translator must drop them first (PLAN).
-- `execute_actions` (`A1456`) reads `int32 frame, uint8 size, bytes` records. PLAN's translator should write this format.
+- `read_action(owner, r)` (`A1348`) switches on the action id. Unknown ids panic. The downgrade drops them first.
+- `execute_actions` (`A1456`) reads `int32 frame, uint8 size, bytes` records. The downgrade writes this format.
 - `copy_state` (`A24`–`A37`) is not needed.
 
 ## Skip or port elsewhere
@@ -420,9 +386,9 @@ These parts are for rendering, sound, UI or other tools. A replay engine does no
 | `get_image_map_position`, `frozen_y_value` | `L13334`–`L13345`, `L5112`, `L5226`, `L6422` | Rendering only. Optional. |
 | `get_map_string` and Korean decoding | `L21196`–`L21204` | Trigger text only. Return raw bytes. |
 | `load_map_file`, `load_map` (MPQ) | `L21219`–`L21228` | Skip. The replay's CHK bytes go to `load_map_data`. |
-| `state_copier`, `copy_state` | `L19556`–`L19761`, `A24`–`A37` | Skip. Port later only if the API needs snapshots. |
+| `state_copier`, `copy_state` | `L19556`–`L19761`, `A24`–`A37` | Not ported. |
 | `string_table_data` | `L21966`–`L21980` | Skip. |
-| `global_init` | `L21982`–`L22336` | Data phase (PLAN phase 1), not this map. It builds `iscript.program_data`, image GRPs, lo offsets and `melee_trg`, which C09 and C13 need. |
+| `global_init` | `L21982`–`L22336` | Ported separately in `global_state.go`. It builds `iscript.program_data`, image GRPs, lo offsets and `melee_trg`, which C09 and C13 need. |
 | `game_player` | `L22338`–`L22394` | Replaced by the Go API. |
 | `read_action_chat`, `read_action_ping_minimap` | `A1164`, `A1231` | Read and skip the bytes only. |
 

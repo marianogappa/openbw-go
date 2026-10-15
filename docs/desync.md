@@ -1,6 +1,6 @@
 # SC:R vs OpenBW desync
 
-Investigation of the desyncs in `INTEGRATION.md`: C++ OpenBW (`ref/openbw`, unmodified) playing downgraded SC:R replays. The Go port is not involved. Run date: 2026-10-14.
+Investigation of the desyncs in [integration.md](integration.md): C++ OpenBW (`ref/openbw`, unmodified) playing downgraded SC:R replays. The Go port is not involved. Run date: 2026-10-14.
 
 ## Result
 
@@ -9,7 +9,7 @@ Investigation of the desyncs in `INTEGRATION.md`: C++ OpenBW (`ref/openbw`, unmo
 | OpenBW keeps the 1.16 object limits. SC:R replays declare larger ones in `LMTS`. The bullet limit (100 vs 400) is reached in big fights, so OpenBW drops attacks that SC:R fires. | **Proven** | Terran desyncs drop from 21/149 to 13/149. Not one replay gets worse by the tag test. |
 | Disabled `THG2` units (Pole Star 1.1) are doodad doors. SC:R creates them, sets the disabled doodad state, and units walk through them. | **Proven** | Pole Star: 30/30 replays load and stay in sync. Before: 30/30 fail at frame 0. |
 | The remaining Terran desyncs are mostly on one map: **Attitude 1.0**. 8 of 18 Terran games there desync, against 5 of 131 Terran games on the other 12 maps. MM-029782AE is one of them. | **Root cause not found** | See "Remaining desyncs". |
-| The INTEGRATION.md Siege/Unsiege lead | **Rejected** | The lead was the bullet limit. Tank games have the most bullets. Of the 4 remaining non-Attitude Terran desyncs checked, 3 have no Siege command before the onset. |
+| The Siege/Unsiege lead of integration.md | **Rejected** | The lead was the bullet limit. Tank games have the most bullets. Of the 4 remaining non-Attitude Terran desyncs checked, 3 have no Siege command before the onset. |
 | SC:R order allocation rule behind `BFIX` bit 2 | **Real, but no effect in the sample** | The diff makes no difference on 117 Terran replays. See "BFIX". |
 
 ## Method
@@ -19,7 +19,7 @@ The ground truth is the command stream. In SC:R every tag a player selects exist
 - the tag does not exist, or
 - the selection has more than one unit and a unit belongs to another player.
 
-Each such command is "inconsistent". Clean games have 0-10 inconsistent commands, from units that die between the click and the command. A game with 20 or more is desynced (the "tag test"). On the 117 Terran baseline replays, the tag test and the `tools/integration` verdict agree on 13 of 14 desynced replays. Each flags one replay the other does not: MM-342E0750 (20 inconsistent commands) and MM-A20D6A70. It also finds the first divergent frame, which is usually minutes before the integration onset.
+Each such command is "inconsistent". Clean games have 0-10 inconsistent commands, from units that die between the click and the command. A game with 20 or more is desynced (the "tag test"). On the 117 Terran baseline replays, the tag test and the `tools/screp/integration` verdict agree on 13 of 14 desynced replays. Each flags one replay the other does not: MM-342E0750 (20 inconsistent commands) and MM-A20D6A70. It also finds the first divergent frame, which is usually minutes before the integration onset.
 
 The test is very sensitive. `tracer -rng F N` moves `lcg_rand` by N steps at frame F. One step before frame 3500 of MM-029782AE causes an inconsistency by frame 3929. Clean games stay consistent to the end, so in them OpenBW's state and RNG match SC:R exactly. A candidate fix that is wrong breaks clean games at once. Two examples: zeroing reused path objects breaks 82 more replays, and never retrying SCV construction spark positions breaks 55 more.
 

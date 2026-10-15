@@ -1,6 +1,6 @@
 # Design: a foundation that knows what the engine knows
 
-Status: implemented. [API.md](API.md) has the Go API.
+Status: implemented. [API.md](../API.md) has the Go API.
 
 ## The key idea: the replay is the storage
 
@@ -22,8 +22,8 @@ The engine is deterministic. The replay plus the engine version together hold al
 
 The product is L0 + L1 + the streaming API. Each layer uses only the layer below it. People who need something unusual go down one layer instead of asking for a new flag.
 
-- **L0 engine**: for power users and viewers. Full access, no stability promise on internals.
-- **L1 hooks**: a small, stable set of callbacks at points where the engine already makes a decision. A hook that nobody registers costs one nil check.
+- **L0 engine**: for power users and viewers. Full access through `EngineOptions` and `Game.Engine`, on a private copy of the game data. No stability promise on internals.
+- **L1 hooks**: callbacks at points where the engine already makes a decision (`EngineOptions.Hooks`). A hook that nobody registers costs one nil check.
 - **Streaming API**: `openbw.Open` and `Game.Events`. It turns L1 hooks into typed events, links them to commands, and gives copies of live state between events. The output is Go values, never a file.
 - **L2 recorders and L3 analyses** belong to other tools. They choose what to keep, how to store it and what to derive. This module has no recorder, no output format and no derived statistics.
 

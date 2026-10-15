@@ -9,7 +9,7 @@ go run ./tools/difftest -out $TMPDIR/scr-difftest -harness $TMPDIR/scrharness/ha
 
 `build.sh [out_dir]` copies `ref/openbw` to `out_dir/openbw`, applies `openbw-scr.patch` and writes `out_dir/harness`. The default `out_dir` is `$TMPDIR/scrharness`.
 
-`openbw-scr.patch` is the diff in [DESYNC.md](../../DESYNC.md) ("Exact change") plus the rest of the rules:
+`openbw-scr.patch` is the diff in [docs/desync.md](../../docs/desync.md) ("Exact change") plus the rest of the rules:
 
 - Object pools with the cwal.gg `LMTS` limits: bullets 400, sprites 5000, images 10000, orders 4000. The unit pool stays 1700.
 - Lone sprites (`new_thingy`): 1000 instead of 500.

@@ -49,7 +49,7 @@ settings, err := downgrade.ReadSCRSettings(scr)
 | `BugFixes` | `BFIX` (8 bytes) | all zero |
 | `GameConfig` | `GCFG`: `u32` build at offset 4, `u8` at offset `0x10` | `nil` |
 
-Methods for the rules in [DESYNC.md](../DESYNC.md):
+Methods for the rules in [docs/desync.md](../docs/desync.md):
 
 - `OrderAllocationRule()`: `BFIX` byte 0 bit `0x4`, or `GCFG` offset `0x10` is not 5, or `GCFG` build > 8153.
 - `FlyingSCVFix()`: the rule above and `GCFG` build ≥ 9713.

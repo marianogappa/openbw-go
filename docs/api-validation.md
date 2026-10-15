@@ -1,6 +1,6 @@
 # API validation
 
-Validation of package `openbw` on 210 replays with [tools/apivalidate](tools/apivalidate), a test tool. Run date: 2026-10-15, at commit `6a614f2`.
+Validation of package `openbw` on 210 replays with [tools/apivalidate](../tools/apivalidate), a test tool. Run date: 2026-10-15, at commit `6a614f2`.
 
 Re-run after the screp split (engine terms only, screp links moved to [screpsim](https://github.com/marianogappa/screpsim)): all semantic checks pass with the same counts. screpsim's `tools/linkcheck` on the same 210 replays: every one of the 1,184,569 screp commands has exactly one command result, in order.
 

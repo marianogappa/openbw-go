@@ -196,7 +196,7 @@ The date does not matter: Terran games desync at a similar rate in both periods.
 ## Failure patterns
 
 1. **Map does not load (Pole Star 1.1).** `error 0 disable thingy unit`. The map has a `THG2` unit with the disabled flag `0x80`, which OpenBW does not support. This is 497 of 2,934 cwal.gg replays. Not a downgrade bug: clearing the flag would change the game.
-2. **Gradual desync, Terran games.** Missing tags start in a few, then grow. Both players are affected after the onset. The desynced player shows the signs described in the task:
+2. **Gradual desync, Terran games.** Missing tags start in a few, then grow. Both players are affected after the onset. The desynced player shows these signs:
    - large unspent minerals (4023b: 42,826 and 46,524; F1SSasad11s32dd: 15,288; osolx;: 6,497),
    - unit types ordered many times but never made (F1SSasad11s32dd: 129 Siege Tank orders, 0 made; IIlllIIlIIlIll: 112 Hydralisk orders, 0 made),
    - many Train/Build commands whose selected unit cannot do them (541 and 454 in MM-08118F44).
@@ -213,8 +213,6 @@ The date does not matter: Terran games desync at a similar rate in both periods.
 | Unsupported commands | **No.** Every command ID in the sample is read by OpenBW. |
 | OpenBW object limits lower than SC:R | **Not observed** (see pattern 4). It can matter for very large games. |
 
-## Next steps
+## Follow-up
 
-- Find the first divergent frame for a short desync (MM-029782AE, before frame 5400) with a frame-by-frame comparison against SC:R state, for example from a BWAPI/SC:R memory dump.
-- Check SC:R `BFIX` bit 2 and Siege Tank behaviour changes against `bwgame.h`.
-- Pole Star needs OpenBW support for disabled `THG2` units.
+[desync.md](desync.md) finds the causes: the SC:R object limits (bullets) and disabled `THG2` units on Pole Star 1.1. The Go engine implements both as SC:R rules (`scrrules`). The Siege/Unsiege lead above was the bullet limit.

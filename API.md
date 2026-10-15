@@ -237,5 +237,5 @@ Effects of orders after the command returns (kills, spells, Mind Control), Larva
 | One `Data` per process, shared. | **One `GlobalState` per game**: memory per game for no gain. |
 | Low-level access only through `EngineOptions`, on a private copy of the data. | **`Data.Global()`, `Game.Prepared()` and `Game.Engine()` on every game**: one write through them corrupts every game that shares the `Data`. **A deep copy of `GlobalState`**: pointers between its tables make a copy error-prone; loading again is simple and costs one `LoadData`. |
 | Named types with `String` for races, controllers, orders, victory states and game types. | **Raw integers**: callers need the engine's tables to read them. |
-| `RulesAuto`: SC:R rules for SC:R replays. | **OpenBW rules by default**: Pole Star replays fail to load and bullet-limit games desync (DESYNC.md). |
+| `RulesAuto`: SC:R rules for SC:R replays. | **OpenBW rules by default**: Pole Star replays fail to load and bullet-limit games desync ([docs/desync.md](docs/desync.md)). |
 | Enums have `String` only; consumers choose their own encoding. | **`MarshalJSON`/`MarshalText` on every type**: an output format by the back door. |
