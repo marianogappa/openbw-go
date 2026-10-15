@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func enumName[T ~uint8](v T, names []string) string {
+func enumName[T ~uint8 | ~uint16](v T, names []string) string {
 	if int(v) < len(names) {
 		return names[v]
 	}
@@ -35,7 +35,7 @@ const (
 
 	AllKinds Kind = KindTick<<1 - 1
 
-	// NoKinds in Options.Kinds subscribes to no kind, for games read through state, AdvanceTo or Options.Hooks.
+	// NoKinds in Options.Kinds subscribes to no kind, for games read through state, AdvanceTo or EngineOptions.Hooks.
 	NoKinds Kind = 1 << 31
 )
 
@@ -253,3 +253,100 @@ const (
 var rulesNames = []string{"Auto", "OpenBW"}
 
 func (m RulesMode) String() string { return enumName(m, rulesNames) }
+
+// Race is a player's race. A slot of the game info can also have RaceRandom or RaceUserSelect,
+// which the map load resolves.
+type Race uint8
+
+// The races.
+const (
+	RaceZerg Race = iota
+	RaceTerran
+	RaceProtoss
+	RaceIndependent
+	RaceNeutral
+	RaceUserSelect
+	RaceRandom
+	RaceInactive
+)
+
+var raceNames = []string{"Zerg", "Terran", "Protoss", "Independent", "Neutral", "UserSelect", "Random", "Inactive"}
+
+func (r Race) String() string { return enumName(r, raceNames) }
+
+// Controller is who controls a player slot.
+type Controller uint8
+
+// The controllers. ControllerUserLeft and ControllerComputerDefeated replace the controller of a player
+// who left or was defeated.
+const (
+	ControllerInactive Controller = iota
+	ControllerComputerGame
+	ControllerOccupied
+	ControllerRescuePassive
+	ControllerRescueActive
+	ControllerComputer
+	ControllerOpen
+	ControllerNeutral
+	ControllerClosed
+	ControllerObserver
+	ControllerUserLeft
+	ControllerComputerDefeated
+)
+
+var controllerNames = []string{
+	"Inactive", "ComputerGame", "Occupied", "RescuePassive", "RescueActive", "Computer", "Open", "Neutral",
+	"Closed", "Observer", "UserLeft", "ComputerDefeated",
+}
+
+func (c Controller) String() string { return enumName(c, controllerNames) }
+
+// VictoryState is a player's result as the engine keeps it.
+type VictoryState uint8
+
+// The victory states. VictoryAllWon is set for every initially active player when all of them win.
+const (
+	VictoryPlaying VictoryState = iota
+	VictoryDropped
+	VictoryDefeated
+	VictoryWon
+	victoryUnused
+	VictoryAllWon
+)
+
+var victoryNames = []string{"Playing", "Dropped", "Defeated", "Won", "4", "AllWon"}
+
+func (v VictoryState) String() string { return enumName(v, victoryNames) }
+
+// Won tells if v is a win: VictoryWon or a later state.
+func (v VictoryState) Won() bool { return v >= VictoryWon }
+
+// GameType is the game type of the game info.
+type GameType uint16
+
+// The game types.
+const (
+	GameTypeNone GameType = iota
+	GameTypeCustom
+	GameTypeMelee
+	GameTypeFreeForAll
+	GameTypeOneOnOne
+	GameTypeCaptureTheFlag
+	GameTypeGreed
+	GameTypeSlaughter
+	GameTypeSuddenDeath
+	GameTypeLadder
+	GameTypeUseMapSettings
+	GameTypeTeamMelee
+	GameTypeTeamFreeForAll
+	GameTypeTeamCaptureTheFlag
+	GameTypeUnknown
+	GameTypeTopVsBottom
+)
+
+var gameTypeNames = []string{
+	"None", "Custom", "Melee", "FreeForAll", "OneOnOne", "CaptureTheFlag", "Greed", "Slaughter", "SuddenDeath",
+	"Ladder", "UseMapSettings", "TeamMelee", "TeamFreeForAll", "TeamCaptureTheFlag", "Unknown", "TopVsBottom",
+}
+
+func (t GameType) String() string { return enumName(t, gameTypeNames) }

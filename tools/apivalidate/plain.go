@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/marianogappa/openbw-go/bwgame"
 	"github.com/marianogappa/openbw-go/downgrade"
 )
@@ -96,4 +98,18 @@ func runPlainEngine(global *bwgame.GlobalState, prepared *downgrade.Prepared, ru
 	run.frame = st.CurrentFrame
 	run.hash = bwgame.StateHash(st)
 	return run, nil
+}
+
+var plainData struct {
+	dir    string
+	once   sync.Once
+	global *bwgame.GlobalState
+	err    error
+}
+
+func plainGlobal() (*bwgame.GlobalState, error) {
+	plainData.once.Do(func() {
+		plainData.global, plainData.err = bwgame.GlobalInitFromDirectory(plainData.dir)
+	})
+	return plainData.global, plainData.err
 }

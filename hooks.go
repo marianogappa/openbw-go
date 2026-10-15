@@ -303,10 +303,8 @@ func (g *Game) onPlayerEliminated(owner int32) {
 	g.emit(&PlayerDefeated{Owner: int8(owner)}, g.syncCmd())
 }
 
-const victoryStateWon = 3
-
 func (g *Game) onVictoryState(owner, state int32) {
-	if state >= victoryStateWon {
-		g.emit(&PlayerWon{Owner: int8(owner), State: state}, g.syncCmd())
+	if s := VictoryState(state); s.Won() {
+		g.emit(&PlayerWon{Owner: int8(owner), State: s}, g.syncCmd())
 	}
 }

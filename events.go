@@ -159,7 +159,7 @@ type PlayerDefeated struct {
 type PlayerWon struct {
 	EventBase
 	Owner int8
-	State int32
+	State VictoryState
 }
 
 // CommandResult is what the engine did with one command. It comes after the events that the command caused.

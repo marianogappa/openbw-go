@@ -29,6 +29,7 @@ func main() {
 	traceReplay := flag.String("replay", "", "trace: replay file")
 	traceID := flag.Uint("unit", 0, "trace: unit ID")
 	flag.Parse()
+	plainData.dir = *dataDir
 
 	var err error
 	switch *mode {

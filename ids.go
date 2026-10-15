@@ -71,6 +71,23 @@ func tableName(i int, names []string) string {
 // String is Name.
 func (t UnitType) String() string { return t.Name() }
 
+// Order is an orders.dat ID: what a unit is doing.
+type Order uint8
+
+// OrderNone is the order of a unit that has none, for example a removed unit.
+const OrderNone = Order(bwgame.OrdersNone)
+
+// Name is OpenBW's name of the order, for example "PlayerGuard", or "None" for OrderNone.
+func (o Order) Name() string {
+	if o == OrderNone {
+		return "None"
+	}
+	return tableName(int(o), orderNames[:])
+}
+
+// String is Name.
+func (o Order) String() string { return o.Name() }
+
 // Research is a tech (techdata.dat ID) or an upgrade (upgrades.dat ID).
 type Research struct {
 	Upgrade bool

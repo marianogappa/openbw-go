@@ -21,7 +21,7 @@ type Unit struct {
 	X, Y           int32
 	HP, Shields    int32
 	Energy         int32
-	Order          uint8
+	Order          Order
 	RemainingBuild int32
 	Container      UnitID
 	Completed      bool
@@ -35,13 +35,13 @@ type Unit struct {
 // Player is a copy of one player's live state.
 type Player struct {
 	Owner            int8
-	Race             uint8
+	Race             Race
 	Minerals, Gas    int32
 	GatheredMinerals int32
 	GatheredGas      int32
 	SupplyUsed       float64
 	SupplyMax        float64
-	VictoryState     int32
+	VictoryState     VictoryState
 	Left             bool
 }
 
@@ -86,9 +86,10 @@ func unitValue(u *bwgame.Unit) Unit {
 		Cloaked:        u.StatusFlags&bwgame.UnitStatusFlagCloaked != 0,
 		Loaded:         u.StatusFlags&bwgame.UnitStatusFlagLoaded != 0,
 		Hallucination:  u.StatusFlags&bwgame.UnitStatusFlagHallucination != 0,
+		Order:          OrderNone,
 	}
 	if u.OrderType != nil {
-		v.Order = uint8(u.OrderType.ID)
+		v.Order = Order(u.OrderType.ID)
 		v.Dying = u.OrderType.ID == bwgame.OrdersDie
 	}
 	return v
@@ -133,14 +134,14 @@ func (g *Game) Player(owner int8) Player {
 		return p
 	}
 	race := st.Players[owner].Race
-	p.Race = uint8(race)
+	p.Race = Race(race)
 	p.Minerals, p.Gas = st.CurrentMinerals[owner], st.CurrentGas[owner]
 	p.GatheredMinerals, p.GatheredGas = st.TotalMineralsGathered[owner], st.TotalGasGathered[owner]
 	if race >= 0 && race < raceCount {
 		p.SupplyUsed = supplyValue(st.SupplyUsed[owner][race])
 		p.SupplyMax = min(supplyValue(st.SupplyAvailable[owner][race]), maxSupply)
 	}
-	p.VictoryState = st.Players[owner].VictoryState
+	p.VictoryState = VictoryState(st.Players[owner].VictoryState)
 	p.Left = st.Players[owner].Controller == bwgame.PlayerControllerUserLeft
 	return p
 }

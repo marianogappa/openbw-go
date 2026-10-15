@@ -125,7 +125,7 @@ type validator struct {
 	lastFr  int32
 	results int
 	plain   *plainRun
-	source  map[int32]*downgrade.SourceCommand
+	source  map[int32]*openbw.SourceCommand
 	header  openbw.Header
 	sources []openbw.SourceCommand
 }
@@ -332,21 +332,26 @@ func validateReplay(data *openbw.Data, path string) *result {
 		return r
 	}
 	r.format = prepared.Report.SourceFormat
-	plain, err := runPlainEngine(data.Global(), prepared, engineRules(prepared, openbw.RulesAuto))
+	global, err := plainGlobal()
+	if err != nil {
+		r.err = err
+		return r
+	}
+	plain, err := runPlainEngine(global, prepared, engineRules(prepared, openbw.RulesAuto))
 	if err != nil {
 		r.err = fmt.Errorf("plain engine: %w", err)
 		return r
 	}
-	g, err := openbw.Open(replay, openbw.Options{Data: data, Kinds: openbw.AllKinds, Classes: openbw.AllClasses, TickEvery: checkpointEvery})
+	g, err := openbw.Open(replay, openbw.Options{Data: data, Kinds: openbw.AllKinds, Classes: openbw.AllClasses, TickEvery: checkpointEvery, Engine: &openbw.EngineOptions{}})
 	if err != nil {
 		r.err = err
 		return r
 	}
 	r.rulesSCR = g.Info().Rules.SCR
 	r.mapName = cleanMapName(g.Header().MapName)
-	v := &validator{r: r, g: g, header: g.Header(), sources: g.SourceCommands(), alive: map[openbw.UnitID]*life{}, dead: map[openbw.UnitID]bool{}, plain: plain, source: map[int32]*downgrade.SourceCommand{}}
-	for i := range g.Prepared().Commands {
-		c := &g.Prepared().Commands[i]
+	v := &validator{r: r, g: g, header: g.Header(), sources: g.SourceCommands(), alive: map[openbw.UnitID]*life{}, dead: map[openbw.UnitID]bool{}, plain: plain, source: map[int32]*openbw.SourceCommand{}}
+	for i := range v.sources {
+		c := &v.sources[i]
 		if c.Action >= 0 {
 			v.source[c.Action] = c
 		} else {
@@ -413,7 +418,7 @@ func explainRules(data *openbw.Data, replay []byte, prepared *downgrade.Prepared
 	for _, s := range singles {
 		rules := bwgame.DefaultRules()
 		s.set(&rules)
-		digest, err := streamDigest(data, replay, openbw.Options{CustomRules: &rules}, newDigester(false))
+		digest, err := streamDigest(data, replay, openbw.Options{Engine: &openbw.EngineOptions{Rules: &rules}}, newDigester(false))
 		if err == nil && digest == scrDigest {
 			causes = append(causes, s.name)
 		}

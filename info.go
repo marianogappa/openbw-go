@@ -26,7 +26,7 @@ type EngineInfo struct {
 type RulesInfo struct {
 	// SCR is true when the rules come from the replay's SC:R settings.
 	SCR bool
-	// Custom is true when Options.CustomRules gave the rules.
+	// Custom is true when Options.Engine gave the rules.
 	Custom              bool
 	Limits              ObjectLimits
 	DisabledThingyUnits bool

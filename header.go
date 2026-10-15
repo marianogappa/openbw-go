@@ -10,7 +10,7 @@ type Header struct {
 	MapName string
 	// EndFrame is the replay's frame count.
 	EndFrame int32
-	GameType int32
+	GameType GameType
 	// Slots are the 12 player slots; a slot's index is its Owner.
 	Slots [playerSlots]Slot
 }
@@ -19,25 +19,23 @@ type Header struct {
 type Slot struct {
 	Owner int8
 	// PlayerID is the player ID that the slot's commands carry; -1 for none.
-	PlayerID int32
-	Name     string
-	// Controller is the game info controller: 0 inactive, 1 computer game, 2 occupied, ..., 6 open, 7 neutral.
-	Controller int32
-	// Race is the game info race: 0 Zerg, 1 Terran, 2 Protoss, 6 random.
-	Race  uint8
-	Force int32
+	PlayerID   int32
+	Name       string
+	Controller Controller
+	Race       Race
+	Force      int32
 }
 
 func readHeader(funcs *bwgame.ReplayFunctions) Header {
 	rs := funcs.ReplayState()
-	h := Header{MapName: rs.MapName, EndFrame: rs.EndFrame, GameType: rs.GameType}
+	h := Header{MapName: rs.MapName, EndFrame: rs.EndFrame, GameType: GameType(rs.GameType)}
 	for i := range h.Slots {
 		h.Slots[i] = Slot{
 			Owner:      int8(i),
 			PlayerID:   funcs.ActionState().PlayerID[i],
 			Name:       rs.PlayerName[i],
-			Controller: rs.SlotController[i],
-			Race:       uint8(rs.SlotRace[i]),
+			Controller: Controller(rs.SlotController[i]),
+			Race:       Race(rs.SlotRace[i]),
 			Force:      rs.SlotForce[i],
 		}
 	}

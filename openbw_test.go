@@ -148,7 +148,7 @@ func plainEngineHash(t *testing.T, data *Data, replay []byte, frame int32) uint6
 	if err != nil {
 		t.Fatal(err)
 	}
-	st := bwgame.NewState(data.Global(), bwgame.NewGameState())
+	st := bwgame.NewState(data.global, bwgame.NewGameState())
 	st.Game.Rules, _ = chooseRules(Options{}, prepared)
 	funcs := bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	if err := funcs.LoadReplayData(prepared.Loadable); err != nil {
@@ -168,7 +168,7 @@ func TestStreamInvariants(t *testing.T) {
 		damaged := 0
 		g, err := Open(replay, Options{
 			Data: data, Kinds: AllKinds, Classes: AllClasses, TickEvery: 24, MaxFrame: testMaxFrame,
-			Hooks: bwgame.Hooks{OnUnitDamaged: func(u, source *bwgame.Unit, owner int32, damage bwgame.Fp8) { damaged++ }},
+			Engine: &EngineOptions{Hooks: bwgame.Hooks{OnUnitDamaged: func(u, source *bwgame.Unit, owner int32, damage bwgame.Fp8) { damaged++ }}},
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -341,7 +341,7 @@ func TestTagCountsMatchTagTest(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		st := bwgame.NewState(data.Global(), bwgame.NewGameState())
+		st := bwgame.NewState(data.global, bwgame.NewGameState())
 		st.Game.Rules, _ = chooseRules(Options{}, prepared)
 		c := &tagChecker{funcs: bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})}
 		c.funcs.BeforeAction = c.beforeAction
@@ -409,7 +409,7 @@ func BenchmarkPlainEngine(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		st := bwgame.NewState(data.Global(), bwgame.NewGameState())
+		st := bwgame.NewState(data.global, bwgame.NewGameState())
 		st.Game.Rules = scrrules.FromSettings(prepared.Settings)
 		funcs := bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 		if err := funcs.LoadReplayData(prepared.Loadable); err != nil {

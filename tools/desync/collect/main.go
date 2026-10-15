@@ -98,7 +98,7 @@ func replayPaths(dir string) ([]string, error) {
 	return paths, err
 }
 
-var raceLetters = map[uint8]string{0: "Z", 1: "T", 2: "P"}
+var raceLetters = map[openbw.Race]string{openbw.RaceZerg: "Z", openbw.RaceTerran: "T", openbw.RaceProtoss: "P"}
 
 func readReplay(data *openbw.Data, path string) (replay, bool) {
 	raw, err := os.ReadFile(path)

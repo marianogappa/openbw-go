@@ -1,6 +1,7 @@
 package openbw
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -79,5 +80,44 @@ func TestOpenOptions(t *testing.T) {
 	}
 	if p := g.Player(99); p != (Player{Owner: 99}) {
 		t.Errorf("player 99: %+v", p)
+	}
+	if g.Engine() != nil {
+		t.Error("Engine without Options.Engine is not nil")
+	}
+}
+
+func TestEngineOptionsUsePrivateData(t *testing.T) {
+	data := testData(t)
+	replay := readReplay(t, testReplays[0])
+	rules := bwgame.DefaultRules()
+	g, err := Open(replay, Options{Data: data, Engine: &EngineOptions{Rules: &rules}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.Engine() == nil || g.Engine().State().Global == data.global {
+		t.Fatal("a game with engine access shares the Data's engine data")
+	}
+	if info := g.Info().Rules; !info.Custom || info.SCR {
+		t.Errorf("rules %+v", info)
+	}
+}
+
+func TestNamedValues(t *testing.T) {
+	for _, c := range []struct {
+		got  fmt.Stringer
+		want string
+	}{
+		{RaceProtoss, "Protoss"}, {RaceRandom, "Random"}, {Race(bwgame.RaceTerran), "Terran"},
+		{ControllerOccupied, "Occupied"}, {Controller(bwgame.PlayerControllerComputerDefeated), "ComputerDefeated"},
+		{Order(bwgame.OrdersDie), "Die"}, {Order(bwgame.OrdersPlayerGuard), "PlayerGuard"}, {OrderNone, "None"},
+		{VictoryDefeated, "Defeated"}, {VictoryAllWon, "AllWon"},
+		{GameTypeTopVsBottom, "TopVsBottom"}, {GameTypeUseMapSettings, "UseMapSettings"},
+	} {
+		if s := c.got.String(); s != c.want {
+			t.Errorf("%T %v: %q, want %q", c.got, c.got, s, c.want)
+		}
+	}
+	if VictoryDefeated.Won() || !VictoryWon.Won() || !VictoryAllWon.Won() {
+		t.Error("VictoryState.Won")
 	}
 }

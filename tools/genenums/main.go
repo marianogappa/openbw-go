@@ -69,6 +69,7 @@ var nameTables = []struct{ cppName, goName string }{
 	{"UnitTypes", "unitTypeNames"},
 	{"TechTypes", "techNames"},
 	{"UpgradeTypes", "upgradeNames"},
+	{"Orders", "orderNames"},
 }
 
 func renderNames(blocks []enumBlock) ([]byte, error) {

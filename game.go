@@ -25,11 +25,19 @@ type Options struct {
 	MaxFrame int32
 	// Rules selects the engine rules.
 	Rules RulesMode
-	// CustomRules overrides Rules when not nil.
-	CustomRules *bwgame.Rules
-	// Hooks are raw engine callbacks (L1), called after the stream's own hooks. They must not change engine state.
+	// Engine gives low-level access to the engine; nil for none. See EngineOptions.
+	Engine *EngineOptions
+}
+
+// EngineOptions give low-level access to the engine through package bwgame, which has no stability promise.
+// A game opened with EngineOptions runs on its own copy of the game data, loaded again from the Data's
+// directory, so nothing done through Game.Engine or Hooks can reach other games. The copy costs about
+// one LoadData per game.
+type EngineOptions struct {
+	// Rules overrides Options.Rules when not nil.
+	Rules *bwgame.Rules
+	// Hooks are raw engine callbacks, called after the stream's own hooks. They must not change engine state.
 	// They run inside Open for the map units, before Open returns the Game, and then inside Events and AdvanceTo.
-	// The Hooks API is package bwgame's and has no stability promise.
 	Hooks bwgame.Hooks
 }
 
@@ -41,6 +49,7 @@ type Game struct {
 	tick     int32
 
 	data     *Data
+	engine   bool
 	prepared *downgrade.Prepared
 	st       *bwgame.State
 	funcs    *bwgame.ReplayFunctions
@@ -95,12 +104,21 @@ func Open(replay []byte, opts Options) (*Game, error) {
 	if g.classes == 0 {
 		g.classes = AllClasses
 	}
+	global := data.global
+	var hooks bwgame.Hooks
+	if opts.Engine != nil {
+		if global, err = data.privateCopy(); err != nil {
+			return nil, err
+		}
+		g.engine = true
+		hooks = opts.Engine.Hooks
+	}
 	rules, source := chooseRules(opts, prepared)
 	g.rules = rulesInfo(source, rules)
-	g.st = bwgame.NewState(data.global, bwgame.NewGameState())
+	g.st = bwgame.NewState(global, bwgame.NewGameState())
 	g.st.Game.Rules = rules
 	g.funcs = bwgame.NewReplayFunctions(g.st, &bwgame.ActionState{}, &bwgame.ReplayState{})
-	g.install(opts.Hooks)
+	g.install(hooks)
 	if g.wants(KindCommandResult) {
 		g.sources = actionSources(prepared.Commands)
 	}
@@ -123,8 +141,8 @@ const (
 
 func chooseRules(opts Options, prepared *downgrade.Prepared) (bwgame.Rules, rulesSource) {
 	switch {
-	case opts.CustomRules != nil:
-		return *opts.CustomRules, rulesFromCustom
+	case opts.Engine != nil && opts.Engine.Rules != nil:
+		return *opts.Engine.Rules, rulesFromCustom
 	case opts.Rules == RulesOpenBW, prepared.Report.SourceFormat == legacyFormat:
 		return bwgame.DefaultRules(), rulesFromOpenBW
 	}
@@ -222,13 +240,14 @@ func (g *Game) Done() bool {
 	return g.funcs.IsDone() || g.maxFrame > 0 && g.st.CurrentFrame >= g.maxFrame
 }
 
-// Engine gives the engine (L0) for reads. It has no stability promise.
+// Engine gives the engine for reads, or nil when Options.Engine is nil. See EngineOptions.
 // The caller must not step the engine or change its state; use Events and AdvanceTo.
-func (g *Game) Engine() *bwgame.ReplayFunctions { return g.funcs }
-
-// Prepared is the downgrade output: the loadable replay, the SC:R settings, the dropped commands and the command index.
-// It has no stability promise.
-func (g *Game) Prepared() *downgrade.Prepared { return g.prepared }
+func (g *Game) Engine() *bwgame.ReplayFunctions {
+	if !g.engine {
+		return nil
+	}
+	return g.funcs
+}
 
 func (g *Game) emit(e Event, cmd int32) {
 	b := e.Base()

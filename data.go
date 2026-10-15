@@ -16,8 +16,10 @@ import (
 var ErrNoData = errors.New("openbw: no game data: set Options.Data or OPENBW_DATA")
 
 // Data is the game data: .dat files, iscript, GRP frame sizes, tilesets.
-// One Data is safe for concurrent use by any number of games.
+// One Data is safe for concurrent use by any number of games. Nothing in this package gives access to the
+// engine's copy of the data, so no caller can change it under other games.
 type Data struct {
+	dir       string
 	global    *bwgame.GlobalState
 	filesHash string
 }
@@ -30,6 +32,14 @@ func LoadData(dir string) (*Data, error) {
 	if dir == "" {
 		return nil, ErrNoData
 	}
+	global, filesHash, err := loadGlobal(dir)
+	if err != nil {
+		return nil, err
+	}
+	return &Data{dir: dir, global: global, filesHash: filesHash}, nil
+}
+
+func loadGlobal(dir string) (*bwgame.GlobalState, string, error) {
 	readFile := bwgame.DataFilesDirectory(dir)
 	hash := sha256.New()
 	global, err := bwgame.GlobalInit(func(path string) ([]byte, error) {
@@ -42,16 +52,24 @@ func LoadData(dir string) (*Data, error) {
 		return data, err
 	})
 	if err != nil {
-		return nil, fmt.Errorf("openbw: load game data from %s: %w", dir, err)
+		return nil, "", fmt.Errorf("openbw: load game data from %s: %w", dir, err)
 	}
-	return &Data{global: global, filesHash: hex.EncodeToString(hash.Sum(nil))}, nil
+	return global, hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+func (d *Data) privateCopy() (*bwgame.GlobalState, error) {
+	global, filesHash, err := loadGlobal(d.dir)
+	if err != nil {
+		return nil, err
+	}
+	if filesHash != d.filesHash {
+		return nil, fmt.Errorf("openbw: the game data in %s changed after LoadData", d.dir)
+	}
+	return global, nil
 }
 
 // FilesHash is the SHA-256 of every data file's path, size and content, in load order, as hex.
 func (d *Data) FilesHash() string { return d.filesHash }
-
-// Global gives the engine data (L0).
-func (d *Data) Global() *bwgame.GlobalState { return d.global }
 
 var defaultData struct {
 	once sync.Once
@@ -70,7 +88,7 @@ func dataOrDefault(d *Data) (*Data, error) {
 }
 
 // EngineError is the error that stops a game when the engine fails. Value is the panic value; a panic in
-// an Options.Hooks function is reported the same way.
+// an EngineOptions.Hooks function is reported the same way.
 type EngineError struct {
 	Frame int32
 	Value any

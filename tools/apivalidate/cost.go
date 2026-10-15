@@ -23,7 +23,11 @@ func runPlain(data *openbw.Data, replay []byte) (int32, int, any, error) {
 	if err != nil {
 		return 0, 0, nil, err
 	}
-	st := bwgame.NewState(data.Global(), bwgame.NewGameState())
+	global, err := plainGlobal()
+	if err != nil {
+		return 0, 0, nil, err
+	}
+	st := bwgame.NewState(global, bwgame.NewGameState())
 	st.Game.Rules = engineRules(prepared, openbw.RulesAuto)
 	f := bwgame.NewReplayFunctions(st, &bwgame.ActionState{}, &bwgame.ReplayState{})
 	if err := f.LoadReplayData(prepared.Loadable); err != nil {
