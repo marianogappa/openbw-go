@@ -1,0 +1,11 @@
+# Benchmark set: 5 replays from tools/difftest/replays.txt, from short to long.
+# 7250 frames
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-Horang2[._.]/MM-39C48C10-35DD-11F1-A3DD-FA167B5461B6.rep
+# 12161 frames
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-491926A2-11BC-11F1-A3DD-FA167B5461B6.rep
+# 22865 frames
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-Esccccccc/MM-4862526E-25E0-11F1-A3DD-FA167B5461B6.rep
+# 35692 frames
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-NEW-lillljilililili/MM-F7581750-01C2-11F1-A3DD-FA167B5461B6.rep
+# 83841 frames
+/Users/mariano.gappa/Code/go/src/github.com/marianogappa/cwalggdl/replays-cwal-dl/30-MORE-4023b/MM-F4C14D6E-3A97-11F1-A3DD-FA167B5461B6.rep
