@@ -43,10 +43,6 @@ func pfPartitionPoint(n int, isBefore func(i int) bool) int {
 	return first
 }
 
-func prependSlice[T any](s []T, v T) []T {
-	return append([]T{v}, s...)
-}
-
 func (f *StateFunctions) pathfinderFindLongPath(pf *Pathfinder) bool {
 	if pf.SourceRegion == pf.DestinationRegion {
 		return false
@@ -218,8 +214,9 @@ func (f *StateFunctions) pathfinderFindLongPath(pf *Pathfinder) bool {
 			goalNode = goalNode.prev
 		}
 		for n := goalNode; n != nil; n = n.prev {
-			pf.LongPath = prependSlice(pf.LongPath, n.region)
+			pf.LongPath = append(pf.LongPath, n.region)
 		}
+		slices.Reverse(pf.LongPath)
 	}
 	pf.FullLongPathSize = fullPathSize
 	clearRegionLongPathNodes(allNodes)
@@ -776,6 +773,43 @@ type pfVisitedColumn struct {
 	y []pfVisitedRange
 }
 
+const pfMaxVisitedColumns = 128 + 1
+const pfMaxVisitedRanges = 10
+
+type shortPathScratch struct {
+	search       pfSearch
+	allNodes     StaticVector[shortPathNode, [250]shortPathNode]
+	areaVisited  []pfVisitedColumn
+	rangeBuffers [pfMaxVisitedColumns][pfMaxVisitedRanges]pfVisitedRange
+	usedBuffers  int
+}
+
+func (f *StateFunctions) resetShortPathScratch() *shortPathScratch {
+	if f.shortPath == nil {
+		f.shortPath = &shortPathScratch{areaVisited: make([]pfVisitedColumn, 0, pfMaxVisitedColumns)}
+	}
+	scratch := f.shortPath
+	scratch.search.reset()
+	scratch.allNodes.Clear()
+	scratch.areaVisited = scratch.areaVisited[:0]
+	scratch.usedBuffers = 0
+	return scratch
+}
+
+func (w *pfSearch) reset() {
+	*w = pfSearch{localEdges: w.localEdges, visitedAreas: w.visitedAreas[:0]}
+}
+
+func (scratch *shortPathScratch) cloneRanges(ranges []pfVisitedRange) []pfVisitedRange {
+	buffer := scratch.rangeBuffers[scratch.usedBuffers][:0]
+	scratch.usedBuffers++
+	return append(buffer, ranges...)
+}
+
+func (scratch *shortPathScratch) newColumn(x int32, ranges []pfVisitedRange) pfVisitedColumn {
+	return pfVisitedColumn{x: x, y: scratch.cloneRanges(ranges)}
+}
+
 func firstRangeEndingAtOrAfter(ranges []pfVisitedRange, y int32) int {
 	i := 0
 	for ; i != len(ranges); i++ {
@@ -805,7 +839,8 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 		nr.PathfinderFlag = 1
 	}
 
-	w := &pfSearch{}
+	scratch := f.resetShortPathScratch()
+	w := &scratch.search
 
 	w.u = pf.U
 	w.targetUnit = pf.TargetUnit
@@ -823,7 +858,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 
 	var open StaticVector[*shortPathNode, [150]*shortPathNode]
 
-	allNodes := &StaticVector[shortPathNode, [250]shortPathNode]{}
+	allNodes := &scratch.allNodes
 	allNodes.PushBack(shortPathNode{})
 	startNode := allNodes.Ptr(allNodes.Size() - 1)
 	startNode.pos = pf.Source
@@ -835,7 +870,7 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 	open.PushBack(startNode)
 	binaryHeapUp(open.Values(), open.Size()-1, shortPathNodeLess)
 
-	areaVisited := []pfVisitedColumn{{x: 0}, {x: int32(f.gameSt.MapWidth)}}
+	areaVisited := append(scratch.areaVisited, scratch.newColumn(0, nil), scratch.newColumn(int32(f.gameSt.MapWidth), nil))
 
 	columnAfter := func(x int32) int {
 		return pfPartitionPoint(len(areaVisited), func(i int) bool { return !(x < areaVisited[i].x) })
@@ -1698,10 +1733,10 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 		next := columnAfter(area.From.X)
 		cur := next - 1
 		if area.From.X > areaVisited[cur].x {
-			if len(areaVisited) == 128+1 {
+			if len(areaVisited) == pfMaxVisitedColumns {
 				return
 			}
-			column := pfVisitedColumn{x: area.From.X, y: slices.Clone(areaVisited[cur].y)}
+			column := scratch.newColumn(area.From.X, areaVisited[cur].y)
 			areaVisited = slices.Insert(areaVisited, next, column)
 			cur = next
 			next = cur + 1
@@ -1711,10 +1746,10 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 		}
 		for {
 			if areaVisited[next].x > area.To.X+1 {
-				if len(areaVisited) == 128+1 {
+				if len(areaVisited) == pfMaxVisitedColumns {
 					return
 				}
-				column := pfVisitedColumn{x: area.To.X + 1, y: slices.Clone(areaVisited[cur].y)}
+				column := scratch.newColumn(area.To.X+1, areaVisited[cur].y)
 				areaVisited = slices.Insert(areaVisited, next, column)
 				cur = next - 1
 			}
@@ -1727,12 +1762,12 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			}
 			newRange := pfVisitedRange{first: area.From.Y, second: area.To.Y}
 			if i == len(ranges) {
-				if len(ranges) == 10 {
+				if len(ranges) == pfMaxVisitedRanges {
 					return
 				}
 				areaVisited[cur].y = slices.Insert(ranges, i, newRange)
 			} else if area.To.Y < ranges[i].first-1 || area.From.Y > ranges[i].second+1 {
-				if len(ranges) == 10 {
+				if len(ranges) == pfMaxVisitedRanges {
 					return
 				}
 				areaVisited[cur].y = slices.Insert(ranges, i, newRange)
@@ -1968,9 +2003,10 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 			}
 			totalCost := cur.totalCost.Add(cost)
 			var n *shortPathNode
-			for i := 1; i != allNodes.Size(); i++ {
-				if allNodes.Ptr(i).pos == v.pos {
-					n = allNodes.Ptr(i)
+			existingNodes := allNodes.Values()
+			for i := 1; i != len(existingNodes); i++ {
+				if existingNodes[i].pos == v.pos {
+					n = &existingNodes[i]
 					break
 				}
 			}
@@ -2134,8 +2170,9 @@ func (f *StateFunctions) pathfinderFindShortPath(pf *Pathfinder, target Xy, targ
 	pf.ShortPath = pf.ShortPath[:0]
 	pf.CurrentShortPathIndex = 0
 	for n := goalNode; n != startNode && len(pf.ShortPath) < 128; n = n.prev {
-		pf.ShortPath = prependSlice(pf.ShortPath, n.pos)
+		pf.ShortPath = append(pf.ShortPath, n.pos)
 	}
+	slices.Reverse(pf.ShortPath)
 	if len(pf.ShortPath) > 50 {
 		pf.ShortPath[49] = pf.ShortPath[len(pf.ShortPath)-1]
 		pf.ShortPath = resizeSlice(pf.ShortPath, 50)

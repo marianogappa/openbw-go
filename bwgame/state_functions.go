@@ -12,6 +12,7 @@ type StateFunctions struct {
 	iscriptBullet         *Bullet
 	iscriptUnit           *Unit
 	unitFinderSearchIndex uint
+	shortPath             *shortPathScratch
 
 	deselectUnit func(u *Unit)
 }
