@@ -23,7 +23,7 @@ The Go engine is bit for bit equal to C++ OpenBW at commit `4b046d5`. [tools/dif
 
 ### Accuracy against SC:R
 
-OpenBW is a reimplementation of the 1.16 engine. SC:R (Remastered) has a few gameplay differences, and a replay only plays correctly when the engine follows them. By default (`RulesAuto`), SC:R replays run with the SC:R rules that [docs/desync.md](docs/desync.md) found: larger object limits (the bullet limit matters in big fights), disabled map doors on Pole Star 1.1 and the SC:R order allocation rule.
+OpenBW is a reimplementation of the 1.16 engine. SC:R (Remastered) has a few gameplay differences, and a replay only plays correctly when the engine follows them. By default (`RulesAuto`), SC:R replays run with the SC:R rules that [docs/desync.md](docs/desync.md) found: larger object limits (the bullet limit matters in big fights), disabled map doors on Pole Star 1.1, the SC:R order allocation rule and Top vs Bottom team alliances.
 
 A desynced game shows itself in the command stream: players select units that do not exist in the engine. On all 1,462 distinct Terran games of a sample of 2,934 SC:R 1v1 replays ([docs/desync.md](docs/desync.md)):
 
@@ -34,6 +34,8 @@ A desynced game shows itself in the command stream: players select units that do
 | Does not load (Pole Star 1.1) | 242 | 0 |
 
 Games without a Terran desync less often: about 2% with OpenBW rules ([docs/integration.md](docs/integration.md)). The cause of the remaining desyncs is not known.
+
+Team games: SC:R rules also ally each Top vs Bottom team at game start, as BW does. In a sample of one player's own replays, Top vs Bottom games desync in 8 of 137 (102 before). Melee-lobby team games, where players ally with commands, still desync in 33 of 95, mostly long games ([docs/desync.md](docs/desync.md), "Team games").
 
 ### API validation
 

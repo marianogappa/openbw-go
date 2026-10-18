@@ -1164,6 +1164,13 @@ func (f *ActionFunctions) actionDecloak(owner int32) bool {
 }
 
 func (f *ActionFunctions) actionSetAlliances(owner int32, alliances [12]int32) bool {
+	if f.gameSt.AlliedVictoryWithinForces {
+		for n := range alliances[:8] {
+			if alliances[n] == 2 && f.st.Players[n].Force != f.st.Players[owner].Force {
+				alliances[n] = 1
+			}
+		}
+	}
 	f.st.Alliances[owner] = alliances
 	for u := range f.st.PlayerUnits[owner].All() {
 		if u.OrderTarget.Unit != nil && u.OrderType.TargetsEnemies {

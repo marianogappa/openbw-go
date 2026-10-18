@@ -10,6 +10,10 @@ Investigation of the desyncs in [integration.md](integration.md): C++ OpenBW (`r
 | Disabled `THG2` units (Pole Star 1.1) are doodad doors. SC:R creates them, sets the disabled doodad state, and units walk through them. | **Proven** | Pole Star: 30/30 replays load and stay in sync. Before: 30/30 fail at frame 0. |
 | The remaining Terran desyncs are mostly on one map: **Attitude 1.0**. 8 of 18 Terran games there desync, against 5 of 131 Terran games on the other 12 maps. MM-029782AE is one of them. | **Root cause not found** | See "Remaining desyncs". |
 | The Siege/Unsiege lead of integration.md | **Rejected** | The lead was the bullet limit. Tank games have the most bullets. Of the 4 remaining non-Attitude Terran desyncs checked, 3 have no Siege command before the onset. |
+| Top vs Bottom teams start as enemies in OpenBW. BW allies each team at game start, and the replay does not record it. | **Proven** | Team games (see "Team games"): Top vs Bottom desyncs drop from 102/137 to 8/137. |
+| Early 1.21 replays without `LMTS` use 1.16-layout tags, which the downgrade turned into tag 0 | **Proven** | Commands in those games now take effect. 7/7 stay in sync. |
+| Halo Rockets fail at a fixed 80 active bullets. SC:R scales the cap with the `LMTS` bullet limit (80% of it). | **Proven** | Melee-lobby team games: 58/159 → 48/159 desynced in a 400-replay sample. Not one replay gets worse. See "Root cause 5". |
+| Melee-lobby team games (alliances by command), the rest | **Root cause not found** | Mostly long games. See "Remaining: Melee-lobby team games". |
 | SC:R order allocation rule behind `BFIX` bit 2 | **Real, but no effect in the sample** | The diff makes no difference on 117 Terran replays. See "BFIX". |
 
 ## Method
@@ -189,7 +193,7 @@ Liquipedia's notes for patches 1.18-1.20 contain no unit-behaviour fix that surv
   - The unit pool stays 1700. A `unit_id` has an 11-bit index, and `downgrade` maps 1.21 indexes 1,701-3,400 to 1-1,700 for a 1,700-unit array. With fewer than 1,700 live units the allocation order is the same.
   - Disabled `THG2` units are created with `status_flag_disabled` and `status_flag_no_collide`.
   - `set_queued_order` drops the order when `can_allocate_order` is false ("BFIX and GCFG"). The flying SCV fix is a separate flag (`GCFG` build ≥ 9713).
-  - The Halo Rockets check (`active_bullets_size >= 80`) is unchanged. It is not known if SC:R scales it with the bullet limit.
+  - Halo Rockets fail to fire at 80% of the bullet limit (`Rules.HaloRocketsBulletCap`), not at a fixed 80. See "Root cause 5". With the 1.16 limit it is 80, so OpenBW rules are unchanged.
 - `obwhash -scr-rules` runs the game with these rules.
 - `tools/scrharness` builds the C++ harness against OpenBW with the same rules (`openbw-scr.patch`). `difftest -obwhash-args "-scr-rules"` compares the two engines.
 
@@ -219,6 +223,101 @@ Tag test (`tools/desync/gotags`) on all 1,462 distinct Terran replays in cwal.gg
 
 Without Pole Star: 87 → 59 desynced of 1,220. 28 replays change from desynced to clean, and none from clean to desynced. 2 of the 242 Pole Star replays are desynced. 45 of the 61 desynced replays are on Attitude 1.0 (see "Remaining desyncs"). The Go tag counts are the same as the C++ tracer's for the replays in "Root cause 1" and for MM-029782AE.
 
+## Team games (2026-10-15)
+
+The sections above cover 1v1 ladder games. A random sample of 400 SC:R replays from one player's own folder (`Maps/Replays`, 2017-2026, mostly Big Game Hunters team games) desynced in most team games: 136 of 234 that load, with SC:R rules. 1v1 games were already fine (0 of 117). Two engine and downgrade bugs caused most of it. Both are fixed.
+
+| Game type (3+ players) | Before | After |
+|---|---|---|
+| Top vs Bottom | 102/137 desynced | **8/137** |
+| Melee lobby (teams made with in-game alliances), FFA | 33/96 | 33/96 (partly fixed later by root cause 5, see below) |
+| 1v1 (control) | 0/117 | 0/117 |
+
+Tag test, `gotags -scr-rules`, desynced means 20 or more inconsistent commands. No replay changes from clean to desynced.
+
+### Root cause 3: Top vs Bottom teams start as enemies
+
+In a Top vs Bottom game (game info game type 15), BW allies each team when the game starts: alliance 2 (allied victory) between teammates, and shared vision. The replay does not record it: there are no alliance (`0x0E`) or vision (`0x0D`) commands for it. OpenBW reads the game type but ignores it, so every player starts as everyone's enemy. Teammates' units attack each other on first contact. The desync shows as soon as two teammates' armies or workers meet, which is why the median onset was minutes into the game.
+
+Evidence:
+
+- Start locations, unit tags and mineral right-clicks match the replay from frame 0. The engine was right until first contact.
+- Allying same-force players at load fixes 5 of the 9 desynced games in a 12-game BGH subset. Adding shared vision fixes the other 2 that alliance alone did not (234410: 1,609 → 14 inconsistent commands).
+- The one alliance command in 234410 (frame 108) sets the same value the rule gives (teammates 2), so it changes nothing. That fits a starting alliance that already exists.
+- The game info's "teams enabled" byte is 0 in Top vs Bottom, so the trigger is the game type, not that byte.
+
+A second rule is needed for 2 games where players ally across teams with alliance commands (182824, 170727). In SC:R, such a cross-team alliance does not give allied victory: with it, OpenBW's melee victory trigger gives one player the victory at frame 3133 and removes the others, while the SC:R game goes on to frame 28049. Capping a cross-team alliance at 1 (allied, no allied victory) fixes both and changes nothing else in the 238 Top vs Bottom replays. Ignoring alliance commands in Top vs Bottom instead (alliances locked) breaks 3 clean games, so SC:R does apply them.
+
+### Root cause 4: 1.21 tags of games without `LMTS`
+
+Early 1.21 replays (2017-2019 in this sample) have no `LMTS` section. Their unit array is 1,700, and their 4-byte tags use the 1.16 layout: an 11-bit index and the generation above it. `downgrade` read every 1.21 tag as a 13-bit index into a 3,400-unit array, so these tags got index 1,701+ and became 0 (no unit). Every Select and targeted command did nothing, and the players trained nothing. The tag test did not see it, because it ignores tag 0. Example: 165606 (3v3, 2018-09) selects tag `0x0DA8`, which is index 1448 (a Drone of that player), generation 1.
+
+7 of the 389 replays have this format. All 7 now load with working commands and stay in sync.
+
+### Exact change
+
+- `downgrade`: the tag layout comes from the replay's unit limit (`LMTS`, or 1,700 without it). With 1,700 units a tag is `index | generation << 11`, with no index remapping. `LegacyUnitTagFor(settings, tag)` exposes it. `LegacyUnitTag` keeps the 3,400-unit mapping.
+- `bwgame.Rules.TopVsBottomAlliances` (on in `scrrules.FromSettings`, so in `RulesAuto` for SC:R replays): when the replay's game type is Top vs Bottom, after the starting units and force vision, each pair of occupied slots in the same force gets alliance 2 and shared vision. In such a game an alliance command sets at most 1 toward a player of another force.
+- `RulesInfo.TopVsBottomAlliances` reports it. Default (`RulesOpenBW`) behaviour is unchanged, so `difftest` against unpatched C++ OpenBW is unaffected. `tools/scrharness/openbw-scr.patch` does not have this rule, so `difftest -scr-rules` on a Top vs Bottom replay will differ. `tools/difftest/replays.txt` has none.
+- Legacy (1.16) Top vs Bottom replays still run with OpenBW rules under `RulesAuto`, so they still have this bug. Use a custom `Rules` with `TopVsBottomAlliances` for them.
+
+### Root cause 5: the Halo Rockets cap (2026-10-16)
+
+BW drops a Valkyrie's Halo Rockets when 80 or more bullets are active: 80% of the 1.16 bullet limit of 100. OpenBW has the fixed 80 (`create_bullet`). SC:R keeps the ratio when `LMTS` raises the limit: the cap is 160 with 200 bullets and 320 with 400. Liquipedia's Valkyrie page describes the cap as a known BW problem in team battles that the larger SC:R limits removed. Big team fights pass 80 active bullets often, so OpenBW dropped rockets that SC:R fired.
+
+Evidence:
+
+- 203541 (200 bullets): 1,269 → 17 inconsistent commands. 213744 (400 bullets): 309 → 12. At the onset of 213744, Valkyries fight next to Siege Tanks and Zerglings.
+- A cap at 80% of the limit and no cap at all give the same result on 399 of 400 replays of the sample. The exception is 233905, a game created with the original CCMU limits (100 bullets): clean with the cap of 80 (9 inconsistent commands), desynced without it (86). So SC:R still has the cap. It is not removed, and it moves with the limit.
+
+The fix: `Rules.HaloRocketsBulletCap()` is `ObjectLimits().Bullets * 4 / 5`. With OpenBW rules (100 bullets) it is 80, so `difftest` against unpatched C++ OpenBW is unchanged. `tools/scrharness/openbw-scr.patch` uses 320.
+
+Tag test, `gotags -scr-rules`, before and after:
+
+| Set | Before | After | Changed |
+|---|---|---|---|
+| 400 random Big Game Hunters replays of the player's folder: Melee lobby, 7-8 players | 58/159 desynced | **48/159** | 10 fixed |
+| Same sample: Melee lobby, 2-6 players | 0/4 | 0/4 | none |
+| Same sample: Top vs Bottom | 12/207 | **10/207** | 2 fixed |
+| 300 random 1v1 ladder replays (pro accounts, 400 bullets) | 5/300 | **4/300** | MM-B625CDC6: 500 → 3 |
+| 200 random other replays of the player's folder (160 load) | 4/160 | **2/160** | 2 fixed |
+
+No replay changes from clean to desynced.
+
+### Remaining: Melee-lobby team games
+
+48 of 159 Melee-lobby team games (7-8 players) still desync. These players form teams with alliance commands, which OpenBW already handles. Top vs Bottom games show the same effect of length (before root cause 5, above 30,000 frames: 9 of 25 desync, against 3 of 186 below), so it is one general mechanism whose rate grows with the amount of fighting, not something specific to alliance commands. Melee lobbies have 8 players and 195 of the 211 Top vs Bottom games have 6 or fewer, which explains the higher rate.
+
+| Melee lobby, 7-8 players, by length | Before root cause 5 | After |
+|---|---|---|
+| under 30,000 frames | 9/94 | 4/94 |
+| 30,000-50,000 | 28/43 | 23/43 |
+| over 50,000 | 21/22 | 21/22 |
+
+How to read the tag test in these games: isolated inconsistent commands are normal. A unit dies a frame early in OpenBW, the player clicks it, and the game heals, because the RNG and the unit allocation stay the same (180911: a Marine duel at equal HP at frame 6902; the slot is reused identically at 6963). The real onset is where the misses become sustained (`tools/desync/onset`: 6 inconsistent commands within 3,000 frames). From that point the unit allocation order differs, and players select tags that OpenBW gives to other players' units. The sustained onset is usually 20,000-30,000 frames into these games, minutes after the first isolated miss.
+
+Ruled out:
+
+- **5-bit unit-id generation wrap.** A stale id resolves to a new unit only after 32 reuses of one slot. The highest generation reached is 7 in 180911 (61,163 frames) and 10 in 213744. No slot wraps.
+- **Players leaving or being defeated.** 20 of 58 desynced games desync before any player is defeated or leaves (for example 180911 at 23,772, first defeat at 27,251). Keeping a leaver's units with their owner instead of making them neutral makes 213744 desync at 5,412 instead of 27,905, so OpenBW's `make_unit_neutral` is right. Killing a defeated player's units instead changes nothing in 234855.
+- **Object and creep pools.** Unit, bullet, sprite and image pools stay below the limits. The receding-creep pool (1,024 entries) has at least 636 free entries in 234855.
+
+The best lead is 234855 (sustained from frame 6,000). Player 1 (Zerg) loses its last hatchery at 4,821 and is defeated at 5,861. Its units become neutral. Its larvae keep the Larva order, wander on the receding creep and die off creep at 6,487 and 6,517. In SC:R those unit slots are already reused before frame 6,273. So the larvae of a destroyed hatchery die earlier in SC:R: either the creep under them recedes faster, or SC:R ends the Larva order differently when the hatchery is gone or the larva is neutral. 180911 has a different trigger: its Valkyries never reach the cap, and its first sustained misses (frames 23,768 and 26,214) are a Hydralisk and an SCV that die to units of two different players.
+
+### Load failures
+
+All 37 replays of the sample that fail to load fail on OpenBW features that are not implemented. None is a Go port bug.
+
+| Error | Replays | Cause | Triage |
+|---|---|---|---|
+| `ComputerAI` (16), `AIPatrol` (9) | 25 | A computer player's units run AI orders. OpenBW has no computer AI. | Not fixable without porting BW's AI script engine. Skip games with a computer slot (the header says so). |
+| `unknown trigger condition 4` | 8 | UMS map trigger condition 4 (Accumulate) is not implemented. | UMS only. Skip UMS or implement the trigger condition. |
+| `fixme unknown flag` | 2 | `complete_unit` stops on units.dat flag `0x800` (single entity: powerups). OpenBW never sets `building.powerup.origin`. | UMS micro maps only. Not fixed: the exact BW behaviour is not known. |
+| `HiddenGun`, `UNIT: invalid owner 12` | 2 | An unimplemented order and a map unit owned by player 12. | UMS-style maps only. |
+| `disable thingy unit` | 2 | Pole Star 1.1 with OpenBW rules only. | Already fixed by SC:R rules (root cause 2). |
+
+The 16 1v1 load failures are all games against a computer or UMS micro maps.
+
 ## Tools (`tools/desync/`)
 
 - `tracer.cpp`, `Makefile` (`make OPENBW=<copy> OUT=<binary>`): plays a downgraded replay on an OpenBW copy. Flags:
@@ -231,6 +330,9 @@ Without Pole Star: 87 → 59 desynced of 1,220. 28 replays change from desynced 
 - `collect` downgrades SC:R replays filtered by map, race and length into `.116.rep` files, for example `go run ./tools/desync/collect -replays <dir> -out <dir> -map "Pole Star" -n 30`. It reads the map, races and length from the engine's `Header`, so it needs the game data (`-data` or `$OPENBW_DATA`).
 - `gotags [-scr-rules] <replays...>` runs the tag test on the Go engine, in parallel, and prints `name first_inconsistent count=<n> end_frame` (or `name error ...`). It reads SC:R replays directly.
 - `thg2inject in.rep out.rep` adds disabled Pit Doors to the `THG2` chunk of a 1.21 SC:R replay's map: one at the map centre and two on the way to each start location.
+- `teamprobe [-scr-rules] [-from f] [-to f] [-stats n] <replay>` prints the players (controller, race, force, start location), the units at load, and each command in the frame window with resolved tags and right-click targets, plus unit creation, destruction, morph, victory and leave events. `-stats n` prints the object pool sizes every n frames. It reads SC:R replays directly.
+- `onset <replays...>` runs the tag test with SC:R rules on Melee and Top vs Bottom replays, in parallel, and prints one line per replay as it finishes: game type, occupied player slots, end frame, inconsistent commands, the sustained onset (6 inconsistent commands within 3,000 frames) and every victory-state change (`frame:player:state`).
+- `watch -idx <index> [-every n] [-x x -y y -r half-size] -from f -to f <replay>` prints the damage and death of one unit (and of every unit in a square), and every n frames its order, position and tile flags, and the receding-creep pool.
 - `mapinfo <legacy.rep>` lists CHK chunks, `UNIT` entries (type, owner, position, resources, property and flag masks, HP%), `THG2` entries with the disabled flag, the tileset, and the number of MTXM/TILE differences.
 
 To reproduce the numbers: copy `ref/openbw` to `$TMPDIR`, apply the diff, then run `check.sh` and `variant.sh` with the same integration flags as the samples above.

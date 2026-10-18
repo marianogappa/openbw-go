@@ -6,7 +6,7 @@ import (
 )
 
 // FromSettings gives the rules for settings: the object limits, disabled THG2 units, the order
-// allocation rule and the flying SCV fix.
+// allocation rule, the flying SCV fix and the Top vs Bottom team alliances.
 func FromSettings(settings downgrade.SCRSettings) bwgame.Rules {
 	return bwgame.Rules{
 		Limits: bwgame.ObjectLimits{
@@ -16,8 +16,9 @@ func FromSettings(settings downgrade.SCRSettings) bwgame.Rules {
 			Bullets:     uint(settings.Limits.Bullets),
 			Orders:      uint(settings.Limits.Orders),
 		},
-		DisabledThingyUnits: true,
-		OrderAllocationRule: settings.OrderAllocationRule(),
-		FlyingSCVFix:        settings.FlyingSCVFix(),
+		DisabledThingyUnits:  true,
+		OrderAllocationRule:  settings.OrderAllocationRule(),
+		FlyingSCVFix:         settings.FlyingSCVFix(),
+		TopVsBottomAlliances: true,
 	}
 }

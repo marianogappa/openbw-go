@@ -23,6 +23,10 @@ type Rules struct {
 	DisabledThingyUnits bool
 	OrderAllocationRule bool
 	FlyingSCVFix        bool
+	// TopVsBottomAlliances allies each Top vs Bottom team at game start (allied victory and shared vision),
+	// as BW does. OpenBW leaves teammates as enemies, and replays do not record the alliance. An alliance
+	// command can still ally another team, but only without allied victory.
+	TopVsBottomAlliances bool
 }
 
 func DefaultRules() Rules {
@@ -41,6 +45,12 @@ func (r Rules) ObjectLimits() ObjectLimits {
 
 func (r Rules) OrderSupplyLowThreshold() uint {
 	return r.ObjectLimits().Orders * 9 / 10
+}
+
+// HaloRocketsBulletCap is the number of active bullets at which Halo Rockets fail to fire: 80 of BW's 100.
+// SC:R keeps the ratio when LMTS raises the bullet limit; a fixed 80 drops Valkyrie rockets in big fights.
+func (r Rules) HaloRocketsBulletCap() uint {
+	return r.ObjectLimits().Bullets * 4 / 5
 }
 
 func orDefault(value *uint, fallback uint) {

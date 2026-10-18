@@ -54,6 +54,8 @@ type GameState struct {
 	Triggers []Trigger
 
 	Rules Rules
+
+	AlliedVictoryWithinForces bool
 }
 
 func NewGameState() *GameState {

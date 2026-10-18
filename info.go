@@ -19,7 +19,9 @@ type EngineInfo struct {
 	DataHash     string
 	// SourceFormat is the replay format that the downgrade read, for example "legacy".
 	SourceFormat string
-	Rules        RulesInfo
+	// UnitLimit is the replay's unit array size: the LMTS units of a 1.21 replay, or 1700 without LMTS.
+	UnitLimit uint32
+	Rules     RulesInfo
 }
 
 // RulesInfo is the engine rules a game runs with.
@@ -27,11 +29,12 @@ type RulesInfo struct {
 	// SCR is true when the rules come from the replay's SC:R settings.
 	SCR bool
 	// Custom is true when Options.Engine gave the rules.
-	Custom              bool
-	Limits              ObjectLimits
-	DisabledThingyUnits bool
-	OrderAllocationRule bool
-	FlyingSCVFix        bool
+	Custom               bool
+	Limits               ObjectLimits
+	DisabledThingyUnits  bool
+	OrderAllocationRule  bool
+	FlyingSCVFix         bool
+	TopVsBottomAlliances bool
 }
 
 // ObjectLimits are the engine's object pool sizes.
@@ -42,12 +45,13 @@ type ObjectLimits struct {
 func rulesInfo(source rulesSource, rules bwgame.Rules) RulesInfo {
 	limits := rules.ObjectLimits()
 	return RulesInfo{
-		SCR:                 source == rulesFromSCR,
-		Custom:              source == rulesFromCustom,
-		Limits:              ObjectLimits{Images: limits.Images, Sprites: limits.Sprites, LoneSprites: limits.LoneSprites, Bullets: limits.Bullets, Orders: limits.Orders},
-		DisabledThingyUnits: rules.DisabledThingyUnits,
-		OrderAllocationRule: rules.OrderAllocationRule,
-		FlyingSCVFix:        rules.FlyingSCVFix,
+		SCR:                  source == rulesFromSCR,
+		Custom:               source == rulesFromCustom,
+		Limits:               ObjectLimits{Images: limits.Images, Sprites: limits.Sprites, LoneSprites: limits.LoneSprites, Bullets: limits.Bullets, Orders: limits.Orders},
+		DisabledThingyUnits:  rules.DisabledThingyUnits,
+		OrderAllocationRule:  rules.OrderAllocationRule,
+		FlyingSCVFix:         rules.FlyingSCVFix,
+		TopVsBottomAlliances: rules.TopVsBottomAlliances,
 	}
 }
 
@@ -77,6 +81,7 @@ func (g *Game) Info() EngineInfo {
 		OpenBWCommit: OpenBWCommit,
 		DataHash:     g.data.FilesHash(),
 		SourceFormat: g.prepared.Report.SourceFormat,
+		UnitLimit:    g.prepared.Settings.Limits.Units,
 		Rules:        g.rules,
 	}
 }

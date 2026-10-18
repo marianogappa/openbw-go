@@ -74,6 +74,7 @@ type SetupInfo struct {
 	ResourceType              int32
 	StartingMinerals          int32
 	CreateNoUnits             bool
+	TopVsBottom               bool
 }
 
 func NewSetupInfo() SetupInfo {

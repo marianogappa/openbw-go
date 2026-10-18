@@ -14,8 +14,11 @@ go run ./tools/difftest -out $TMPDIR/scr-difftest -harness $TMPDIR/scrharness/ha
 - Object pools with the cwal.gg `LMTS` limits: bullets 400, sprites 5000, images 10000, orders 4000. The unit pool stays 1700.
 - Lone sprites (`new_thingy`): 1000 instead of 500.
 - `issue_order` queues an order only below 3600 active orders (90% of 4000) instead of 1800.
+- Halo Rockets fail to fire at 320 active bullets (80% of 400) instead of 80.
 - `can_allocate_order` in `set_queued_order`: the `BFIX`/`GCFG` order allocation rule with the flying SCV fix.
 - Disabled `THG2` units get the disabled and no-collide status flags instead of `disable thingy unit`.
 - The `state_copier` arrays get the new pool sizes.
 
 The limits are compile-time constants, so the patched harness matches `-scr-rules` only for replays with these settings. All 2,934 cwal.gg replays have them. `obwhash -scr-rules` prints the settings it uses to stderr.
+
+The patch does not have the Top vs Bottom team alliances rule ([docs/desync.md](../../docs/desync.md), "Team games"). A Top vs Bottom replay differs between `obwhash -scr-rules` and the patched harness.

@@ -31,7 +31,7 @@ func TestSCRSettings(t *testing.T) {
 	if rules.ObjectLimits() != want {
 		t.Fatalf("limits %+v", rules.ObjectLimits())
 	}
-	if !rules.OrderAllocationRule || !rules.FlyingSCVFix || rules.OrderSupplyLowThreshold() != 3600 {
+	if !rules.OrderAllocationRule || !rules.FlyingSCVFix || !rules.TopVsBottomAlliances || rules.OrderSupplyLowThreshold() != 3600 {
 		t.Fatalf("rules %+v", rules)
 	}
 }

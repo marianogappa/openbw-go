@@ -467,7 +467,7 @@ func (f *StateFunctions) applyBulletHeadingOffset(b *Bullet, weaponType *WeaponT
 }
 
 func (f *StateFunctions) createBullet(weaponType *WeaponTypeT, sourceUnit *Unit, pos Xy, owner int32, heading DirectionT) *Bullet {
-	if weaponType.ID == WeaponTypesHaloRockets && f.st.ActiveBulletsSize >= 80 {
+	if weaponType.ID == WeaponTypesHaloRockets && f.st.ActiveBulletsSize >= f.gameSt.Rules.HaloRocketsBulletCap() {
 		return nil
 	}
 	if f.uCannotAttack(sourceUnit) && !f.isSpell(weaponType) {

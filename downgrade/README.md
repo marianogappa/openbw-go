@@ -77,6 +77,7 @@ The stream is frame blocks: `u32` frame, `u8` block size, then commands. Each co
 
 - `0x60`-`0x65` (1.21 Right Click, Targeted Order, Unload, Select, Select Add, Select Remove) become `0x14`, `0x15`, `0x29`, `0x09`, `0x0A`, `0x0B`. Each 4-byte unit tag becomes a 2-byte OpenBW `unit_id`:
   - A 1.21 tag is a 13-bit index (unit array index + 1) and a generation in the bits above it. An OpenBW `unit_id` is an 11-bit index and a 5-bit generation.
+  - Exception: a replay without `LMTS` (early 1.21) has a 1,700-unit array, and its tags use the 1.16 layout: an 11-bit index and the generation above it. These tags keep their index; the generation is kept modulo 32. The unit limit from `LMTS` (1,700 without it) selects the layout.
   - SC:R has a 3,400-unit array. OpenBW has a 1,700-unit array. Both use the `object_container` order: the first unit gets index 0, the next units get the highest free index. Thus 1.21 index 1 stays 1, and 1.21 index 1,701-3,400 becomes 1-1,700.
   - The generation is kept modulo 32.
   - A tag with index 0 or an index that OpenBW cannot have becomes 0 (no unit).

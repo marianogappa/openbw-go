@@ -35,9 +35,9 @@ func (id UnitID) LegacyTag() uint16 {
 	return id.Index() | uint16(id.Generation()%legacyGenerations)<<unitIndexBits
 }
 
-// MatchesSCRTag tells if a 1.21 unit tag refers to this unit, with the downgrade's own mapping.
-func (id UnitID) MatchesSCRTag(tag uint32) bool {
-	return id != 0 && downgrade.LegacyUnitTag(tag) == id.LegacyTag()
+// MatchesSCRTag tells if a 1.21 unit tag of this game's replay refers to the unit, with the downgrade's own mapping.
+func (g *Game) MatchesSCRTag(id UnitID, tag uint32) bool {
+	return id != 0 && downgrade.LegacyUnitTagFor(g.prepared.Settings, tag) == id.LegacyTag()
 }
 
 // UnitType is a units.dat ID.

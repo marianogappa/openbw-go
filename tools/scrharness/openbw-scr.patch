@@ -20,6 +20,15 @@
  
  	intrusive_list<path_t, default_link_f> free_paths;
  	a_list<path_t> paths;
+@@ -14487,7 +14487,7 @@
+ 	}
+ 
+ 	bullet_t* create_bullet(const weapon_type_t* weapon_type, unit_t* source_unit, xy pos, int owner, direction_t heading) {
+-		if (weapon_type->id == WeaponTypes::Halo_Rockets && st.active_bullets_size >= 80) return nullptr;
++		if (weapon_type->id == WeaponTypes::Halo_Rockets && st.active_bullets_size >= 320) return nullptr;
+ 		if (u_cannot_attack(source_unit) && !is_spell(weapon_type)) return nullptr;
+ 		bullet_t* b = st.bullets_container.top();
+ 		if (!b) return nullptr;
 @@ -14539,7 +14539,7 @@
  			st.free_thingies.pop_front();
  			return r;

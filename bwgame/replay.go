@@ -106,6 +106,8 @@ type ReplayState struct {
 	SlotController    [12]int32
 	SlotRace          [12]int32
 	SlotForce         [12]int32
+	AlliesEnabled     bool
+	TeamsEnabled      bool
 }
 
 type ReplayFunctions struct {
@@ -190,6 +192,8 @@ func (f *ReplayFunctions) loadReplayData(data []byte, initialProcessing bool, ge
 	f.loadReplay(makeReplayFileReader(&r), initialProcessing, getMapData)
 }
 
+const gameTypeTopVsBottom = 15
+
 type replayGameInfo struct {
 	frameCount                uint32
 	randomSeed                uint32
@@ -199,6 +203,8 @@ type replayGameInfo struct {
 	resourceType              uint8
 	createInitialUnits        uint8
 	tournamentMode            uint8
+	alliesEnabled             uint8
+	teamsEnabled              uint8
 	startingMinerals          uint32
 	slotPlayerID              [12]int32
 	slotController            [12]int32
@@ -245,8 +251,8 @@ func readReplayGameInfo(gir *DataReader) replayGameInfo {
 	gi.createInitialUnits = gir.GetU8()
 	gir.GetU8()
 	gir.GetU8()
-	gir.GetU8()
-	gir.GetU8()
+	gi.alliesEnabled = gir.GetU8()
+	gi.teamsEnabled = gir.GetU8()
 	gir.GetU8()
 	gi.tournamentMode = gir.GetU8()
 	gir.GetU32()
@@ -313,6 +319,8 @@ func (f *ReplayFunctions) loadReplay(r *replayFileReader, initialProcessing bool
 
 	f.replaySt.EndFrame = int32(gi.frameCount)
 	f.replaySt.GameType = int32(gi.gameType)
+	f.replaySt.AlliesEnabled = gi.alliesEnabled != 0
+	f.replaySt.TeamsEnabled = gi.teamsEnabled != 0
 
 	f.replaySt.ActionsDataBuffer = make([]byte, r.getU32())
 	r.getBytes(f.replaySt.ActionsDataBuffer)
@@ -342,6 +350,7 @@ func (f *ReplayFunctions) applyReplaySetup(gameLoadFuncs *GameLoadFunctions, gi 
 	setupInfo.TournamentMode = int32(gi.tournamentMode)
 	setupInfo.ResourceType = int32(gi.resourceType)
 	setupInfo.StartingMinerals = int32(gi.startingMinerals)
+	setupInfo.TopVsBottom = gi.gameType == gameTypeTopVsBottom
 	for i := range 12 {
 		f.st.Players[i].Controller = gi.slotController[i]
 		f.st.Players[i].Race = Race(gi.slotRace[i])

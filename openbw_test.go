@@ -394,8 +394,14 @@ func TestUnitIDTags(t *testing.T) {
 	if id.Index() != 5 || id.Generation() != 37 || id.LegacyTag() != 5|5<<11 {
 		t.Fatalf("index %d generation %d tag %#x", id.Index(), id.Generation(), id.LegacyTag())
 	}
-	if !id.MatchesSCRTag(1705|37<<13) || id.MatchesSCRTag(1706|37<<13) || id.MatchesSCRTag(5|37<<13) {
+	scr := &Game{prepared: &downgrade.Prepared{Settings: downgrade.SCRSettings{Limits: downgrade.ObjectLimits{Units: 3400}}}}
+	if !scr.MatchesSCRTag(id, 1705|37<<13) || scr.MatchesSCRTag(id, 1706|37<<13) || scr.MatchesSCRTag(id, 5|37<<13) {
 		t.Fatal("SC:R tag match")
+	}
+	noLMTS := &Game{prepared: &downgrade.Prepared{Settings: downgrade.LegacySettings()}}
+	early := UnitID(1448 | 1<<11)
+	if !noLMTS.MatchesSCRTag(early, 0x0DA8) || noLMTS.MatchesSCRTag(early, 0x0DA9) || scr.MatchesSCRTag(early, 0x0DA8) {
+		t.Fatal("SC:R tag match without LMTS")
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 func newTestActionFunctions() (*ActionFunctions, *State, *ActionState) {
-	st := NewState(nil, nil)
+	st := NewState(nil, NewGameState())
 	actionSt := &ActionState{}
 	return NewActionFunctions(st, actionSt), st, actionSt
 }

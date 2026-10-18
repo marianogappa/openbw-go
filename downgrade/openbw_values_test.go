@@ -69,13 +69,31 @@ func TestLegacyUnitTag(t *testing.T) {
 	}
 }
 
+func TestLegacyUnitTagWithoutLMTSKeepsTheLegacyLayout(t *testing.T) {
+	cases := []struct {
+		tag121 uint32
+		want   uint16
+	}{
+		{0x00000da8, 0x0da8},
+		{0x00010da8, 0x0da8},
+		{0x00000801, 0x0801},
+		{0x00000800, 0},
+		{0, 0},
+	}
+	for _, c := range cases {
+		if got := legacyUnitTagForLimit(c.tag121, Legacy116Limits.Units); got != c.want {
+			t.Errorf("legacyUnitTagForLimit(%08x): got %04x, want %04x", c.tag121, got, c.want)
+		}
+	}
+}
+
 func TestNarrowSelectionTags(t *testing.T) {
 	payload := []byte{3}
 	for _, tag121 := range []uint32{0x00002cb4, 0x00010c13, 0} {
 		payload = binary.LittleEndian.AppendUint32(payload, tag121)
 	}
 	want := []byte{3, 0x10, 0x0e, 0x6f, 0x45, 0, 0}
-	if got := narrowSelectionTags(payload); string(got) != string(want) {
+	if got := narrowSelectionTags(payload, scrUnitCapacity); string(got) != string(want) {
 		t.Errorf("got % x, want % x", got, want)
 	}
 }

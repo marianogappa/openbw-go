@@ -139,6 +139,7 @@ type SourceCommand struct {
 
 type commandTranslator struct {
 	validPlayerIDs map[byte]bool
+	unitLimit      uint32
 	dropped        []DroppedCommand
 	commands       []SourceCommand
 	written        int32
@@ -149,8 +150,9 @@ func newCommandIndexer() *commandTranslator {
 	return &commandTranslator{framePositions: map[uint32]int{}}
 }
 
-func newCommandTranslator(slotPlayerIDs [slotCount]uint32) *commandTranslator {
+func newCommandTranslator(slotPlayerIDs [slotCount]uint32, unitLimit uint32) *commandTranslator {
 	t := newCommandIndexer()
+	t.unitLimit = unitLimit
 	t.validPlayerIDs = map[byte]bool{}
 	for _, id := range slotPlayerIDs {
 		if id <= 0xff {
@@ -223,7 +225,7 @@ func (t *commandTranslator) splitCommand(frame uint32, block []byte, pos int) (c
 }
 
 func (t *commandTranslator) appendTranslated(out []byte, original command) []byte {
-	cmd := toLegacyCommand(original)
+	cmd := toLegacyCommand(original, t.unitLimit)
 	if reason := t.dropReason(cmd); reason != "" {
 		t.drop(original.frame, original.playerID, original.id, reason)
 		return out
@@ -277,12 +279,12 @@ func (t *commandTranslator) indexLegacyBlock(frame uint32, block []byte) bool {
 	return true
 }
 
-func toLegacyCommand(cmd command) command {
+func toLegacyCommand(cmd command, unitLimit uint32) command {
 	legacyID, is121 := legacyIDOf121[cmd.id]
 	if !is121 {
 		return cmd
 	}
-	return command{frame: cmd.frame, playerID: cmd.playerID, id: legacyID, payload: narrowUnitTags(cmd.id, cmd.payload)}
+	return command{frame: cmd.frame, playerID: cmd.playerID, id: legacyID, payload: narrowUnitTags(cmd.id, cmd.payload, unitLimit)}
 }
 
 func (t *commandTranslator) dropReason(cmd command) string {
@@ -309,6 +311,8 @@ const (
 	unitTagSize           = 2
 	unitIndex121Bits      = 13
 	unitIndex121Mask      = 1<<unitIndex121Bits - 1
+	unitIndexBits         = 11
+	unitIndexMask         = 1<<unitIndexBits - 1
 	scrUnitCapacity       = 3400
 	openBWUnitCapacity    = 1700
 	unitGenerationShift   = 11
@@ -316,28 +320,42 @@ const (
 	firstAllocatedUnitTag = 1
 )
 
-func narrowUnitTags(id121 byte, payload []byte) []byte {
+func narrowUnitTags(id121 byte, payload []byte, unitLimit uint32) []byte {
 	switch id121 {
 	case idRightClick121, idTargetedOrder121:
-		return concat(payload[:4], appendLegacyUnitTag(nil, payload[4:8]), payload[8:])
+		return concat(payload[:4], appendLegacyUnitTag(nil, payload[4:8], unitLimit), payload[8:])
 	case idUnload121:
-		return appendLegacyUnitTag(nil, payload[:4])
+		return appendLegacyUnitTag(nil, payload[:4], unitLimit)
 	}
-	return narrowSelectionTags(payload)
+	return narrowSelectionTags(payload, unitLimit)
 }
 
-func narrowSelectionTags(payload []byte) []byte {
+func narrowSelectionTags(payload []byte, unitLimit uint32) []byte {
 	count := int(payload[0])
 	out := make([]byte, 0, 1+count*unitTagSize)
 	out = append(out, payload[0])
 	for i := range count {
-		out = appendLegacyUnitTag(out, payload[1+i*unitTag121Size:])
+		out = appendLegacyUnitTag(out, payload[1+i*unitTag121Size:], unitLimit)
 	}
 	return out
 }
 
-func appendLegacyUnitTag(out, tag121 []byte) []byte {
-	return binary.LittleEndian.AppendUint16(out, legacyUnitTag(binary.LittleEndian.Uint32(tag121)))
+func appendLegacyUnitTag(out, tag121 []byte, unitLimit uint32) []byte {
+	return binary.LittleEndian.AppendUint16(out, legacyUnitTagForLimit(binary.LittleEndian.Uint32(tag121), unitLimit))
+}
+
+// legacyUnitTagForLimit maps a 1.21 tag of a game with the given LMTS unit limit.
+// Games with a 1,700-unit array (no LMTS section) use the 1.16 layout in a 4-byte tag.
+func legacyUnitTagForLimit(tag121, unitLimit uint32) uint16 {
+	if unitLimit > openBWUnitCapacity {
+		return legacyUnitTag(tag121)
+	}
+	index := tag121 & unitIndexMask
+	if index == 0 {
+		return 0
+	}
+	generation := (tag121 >> unitIndexBits) % unitGenerationCount
+	return uint16(index | generation<<unitGenerationShift)
 }
 
 func legacyUnitTag(tag121 uint32) uint16 {
@@ -381,7 +399,13 @@ func (t *commandTranslator) drop(frame uint32, playerID, id byte, reason string)
 	t.dropped = append(t.dropped, DroppedCommand{ID: id, Frame: frame, PlayerID: playerID, Count: 1, Reason: reason})
 }
 
-// LegacyUnitTag maps a 1.21 unit tag to the 1.16 tag that the downgraded commands carry.
+// LegacyUnitTag maps a 1.21 unit tag of a game with a 3,400-unit array to the 1.16 tag that the downgraded commands carry.
 func LegacyUnitTag(tag121 uint32) uint16 {
 	return legacyUnitTag(tag121)
+}
+
+// LegacyUnitTagFor maps a 1.21 unit tag to the 1.16 tag that the downgraded commands carry,
+// using the unit array size in settings.Limits.Units.
+func LegacyUnitTagFor(settings SCRSettings, tag121 uint32) uint16 {
+	return legacyUnitTagForLimit(tag121, settings.Limits.Units)
 }

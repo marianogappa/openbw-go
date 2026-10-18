@@ -781,6 +781,10 @@ func (f *GameLoadFunctions) loadMapData(data []byte, setupF func(), initialProce
 		}
 	}
 	l.shareForceVision()
+	f.gameSt.AlliedVictoryWithinForces = f.gameSt.Rules.TopVsBottomAlliances && f.setupInfo.TopVsBottom
+	if f.gameSt.AlliedVictoryWithinForces {
+		l.allyForces()
+	}
 
 	if initialProcessing {
 		f.processFrame()
@@ -918,6 +922,22 @@ func (l *mapDataLoader) shareForceVision() {
 			if st.Players[i2].Force == force {
 				st.SharedVision[i] |= 1 << i2
 			}
+		}
+	}
+}
+
+func (l *mapDataLoader) allyForces() {
+	st := l.f.st
+	for i := 0; i != 8; i++ {
+		for i2 := 0; i2 != 8; i2++ {
+			if i == i2 || st.Players[i].Force != st.Players[i2].Force {
+				continue
+			}
+			if st.Players[i].Controller != PlayerControllerOccupied || st.Players[i2].Controller != PlayerControllerOccupied {
+				continue
+			}
+			st.Alliances[i][i2] = 2
+			st.SharedVision[i] |= 1 << i2
 		}
 	}
 }

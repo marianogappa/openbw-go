@@ -85,7 +85,7 @@ func downgradeSections(src sourceSections) (legacy []byte, report Report, comman
 	if src.format == formatLegacy {
 		return encodeLegacyReplay(src.gameInfo, src.actions, src.mapData), report, indexLegacyActions(src.actions), nil
 	}
-	translator := newCommandTranslator(slotPlayerIDs(src.gameInfo))
+	translator := newCommandTranslator(slotPlayerIDs(src.gameInfo), report.SCRSettings.Limits.Units)
 	actions, err := translator.translateActions(src.actions)
 	if err != nil {
 		return nil, report, nil, err

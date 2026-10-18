@@ -24,7 +24,7 @@ func testSlotIDs() [slotCount]uint32 {
 
 func translateForTest(t *testing.T, actions []byte) ([]byte, []DroppedCommand) {
 	t.Helper()
-	translator := newCommandTranslator(testSlotIDs())
+	translator := newCommandTranslator(testSlotIDs(), scrUnitCapacity)
 	out, err := translator.translateActions(actions)
 	if err != nil {
 		t.Fatal(err)
@@ -98,7 +98,7 @@ func TestDropInvalidForOpenBW(t *testing.T) {
 
 func TestTruncatedBlockIsAnError(t *testing.T) {
 	broken := frameBlock(1, []byte{0, 0x1a, 0})[:6]
-	if _, err := newCommandTranslator(testSlotIDs()).translateActions(broken); err == nil {
+	if _, err := newCommandTranslator(testSlotIDs(), scrUnitCapacity).translateActions(broken); err == nil {
 		t.Error("want an error")
 	}
 }
@@ -125,7 +125,7 @@ func TestTranslatorIndexesSourceCommands(t *testing.T) {
 		frameBlock(4, stop, unknown, stop),
 		frameBlock(5, stop),
 	}, nil)
-	translator := newCommandTranslator(testSlotIDs())
+	translator := newCommandTranslator(testSlotIDs(), scrUnitCapacity)
 	if _, err := translator.translateActions(actions); err != nil {
 		t.Fatal(err)
 	}

@@ -12,6 +12,18 @@ func TestZeroRulesUseOpenBWLimits(t *testing.T) {
 	if rules.OrderSupplyLowThreshold() != 1800 {
 		t.Fatalf("threshold %d", rules.OrderSupplyLowThreshold())
 	}
+	if rules.HaloRocketsBulletCap() != 80 {
+		t.Fatalf("halo rockets cap %d", rules.HaloRocketsBulletCap())
+	}
+}
+
+func TestHaloRocketsBulletCapScalesWithBulletLimit(t *testing.T) {
+	for _, c := range []struct{ bullets, want uint }{{200, 160}, {400, 320}} {
+		rules := Rules{Limits: ObjectLimits{Bullets: c.bullets}}
+		if got := rules.HaloRocketsBulletCap(); got != c.want {
+			t.Errorf("bullets %d: cap %d, want %d", c.bullets, got, c.want)
+		}
+	}
 }
 
 func TestNewStateSizesContainersFromRules(t *testing.T) {
@@ -78,5 +90,40 @@ func TestCanAllocateOrder(t *testing.T) {
 		if got := f.canAllocateOrder(u, c.newOrder); got != c.want {
 			t.Errorf("%s: got %v, want %v", c.name, got, c.want)
 		}
+	}
+}
+
+func TestAllyForcesAlliesOccupiedTeammates(t *testing.T) {
+	f := NewGameLoadFunctions(NewState(nil, NewGameState()))
+	st := f.st
+	forces := []int32{1, 2, 1, 2, 1, 2}
+	for i, force := range forces {
+		st.Players[i] = Player{Controller: PlayerControllerOccupied, Force: force}
+		st.SharedVision[i] = 1 << i
+	}
+	st.Players[4].Controller = PlayerControllerOpen
+	(&mapDataLoader{f: f}).allyForces()
+
+	if st.Alliances[0][2] != 2 || st.Alliances[2][0] != 2 || st.Alliances[1][3] != 2 {
+		t.Fatalf("teammates not allied: %v", st.Alliances)
+	}
+	if st.Alliances[0][1] != 0 || st.Alliances[0][4] != 0 || st.Alliances[4][0] != 0 {
+		t.Fatalf("enemy or open slot allied: %v", st.Alliances)
+	}
+	if st.SharedVision[0] != 0b101 || st.SharedVision[1] != 0b101010 {
+		t.Fatalf("shared vision %b %b", st.SharedVision[0], st.SharedVision[1])
+	}
+}
+
+func TestAlliedVictoryWithinForcesCapsOtherTeams(t *testing.T) {
+	game := NewGameState()
+	game.AlliedVictoryWithinForces = true
+	f := NewActionFunctions(NewState(nil, game), &ActionState{})
+	for i, force := range []int32{1, 2, 1} {
+		f.st.Players[i] = Player{Controller: PlayerControllerOccupied, Force: force}
+	}
+	f.actionSetAlliances(0, [12]int32{2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2})
+	if got := f.st.Alliances[0]; got[1] != 1 || got[2] != 2 || got[11] != 2 {
+		t.Fatalf("alliances %v", got)
 	}
 }
